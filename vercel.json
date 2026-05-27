@@ -1,5 +1,9 @@
 {
   "version": 2,
+  "git": {
+    "submodules": true
+  },
+  "buildCommand": "bash build.sh",
   "builds": [
     { "src": "api/**/*.py", "use": "@vercel/python" },
     { "src": "index.html", "use": "@vercel/static" }
