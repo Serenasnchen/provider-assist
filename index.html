@@ -384,14 +384,32 @@ function deleteClient(id) {
 }
 
 function createClient() {
-    const input = prompt('请输入：客户名称 / 行业\n例如：鹏宁担保 / 金融');
-    if (!input) return;
-    const parts = input.split(/[\/,，、|]/).map(s => s.trim());
-    const name = parts[0] || '';
-    const industry = parts[1] || '';
-    if (!name) return;
+    // 显示自定义弹窗
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `<div style="background:#fff;border-radius:12px;padding:28px;width:360px;box-shadow:0 8px 30px rgba(0,0,0,0.15)">
+        <h3 style="font-size:16px;margin-bottom:18px">新建客户</h3>
+        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">客户名称</label>
+        <input id="new-client-name" type="text" placeholder="如：鹏宁担保" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:14px">
+        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">客户行业</label>
+        <input id="new-client-industry" type="text" placeholder="如：金融、制造业、服装外贸" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:18px">
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:8px 18px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">取消</button>
+            <button onclick="confirmCreateClient()" style="padding:8px 18px;border:none;border-radius:8px;background:#0052d9;color:#fff;cursor:pointer;font-size:14px;font-weight:500">创建</button>
+        </div>
+    </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('new-client-name').focus();
+}
+
+function confirmCreateClient() {
+    const name = document.getElementById('new-client-name').value.trim();
+    const industry = document.getElementById('new-client-industry').value.trim();
+    if (!name) { alert('请输入客户名称'); return; }
+    // 关闭弹窗
+    document.querySelector('div[style*="position:fixed"][style*="z-index:9999"]').remove();
     const clients = getClients();
-    const newClient = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), name, industry, status: 'draft', created_at: new Date().toISOString(), step1_result: '', step2_report: '', step2_schema: null };
+    const newClient = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), name, industry: industry || '', status: 'draft', created_at: new Date().toISOString(), step1_result: '', step2_report: '', step2_schema: null };
     clients.unshift(newClient);
     saveClients(clients);
     renderClientList();
