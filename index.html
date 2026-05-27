@@ -445,20 +445,73 @@ async function generateStep2() {
     document.getElementById('s2-result').style.display = 'none';
 
     try {
-        const resp = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ industry, transcript, output_type: 'all' }) });
-        const data = await resp.json();
-        if (data.error) { alert(data.error); return; }
-
-        if (data.report) { document.getElementById('s2-report').innerHTML = renderMarkdown(data.report); }
-        if (data.schema || data.demo_json) {
-            let schema = data.demo_json;
-            if (!schema) { try { const m = data.schema.match(/```(?:json)?\s*([\s\S]*?)```/); schema = m ? JSON.parse(m[1]) : JSON.parse(data.schema); } catch {} }
-            if (schema && schema.sheets) { demoSchema = schema; renderSchema(schema); }
-            else if (data.schema) { document.getElementById('s2-schema').innerHTML = renderMarkdown(data.schema); document.getElementById('s2-schema-card').style.display = 'block'; }
+        // 1. 后端匹配知识库获取上下文
+        const matchResp = await fetch('/api/match', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ industry, direction: transcript.substring(0, 200) }) });
+        let kbContext = '';
+        if (matchResp.ok) {
+            const matchData = await matchResp.json();
+            if (matchData.industry_knowledge) kbContext += '## 行业知识\n' + matchData.industry_knowledge + '\n\n';
+            if (matchData.matched_cases && matchData.matched_cases.length) {
+                kbContext += '## 相关案例\n';
+                matchData.matched_cases.forEach(cs => {
+                    const meta = cs.meta || {};
+                    kbContext += `【${meta.industry||''}-${meta.scene||''}】\n`;
+                    if (cs.pain_points) kbContext += '痛点：' + cs.pain_points.join('; ') + '\n';
+                    const sol = cs.solution || {};
+                    if (sol.tables) kbContext += '方案子表：' + sol.tables.map(t=>t.table_name||'').join(', ') + '\n';
+                });
+                kbContext += '\n';
+            }
+            if (matchData.matched_templates && matchData.matched_templates.length) {
+                kbContext += '## 字段经验池\n';
+                matchData.matched_templates.forEach(tpl => {
+                    const meta = tpl.meta || {};
+                    kbContext += `${meta.industry||''}-${meta.scene||''}: ${meta.total_tables||'?'}表${meta.total_fields||'?'}字段\n`;
+                });
+                kbContext += '\n';
+            }
         }
+
+        // 2. 前端直调DeepSeek生成报告
+        const reportPrompt = `你是一个专业的企业微信智能表格售前方案顾问。根据服务商与客户的沟通记录，生成结构化的需求洞察报告。
+
+## 输出格式（直接输出，不要开场白）
+
+## 客户信息
+## 核心痛点（逐条列出，引用客户原话）
+## 业务场景（流程+角色+数据流）
+## 详细规格
+## 智能表格搭建方案（子表结构用表格展示、自动化规则、视图、权限）
+## 预估交付周期
+## 待确认事项（客户没讲清楚的地方，用❓标记）
+
+原则：基于客户原话，不臆测；痛点必须引用原话；方案细致到字段级别。`;
+
+        const reportUserPrompt = kbContext + '## 客户沟通记录\n\n' + transcript + '\n\n请生成完整的需求洞察报告。';
+        const report = await callDeepSeek(reportPrompt, reportUserPrompt);
+        document.getElementById('s2-report').innerHTML = renderMarkdown(report);
+
+        // 3. 前端直调DeepSeek生成Demo schema
+        const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求设计Demo结构。直接输出JSON，不要markdown代码块。
+格式：{"doc_name":"名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
+字段类型：FIELD_TYPE_TEXT, FIELD_TYPE_NUMBER, FIELD_TYPE_SINGLE_SELECT, FIELD_TYPE_DATE_TIME, FIELD_TYPE_CURRENCY, FIELD_TYPE_PROGRESS, FIELD_TYPE_PHONE_NUMBER, FIELD_TYPE_CHECKBOX
+每表6-10字段，2-3条示例数据。`;
+
+        const schemaUserPrompt = kbContext + '## 客户沟通记录\n\n' + transcript + '\n\n请设计智能表格Demo结构，直接输出JSON。';
+        const schemaText = await callDeepSeek(schemaPrompt, schemaUserPrompt);
+
+        // 解析schema
+        let schema = null;
+        try { schema = JSON.parse(schemaText); } catch {
+            const m = schemaText.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (m) try { schema = JSON.parse(m[1]); } catch {}
+            if (!schema) { const j = schemaText.match(/\{[\s\S]*\}/); if (j) try { schema = JSON.parse(j[0]); } catch {} }
+        }
+        if (schema && schema.sheets) { demoSchema = schema; renderSchema(schema); }
+
         document.getElementById('s2-result').style.display = 'block';
-        updateClient(currentClientId, { step2_report: data.report || '', step2_schema: demoSchema, status: 'done' });
+        updateClient(currentClientId, { step2_report: report || '', step2_schema: demoSchema, status: 'done' });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s2-loading').classList.remove('visible'); }
 }
@@ -515,15 +568,22 @@ async function exportWecomDoc(elId, title) {
     try {
         const c = getClient(currentClientId);
         const docTitle = (c ? c.name + ' - ' : '') + title;
+        // 优先使用原始markdown内容（保留序号），否则用innerText
+        let content = '';
+        if (elId === 's1-content' && c && c.step1_result) {
+            content = c.step1_result;
+        } else if (elId === 's2-report' && c && c.step2_report) {
+            content = c.step2_report;
+        } else {
+            content = document.getElementById(elId).innerText;
+        }
         const resp = await fetch('/api/export_doc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: docTitle, content: document.getElementById(elId).innerText }) });
+            body: JSON.stringify({ title: docTitle, content: content }) });
         const data = await resp.json();
         if (data.success && data.url) {
             showToast('企微文档已创建');
-            // 保存链接到客户数据
             if (elId === 's1-content') { updateClient(currentClientId, { step1_doc_url: data.url }); }
             else if (elId === 's2-report') { updateClient(currentClientId, { report_doc_url: data.url }); }
-            // 显示链接
             const div = document.createElement('div');
             div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + data.url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
             document.getElementById(elId).closest('.card').appendChild(div);
