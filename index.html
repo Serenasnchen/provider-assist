@@ -177,15 +177,20 @@
             </div>
         </div>
 
-        <div class="steps-nav">
-            <div class="step-nav active" onclick="switchStep('step1')">Step 1: 调研准备</div>
-            <div class="step-nav" onclick="switchStep('step2')">Step 2: 需求转化</div>
-        </div>
-
-        <!-- Step1 -->
-        <div id="step1" class="step-panel active">
-            <div id="s1-form" class="card">
-                <h3>客户信息</h3>
+        <!-- 客户档案卡 -->
+        <div class="card" id="profile-card" style="padding:18px 22px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <h3 style="margin:0;font-size:14px;color:#666">客户档案</h3>
+                <button class="btn btn-secondary btn-sm" onclick="toggleProfile()">编辑</button>
+            </div>
+            <div id="profile-view">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px">
+                    <div><span style="color:#999">行业：</span><span id="pv-industry">-</span></div>
+                    <div><span style="color:#999">业务：</span><span id="pv-business">-</span></div>
+                    <div><span style="color:#999">痛点：</span><span id="pv-pain">-</span></div>
+                </div>
+            </div>
+            <div id="profile-edit" style="display:none">
                 <label>客户行业</label>
                 <input type="text" id="s1-industry" placeholder="如：制造业、汽车金融、服装外贸...">
                 <label>客户业务描述</label>
@@ -193,15 +198,50 @@
                 <label>希望解决什么痛点</label>
                 <textarea id="s1-pain" placeholder="客户目前最头疼的问题"></textarea>
                 <div class="actions">
+                    <button class="btn btn-primary btn-sm" onclick="saveProfile()">保存</button>
+                    <button class="btn btn-secondary btn-sm" onclick="toggleProfile()">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 可用操作区 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div class="card" style="padding:18px;cursor:pointer;text-align:center;border:1.5px solid #eee;transition:all 0.2s" onclick="showPanel('step1')" id="action-step1">
+                <div style="font-size:24px;margin-bottom:6px">📋</div>
+                <div style="font-size:14px;font-weight:600">调研准备</div>
+                <div style="font-size:12px;color:#888;margin-top:4px">生成提问清单 + 分析缺失信息</div>
+                <div id="action-step1-status" style="margin-top:8px"></div>
+            </div>
+            <div class="card" style="padding:18px;cursor:pointer;text-align:center;border:1.5px solid #eee;transition:all 0.2s" onclick="showPanel('step2')" id="action-step2">
+                <div style="font-size:24px;margin-bottom:6px">📊</div>
+                <div style="font-size:14px;font-weight:600">需求交付</div>
+                <div style="font-size:12px;color:#888;margin-top:4px">上传沟通记录 → 报告 + Demo</div>
+                <div id="action-step2-status" style="margin-top:8px"></div>
+            </div>
+        </div>
+
+        <!-- 产出物区域 -->
+        <div class="card" id="outputs-card" style="display:none">
+            <h3 style="font-size:14px;color:#666">产出物</h3>
+            <div id="outputs-list"></div>
+        </div>
+
+        <!-- Step1 面板 -->
+        <div id="step1" class="step-panel" style="display:none">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <h3 style="margin:0">调研准备</h3>
+                    <span style="font-size:12px;color:#0052d9;cursor:pointer" onclick="hidePanel()">← 返回</span>
+                </div>
+                <p style="font-size:13px;color:#666;margin-bottom:16px">基于客户信息+知识库，生成提问清单和分析材料</p>
+                <div class="actions">
                     <button class="btn btn-primary" onclick="generateStep1()">生成调研准备材料</button>
                 </div>
             </div>
-            <div id="s1-loading" class="loading"><div class="spinner"></div><p>正在结合知识库生成...</p></div>
+            <div id="s1-loading" class="loading"><div class="spinner"></div><p>正在匹配知识库...</p></div>
             <div id="s1-result" style="display:none">
                 <div class="card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-                        <h3 style="margin:0">调研准备材料</h3>
-                    </div>
+                    <h3>调研准备材料</h3>
                     <div id="s1-content" class="rendered-content"></div>
                     <div class="actions">
                         <button class="btn btn-secondary btn-sm" onclick="copyRendered('s1-content')">复制</button>
@@ -218,10 +258,13 @@
             </div>
         </div>
 
-        <!-- Step2 -->
-        <div id="step2" class="step-panel">
-            <div id="s2-form" class="card">
-                <h3>上传沟通记录</h3>
+        <!-- Step2 面板 -->
+        <div id="step2" class="step-panel" style="display:none">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <h3 style="margin:0">需求交付</h3>
+                    <span style="font-size:12px;color:#0052d9;cursor:pointer" onclick="hidePanel()">← 返回</span>
+                </div>
                 <div class="upload-area" onclick="document.getElementById('file-input').click()">
                     <p>点击上传或拖拽文件</p>
                     <p class="hint">支持 .txt / .docx</p>
@@ -229,12 +272,12 @@
                 </div>
                 <input type="file" id="file-input" accept=".txt,.docx" style="display:none" onchange="handleFileUpload(event)">
                 <div class="or-divider">或直接粘贴</div>
-                <textarea id="s2-transcript" style="min-height:200px" placeholder="粘贴会议转写或沟通记录..."></textarea>
+                <textarea id="s2-transcript" style="min-height:180px" placeholder="粘贴会议转写或沟通记录..."></textarea>
                 <div class="actions">
                     <button class="btn btn-primary" onclick="generateStep2()">生成需求报告 + Demo</button>
                 </div>
             </div>
-            <div id="s2-loading" class="loading"><div class="spinner"></div><p>正在分析并生成结构化产物...</p></div>
+            <div id="s2-loading" class="loading"><div class="spinner"></div><p>正在分析...</p></div>
             <div id="s2-result" style="display:none">
                 <div class="card">
                     <h3>需求分析报告</h3>
@@ -363,10 +406,19 @@ function openClient(id) {
     const el = document.getElementById('detail-status');
     el.textContent = label; el.className = cls;
 
-    // Restore Step1
+    // Profile view
+    document.getElementById('pv-industry').textContent = c.industry || '-';
+    document.getElementById('pv-business').textContent = (c.business_desc || '-').substring(0, 40);
+    document.getElementById('pv-pain').textContent = (c.pain_points || '-').substring(0, 40);
+    document.getElementById('profile-edit').style.display = 'none';
+    document.getElementById('profile-view').style.display = 'block';
+
+    // Restore inputs
     document.getElementById('s1-industry').value = c.industry || '';
     document.getElementById('s1-business').value = c.business_desc || '';
     document.getElementById('s1-pain').value = c.pain_points || '';
+
+    // Restore Step1 result
     if (c.step1_result) {
         document.getElementById('s1-content').innerHTML = renderWithTags(c.step1_result);
         document.getElementById('s1-result').style.display = 'block';
@@ -382,17 +434,11 @@ function openClient(id) {
     } else {
         document.getElementById('s2-result').style.display = 'none';
     }
-    if (c.step2_schema) {
-        demoSchema = c.step2_schema;
-        renderSchema(demoSchema);
-    }
+    if (c.step2_schema) { demoSchema = c.step2_schema; renderSchema(demoSchema); }
 
-    switchStep('step1');
-    // If already has Step1 result, show Step2 as active
-    if (c.status === 'waiting' || c.status === 'done') {
-        switchStep('step2');
-    }
-    // 更新时间轴
+    // Show default view (action cards, hide panels)
+    hidePanel();
+    renderOutputs(c);
     updateTimeline(c);
 }
 
@@ -416,11 +462,71 @@ function deleteCurrentClient() {
 }
 
 function switchStep(step) {
-    document.querySelectorAll('.step-nav').forEach(n => n.classList.remove('active'));
-    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById(step).classList.add('active');
-    const idx = step === 'step1' ? 0 : 1;
-    document.querySelectorAll('.step-nav')[idx].classList.add('active');
+    // Legacy compat - now uses showPanel/hidePanel
+    showPanel(step);
+}
+
+function showPanel(panel) {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById(panel).style.display = 'block';
+    // Hide action cards when panel is open
+    document.querySelector('[onclick="showPanel(\'step1\')"]').closest('div[style*="grid"]').style.display = 'none';
+}
+
+function hidePanel() {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'none';
+    // Show action cards
+    document.querySelector('[onclick="showPanel(\'step1\')"]').closest('div[style*="grid"]').style.display = 'grid';
+}
+
+function toggleProfile() {
+    const view = document.getElementById('profile-view');
+    const edit = document.getElementById('profile-edit');
+    if (edit.style.display === 'none') {
+        edit.style.display = 'block'; view.style.display = 'none';
+    } else {
+        edit.style.display = 'none'; view.style.display = 'block';
+    }
+}
+
+function saveProfile() {
+    const industry = document.getElementById('s1-industry').value.trim();
+    const business = document.getElementById('s1-business').value.trim();
+    const pain = document.getElementById('s1-pain').value.trim();
+    updateClient(currentClientId, { industry, business_desc: business, pain_points: pain });
+    // Update view
+    document.getElementById('pv-industry').textContent = industry || '-';
+    document.getElementById('pv-business').textContent = (business || '-').substring(0, 30) + (business.length > 30 ? '...' : '');
+    document.getElementById('pv-pain').textContent = (pain || '-').substring(0, 30) + (pain.length > 30 ? '...' : '');
+    document.getElementById('detail-industry').textContent = industry;
+    toggleProfile();
+    updateTimeline(getClient(currentClientId));
+}
+
+function renderOutputs(c) {
+    const items = [];
+    if (c.step1_doc_url) items.push({ icon: '📋', name: '调研准备材料', url: c.step1_doc_url, time: '' });
+    if (c.report_doc_url) items.push({ icon: '📄', name: '需求分析报告', url: c.report_doc_url, time: '' });
+    if (c.demo_url) items.push({ icon: '📊', name: '智能表格 Demo', url: c.demo_url, time: '' });
+
+    const card = document.getElementById('outputs-card');
+    if (!items.length) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    document.getElementById('outputs-list').innerHTML = items.map(it =>
+        `<a href="${it.url}" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f5f5f5;text-decoration:none;color:#1a1a1a">
+            <span style="font-size:18px">${it.icon}</span>
+            <span style="font-size:13px;font-weight:500">${it.name}</span>
+            <span style="margin-left:auto;font-size:11px;color:#0052d9">打开 →</span>
+        </a>`
+    ).join('');
+
+    // Update action card statuses
+    document.getElementById('action-step1-status').innerHTML = c.step1_result ?
+        '<span style="font-size:11px;color:#2e7d32;background:#e8f5e9;padding:2px 8px;border-radius:4px">已完成</span>' : '';
+    document.getElementById('action-step2-status').innerHTML = c.step2_report ?
+        '<span style="font-size:11px;color:#2e7d32;background:#e8f5e9;padding:2px 8px;border-radius:4px">已完成</span>' : '';
 }
 
 function updateTimeline(c) {
