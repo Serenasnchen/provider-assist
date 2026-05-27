@@ -8,660 +8,453 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f5f7fa;
-            color: #1a1a1a;
-            line-height: 1.6;
-        }
-        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
-        header { text-align: center; padding: 30px 0 20px; }
-        header h1 { font-size: 24px; font-weight: 600; }
-        header p { color: #666; font-size: 14px; margin-top: 6px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f7fa; color: #1a1a1a; line-height: 1.6; min-height: 100vh; }
+        .container { max-width: 920px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 24px 0 16px; }
+        header h1 { font-size: 22px; font-weight: 600; }
+        header p { color: #666; font-size: 13px; margin-top: 4px; }
 
-        .tabs {
-            display: flex; margin-bottom: 24px; background: #fff;
-            border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        }
-        .tab {
-            flex: 1; padding: 14px; text-align: center; cursor: pointer;
-            font-size: 14px; font-weight: 500; color: #666;
-            border-bottom: 2px solid transparent; transition: all 0.2s;
-        }
-        .tab.active { color: #0052d9; border-bottom-color: #0052d9; background: #f0f5ff; }
-        .tab:hover:not(.active) { background: #fafafa; }
-
-        .card {
-            background: #fff; border-radius: 12px; padding: 24px;
-            margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        }
+        .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
         .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
         .card label { display: block; font-size: 13px; font-weight: 500; color: #333; margin-bottom: 6px; }
-        .card input, .card textarea, .card select {
-            width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0;
-            border-radius: 8px; font-size: 14px; margin-bottom: 14px; transition: border-color 0.2s;
-        }
+        .card input, .card textarea, .card select { width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; margin-bottom: 14px; transition: border-color 0.2s; }
         .card input:focus, .card textarea:focus { outline: none; border-color: #0052d9; }
-        .card textarea { min-height: 120px; resize: vertical; }
-        .card textarea.large { min-height: 250px; }
+        .card textarea { min-height: 100px; resize: vertical; }
 
-        .btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 10px 20px; border: none; border-radius: 8px;
-            font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;
-        }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: #0052d9; color: #fff; }
         .btn-primary:hover { background: #003eb3; }
         .btn-primary:disabled { background: #a0c4ff; cursor: not-allowed; }
         .btn-secondary { background: #f0f0f0; color: #333; }
         .btn-secondary:hover { background: #e0e0e0; }
-        .btn-icon { padding: 8px 14px; font-size: 13px; }
+        .btn-danger { background: #fff; color: #e53935; border: 1px solid #ffcdd2; }
+        .btn-danger:hover { background: #ffebee; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; }
+        .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
 
-        .result-section { display: none; }
-        .result-section.visible { display: block; }
+        /* Client List */
+        .client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 16px; }
+        .client-card { background: #fff; border-radius: 10px; padding: 18px; cursor: pointer; border: 1px solid #eee; transition: all 0.2s; position: relative; }
+        .client-card:hover { border-color: #0052d9; box-shadow: 0 2px 8px rgba(0,82,217,0.08); }
+        .client-card .name { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+        .client-card .meta { font-size: 12px; color: #888; }
+        .client-card .status { position: absolute; top: 14px; right: 14px; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+        .status-draft { background: #f5f5f5; color: #999; }
+        .status-listed { background: #e3f2fd; color: #1565c0; }
+        .status-waiting { background: #fff3e0; color: #e65100; }
+        .status-done { background: #e8f5e9; color: #2e7d32; }
+        .add-card { background: #fafbfc; border: 2px dashed #d0d5dd; display: flex; align-items: center; justify-content: center; min-height: 100px; border-radius: 10px; cursor: pointer; font-size: 14px; color: #666; transition: all 0.2s; }
+        .add-card:hover { border-color: #0052d9; color: #0052d9; background: #f8faff; }
 
-        /* Markdown rendered content */
-        .rendered-content {
-            background: #fff; border: 1px solid #eee; border-radius: 10px;
-            padding: 28px; font-size: 14px; line-height: 1.9;
-            max-height: 700px; overflow-y: auto;
-        }
-        .rendered-content h1, .rendered-content h2, .rendered-content h3 {
-            color: #0052d9; margin-top: 24px; margin-bottom: 12px;
-            padding-bottom: 8px; border-bottom: 1px solid #f0f0f0;
-        }
-        .rendered-content h1 { font-size: 18px; }
-        .rendered-content h2 { font-size: 16px; }
-        .rendered-content h3 { font-size: 15px; border-bottom: none; color: #1a1a1a; }
-        .rendered-content h4 { font-size: 14px; color: #333; margin-top: 16px; margin-bottom: 8px; }
-        .rendered-content p { margin-bottom: 10px; }
-        .rendered-content ul, .rendered-content ol { padding-left: 20px; margin-bottom: 12px; }
-        .rendered-content li { margin-bottom: 8px; }
-        .rendered-content li > ul, .rendered-content li > ol { margin-top: 6px; margin-bottom: 0; }
-        .rendered-content strong { color: #0052d9; font-weight: 600; }
+        /* Detail page */
+        .back-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #666; cursor: pointer; margin-bottom: 16px; padding: 6px 0; }
+        .back-btn:hover { color: #0052d9; }
+        .steps-nav { display: flex; gap: 0; margin-bottom: 20px; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        .step-nav { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: 500; color: #666; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s; }
+        .step-nav.active { color: #0052d9; border-bottom-color: #0052d9; background: #f0f5ff; }
+        .step-nav.done { color: #2e7d32; }
+        .step-panel { display: none; }
+        .step-panel.active { display: block; }
+
+        .rendered-content { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 24px; font-size: 14px; line-height: 1.9; max-height: 700px; overflow-y: auto; }
+        .rendered-content h1,.rendered-content h2,.rendered-content h3 { color: #0052d9; margin-top: 20px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; }
+        .rendered-content h1 { font-size: 17px; } .rendered-content h2 { font-size: 15px; } .rendered-content h3 { font-size: 14px; border-bottom: none; color: #1a1a1a; }
+        .rendered-content p { margin-bottom: 8px; } .rendered-content ul,.rendered-content ol { padding-left: 20px; margin-bottom: 10px; }
+        .rendered-content li { margin-bottom: 6px; } .rendered-content strong { color: #0052d9; }
         .rendered-content em { color: #666; font-style: normal; font-size: 13px; }
-        .rendered-content blockquote {
-            border-left: 3px solid #0052d9; padding: 8px 16px; margin: 12px 0;
-            background: #f8faff; border-radius: 0 6px 6px 0; color: #555;
-        }
-        .rendered-content code {
-            background: #f5f5f5; padding: 2px 6px; border-radius: 4px;
-            font-family: monospace; font-size: 13px;
-        }
-        .rendered-content hr {
-            border: none; border-top: 1px solid #eee; margin: 20px 0;
-        }
-        .rendered-content table {
-            width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px;
-        }
-        .rendered-content th, .rendered-content td {
-            border: 1px solid #eee; padding: 8px 12px; text-align: left;
-        }
+        .rendered-content blockquote { border-left: 3px solid #0052d9; padding: 6px 14px; margin: 10px 0; background: #f8faff; border-radius: 0 6px 6px 0; color: #555; font-size: 13px; }
+        .rendered-content table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+        .rendered-content th,.rendered-content td { border: 1px solid #eee; padding: 6px 10px; text-align: left; }
         .rendered-content th { background: #f8f9fa; font-weight: 500; }
 
         .loading { display: none; text-align: center; padding: 40px; }
         .loading.visible { display: block; }
-        .loading .spinner {
-            width: 32px; height: 32px; border: 3px solid #e0e0e0;
-            border-top-color: #0052d9; border-radius: 50%;
-            animation: spin 0.8s linear infinite; margin: 0 auto 12px;
-        }
+        .loading .spinner { width: 28px; height: 28px; border: 3px solid #e0e0e0; border-top-color: #0052d9; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .status-badge {
-            display: inline-block; padding: 3px 8px; border-radius: 4px;
-            font-size: 12px; margin-right: 6px;
-        }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
         .status-badge.matched { background: #e8f5e9; color: #2e7d32; }
         .status-badge.unmatched { background: #f5f5f5; color: #999; }
 
-        .step-panel { display: none; }
-        .step-panel.active { display: block; }
-        .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
-
-        /* Export dropdown */
-        .export-group { position: relative; display: inline-block; }
-        .export-dropdown {
-            display: none; position: absolute; top: 100%; left: 0; margin-top: 4px;
-            background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; min-width: 160px;
-            overflow: hidden;
-        }
-        .export-dropdown.visible { display: block; }
-        .export-dropdown .export-item {
-            padding: 10px 16px; cursor: pointer; font-size: 13px;
-            display: flex; align-items: center; gap: 8px; transition: background 0.1s;
-        }
-        .export-dropdown .export-item:hover { background: #f5f7fa; }
-        .export-dropdown .export-item .icon { font-size: 16px; }
-
-        /* File upload */
-        .upload-area {
-            border: 2px dashed #d0d5dd; border-radius: 10px; padding: 30px;
-            text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 14px;
-        }
+        .upload-area { border: 2px dashed #d0d5dd; border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 14px; }
         .upload-area:hover { border-color: #0052d9; background: #f8faff; }
-        .upload-area.dragover { border-color: #0052d9; background: #eef4ff; }
-        .upload-area p { color: #666; font-size: 14px; }
-        .upload-area .hint { color: #999; font-size: 12px; margin-top: 6px; }
-        .upload-area .file-name {
-            color: #0052d9; font-weight: 500; margin-top: 8px; font-size: 14px;
-        }
+        .upload-area p { color: #666; font-size: 13px; }
+        .upload-area .hint { color: #999; font-size: 12px; margin-top: 4px; }
+        .upload-area .file-name { color: #0052d9; font-weight: 500; margin-top: 6px; font-size: 13px; }
+        .or-divider { text-align: center; color: #999; font-size: 12px; margin: 8px 0; position: relative; }
+        .or-divider::before,.or-divider::after { content:''; position:absolute; top:50%; width:40%; height:1px; background:#e8e8e8; }
+        .or-divider::before { left:0; } .or-divider::after { right:0; }
 
-        /* Tab separator */
-        .or-divider {
-            text-align: center; color: #999; font-size: 13px; margin: 10px 0;
-            position: relative;
-        }
-        .or-divider::before, .or-divider::after {
-            content: ''; position: absolute; top: 50%; width: 40%;
-            height: 1px; background: #e8e8e8;
-        }
-        .or-divider::before { left: 0; }
-        .or-divider::after { right: 0; }
+        .export-group { position: relative; display: inline-block; }
+        .export-dropdown { display: none; position: absolute; top: 100%; left: 0; margin-top: 4px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; min-width: 160px; overflow: hidden; }
+        .export-dropdown.visible { display: block; }
+        .export-dropdown .export-item { padding: 10px 16px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background 0.1s; }
+        .export-dropdown .export-item:hover { background: #f5f7fa; }
+
+        .page { display: none; } .page.active { display: block; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state p { font-size: 14px; margin-bottom: 16px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>服务商助手</h1>
-            <p>智能提问清单 + 需求结构化转化</p>
-        </header>
+<div class="container">
+    <header>
+        <h1>服务商助手</h1>
+        <p>多客户管理 · 智能提问清单 · 需求结构化转化</p>
+    </header>
 
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('step1')">Step 1: 智能提问清单</div>
-            <div class="tab" onclick="switchTab('step2')">Step 2: 需求结构化转化</div>
+    <!-- PAGE: Client List -->
+    <div id="page-list" class="page active">
+        <div class="card" style="padding:16px 24px;display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0;font-size:15px">我的客户</h3>
+            <button class="btn btn-primary btn-sm" onclick="createClient()">+ 新建客户</button>
+        </div>
+        <div id="client-grid" class="client-grid"></div>
+        <div id="empty-state" class="empty-state" style="display:none">
+            <p>还没有客户项目</p>
+            <button class="btn btn-primary" onclick="createClient()">+ 新建第一个客户</button>
+        </div>
+    </div>
+
+    <!-- PAGE: Client Detail -->
+    <div id="page-detail" class="page">
+        <div class="back-btn" onclick="goBack()">← 返回客户列表</div>
+        <div class="card" style="padding:14px 20px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <span id="detail-name" style="font-size:16px;font-weight:600"></span>
+                    <span id="detail-industry" style="font-size:12px;color:#888;margin-left:8px"></span>
+                </div>
+                <span id="detail-status" style="font-size:11px;padding:2px 8px;border-radius:4px"></span>
+            </div>
         </div>
 
-        <!-- Step 1 -->
-        <div id="step1-panel" class="step-panel active">
-            <div class="card">
-                <h3>客户基本信息</h3>
+        <div class="steps-nav">
+            <div class="step-nav active" onclick="switchStep('step1')">Step 1: 调研准备</div>
+            <div class="step-nav" onclick="switchStep('step2')">Step 2: 需求转化</div>
+        </div>
+
+        <!-- Step1 -->
+        <div id="step1" class="step-panel active">
+            <div id="s1-form" class="card">
+                <h3>客户信息</h3>
                 <label>客户行业</label>
-                <input type="text" id="s1-industry" placeholder="如：制造业、汽车金融、服装外贸、装修、餐饮...">
+                <input type="text" id="s1-industry" placeholder="如：制造业、汽车金融、服装外贸...">
                 <label>客户业务描述</label>
-                <textarea id="s1-business" placeholder="客户的业务是怎么运转的？比如：&#10;我们是做汽车贷款担保的，业务员在4S店收件，提交到公司中台审核，审核通过后报银行放款，放款后要上牌抵押归档"></textarea>
-                <label>希望智能表格解决什么痛点</label>
-                <textarea id="s1-pain" placeholder="客户目前最头疼的问题，比如：&#10;订单都是后台一个人录入，重复录入工作量大&#10;各环节靠微信群同步，进度不透明&#10;老板想看数据但没有统一报表"></textarea>
+                <textarea id="s1-business" placeholder="客户的业务是怎么运转的？"></textarea>
+                <label>希望解决什么痛点</label>
+                <textarea id="s1-pain" placeholder="客户目前最头疼的问题"></textarea>
                 <div class="actions">
-                    <button class="btn btn-primary" onclick="generateQuestionList()">生成调研准备材料</button>
+                    <button class="btn btn-primary" onclick="generateStep1()">生成调研准备材料</button>
                 </div>
             </div>
-
-            <div id="s1-loading" class="loading">
-                <div class="spinner"></div>
-                <p>正在结合知识库生成调研准备材料...</p>
-            </div>
-
-            <div id="s1-result" class="result-section">
+            <div id="s1-loading" class="loading"><div class="spinner"></div><p>正在结合知识库生成...</p></div>
+            <div id="s1-result" style="display:none">
                 <div class="card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-                        <h3 style="margin-bottom:0">提问清单</h3>
-                        <div id="s1-context-info" style="display:flex;gap:4px"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                        <h3 style="margin:0">调研准备材料</h3>
+                        <div id="s1-badges"></div>
                     </div>
                     <div id="s1-content" class="rendered-content"></div>
                     <div class="actions">
-                        <button class="btn btn-secondary btn-icon" onclick="copyRendered('s1-content')">复制文本</button>
+                        <button class="btn btn-secondary btn-sm" onclick="copyRendered('s1-content')">复制</button>
                         <div class="export-group">
-                            <button class="btn btn-secondary btn-icon" onclick="toggleExport('s1-export')">导出</button>
+                            <button class="btn btn-secondary btn-sm" onclick="toggleExport('s1-export')">导出</button>
                             <div id="s1-export" class="export-dropdown">
-                                <div class="export-item" onclick="exportWord('s1-content','提问清单')"><span class="icon">W</span> Word 文档</div>
-                                <div class="export-item" onclick="exportPDF('s1-content','提问清单')"><span class="icon">P</span> PDF 文档</div>
-                                <div class="export-item" onclick="exportWecomDoc('s1-content','提问清单')"><span class="icon">企</span> 企业微信文档</div>
+                                <div class="export-item" onclick="exportWord('s1-content','调研准备材料')">Word</div>
+                                <div class="export-item" onclick="exportPDF('s1-content','调研准备材料')">PDF</div>
+                                <div class="export-item" onclick="exportWecomDoc('s1-content','调研准备材料')">企微文档</div>
                             </div>
                         </div>
                     </div>
-                    <div id="s1-wecom-result" style="margin-top:12px;display:none"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Step 2 -->
-        <div id="step2-panel" class="step-panel">
-            <div class="card">
-                <h3>沟通记录输入</h3>
-                <label>客户行业</label>
-                <input type="text" id="s2-industry" placeholder="如：制造业、餐饮、服装外贸...">
-
-                <label>上传文档</label>
-                <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
-                    <p>点击上传或拖拽文件到此处</p>
-                    <p class="hint">支持 .txt / .doc / .docx / .pdf 格式</p>
+        <!-- Step2 -->
+        <div id="step2" class="step-panel">
+            <div id="s2-form" class="card">
+                <h3>上传沟通记录</h3>
+                <div class="upload-area" onclick="document.getElementById('file-input').click()">
+                    <p>点击上传或拖拽文件</p>
+                    <p class="hint">支持 .txt / .docx</p>
                     <p class="file-name" id="upload-filename"></p>
                 </div>
-                <input type="file" id="file-input" accept=".txt,.doc,.docx,.pdf" style="display:none" onchange="handleFileUpload(event)">
-
-                <div class="or-divider">或直接粘贴文本</div>
-
-                <label>会议转写 / 沟通记录</label>
-                <textarea id="s2-transcript" class="large" placeholder="粘贴腾讯会议的文字转写、沟通记录或任何形式的文本..."></textarea>
-
-                <label>输出类型</label>
-                <select id="s2-output-type">
-                    <option value="all">全部（报告 + 字段设计 + Demo）</option>
-                    <option value="report">仅需求分析报告</option>
-                    <option value="schema">仅字段设计方案</option>
-                </select>
-
+                <input type="file" id="file-input" accept=".txt,.docx" style="display:none" onchange="handleFileUpload(event)">
+                <div class="or-divider">或直接粘贴</div>
+                <textarea id="s2-transcript" style="min-height:200px" placeholder="粘贴会议转写或沟通记录..."></textarea>
                 <div class="actions">
-                    <button class="btn btn-primary" onclick="analyzeTranscript()">开始分析</button>
+                    <button class="btn btn-primary" onclick="generateStep2()">生成需求报告 + Demo</button>
                 </div>
             </div>
-
-            <div id="s2-loading" class="loading">
-                <div class="spinner"></div>
-                <p>正在分析沟通记录并生成结构化产物...</p>
-            </div>
-
-            <div id="s2-result" class="result-section">
+            <div id="s2-loading" class="loading"><div class="spinner"></div><p>正在分析并生成结构化产物...</p></div>
+            <div id="s2-result" style="display:none">
                 <div class="card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-                        <h3 style="margin-bottom:0">需求分析报告</h3>
-                        <div id="s2-context-info" style="display:flex;gap:4px"></div>
-                    </div>
+                    <h3>需求分析报告</h3>
                     <div id="s2-report" class="rendered-content"></div>
                     <div class="actions">
-                        <button class="btn btn-secondary btn-icon" onclick="copyRendered('s2-report')">复制文本</button>
+                        <button class="btn btn-secondary btn-sm" onclick="copyRendered('s2-report')">复制</button>
                         <div class="export-group">
-                            <button class="btn btn-secondary btn-icon" onclick="toggleExport('s2-export')">导出</button>
+                            <button class="btn btn-secondary btn-sm" onclick="toggleExport('s2-export')">导出</button>
                             <div id="s2-export" class="export-dropdown">
-                                <div class="export-item" onclick="exportWord('s2-report','需求分析报告')"><span class="icon">W</span> Word 文档</div>
-                                <div class="export-item" onclick="exportPDF('s2-report','需求分析报告')"><span class="icon">P</span> PDF 文档</div>
-                                <div class="export-item" onclick="exportWecomDoc('s2-report','需求分析报告')"><span class="icon">企</span> 企业微信文档</div>
+                                <div class="export-item" onclick="exportWord('s2-report','需求分析报告')">Word</div>
+                                <div class="export-item" onclick="exportPDF('s2-report','需求分析报告')">PDF</div>
+                                <div class="export-item" onclick="exportWecomDoc('s2-report','需求分析报告')">企微文档</div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div id="s2-schema-card" class="card">
-                    <h3>字段设计方案 / Demo 预览</h3>
+                <div id="s2-schema-card" class="card" style="display:none">
+                    <h3>智能表格 Demo</h3>
                     <div id="s2-schema" class="rendered-content"></div>
                     <div class="actions">
-                        <button class="btn btn-primary btn-icon" id="btn-create-sheet" style="display:none" onclick="createSmartsheet()">创建企微智能表格</button>
-                        <button class="btn btn-secondary btn-icon" onclick="copyRendered('s2-schema')">复制文本</button>
-                        <div class="export-group">
-                            <button class="btn btn-secondary btn-icon" onclick="toggleExport('s2-schema-export')">导出</button>
-                            <div id="s2-schema-export" class="export-dropdown">
-                                <div class="export-item" onclick="exportWord('s2-schema','字段设计方案')"><span class="icon">W</span> Word 文档</div>
-                                <div class="export-item" onclick="exportPDF('s2-schema','字段设计方案')"><span class="icon">P</span> PDF 文档</div>
-                                <div class="export-item" onclick="exportWecomDoc('s2-schema','字段设计方案')"><span class="icon">企</span> 企业微信文档</div>
-                            </div>
-                        </div>
+                        <button class="btn btn-primary btn-sm" id="btn-create" style="display:none" onclick="createSmartsheet()">创建企微智能表格</button>
+                        <button class="btn btn-secondary btn-sm" onclick="copyRendered('s2-schema')">复制</button>
                     </div>
-                    <div id="s2-create-result" style="margin-top:12px;display:none"></div>
+                    <div id="s2-create-result" style="margin-top:10px;display:none"></div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // Configure marked
-        marked.setOptions({ breaks: true, gfm: true });
+<script>
+marked.setOptions({ breaks: true, gfm: true });
 
-        function renderMarkdown(text) {
-            // Clean AI artifacts: remove leading "好的..." intro paragraphs
-            text = text.replace(/^(好的|作为|我已经|根据您|以下是).*?(\n---|\n##|\n###)/s, '$2');
-            // Remove isolated --- at start
-            text = text.replace(/^\s*---\s*\n/, '');
-            return marked.parse(text);
-        }
+const STORAGE_KEY = 'provider-assist-clients';
+let currentClientId = null;
+let demoSchema = null;
 
-        function switchTab(step) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-            if (step === 'step1') {
-                document.querySelectorAll('.tab')[0].classList.add('active');
-                document.getElementById('step1-panel').classList.add('active');
-            } else {
-                document.querySelectorAll('.tab')[1].classList.add('active');
-                document.getElementById('step2-panel').classList.add('active');
-            }
-        }
+// === Storage ===
+function getClients() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+function saveClients(clients) { localStorage.setItem(STORAGE_KEY, JSON.stringify(clients)); }
+function getClient(id) { return getClients().find(c => c.id === id); }
+function updateClient(id, updates) {
+    const clients = getClients();
+    const idx = clients.findIndex(c => c.id === id);
+    if (idx >= 0) { Object.assign(clients[idx], updates, { updated_at: new Date().toISOString() }); saveClients(clients); }
+}
 
-        // === Step 1 ===
-        async function generateQuestionList() {
-            const industry = document.getElementById('s1-industry').value.trim();
-            const business = document.getElementById('s1-business').value.trim();
-            const pain = document.getElementById('s1-pain').value.trim();
-            if (!industry) { alert('请填写客户行业'); return; }
+// === Pages ===
+function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+}
 
-            document.getElementById('s1-loading').classList.add('visible');
-            document.getElementById('s1-result').classList.remove('visible');
+function renderClientList() {
+    const clients = getClients();
+    const grid = document.getElementById('client-grid');
+    const empty = document.getElementById('empty-state');
+    if (!clients.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    const statusMap = { draft: ['待填写','status-draft'], listed: ['已生成清单','status-listed'], waiting: ['待上传转写','status-waiting'], done: ['已完成','status-done'] };
+    grid.innerHTML = clients.map(c => {
+        const [label, cls] = statusMap[c.status] || ['', ''];
+        return `<div class="client-card" onclick="openClient('${c.id}')">
+            <span class="status ${cls}">${label}</span>
+            <div class="name">${c.name || '未命名客户'}</div>
+            <div class="meta">${c.industry || ''} · ${new Date(c.created_at).toLocaleDateString()}</div>
+        </div>`;
+    }).join('') + '<div class="add-card" onclick="createClient()">+ 新建客户</div>';
+}
 
+function createClient() {
+    const name = prompt('客户名称（如：广州鹏宁担保）');
+    if (!name) return;
+    const clients = getClients();
+    const newClient = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), name, industry: '', status: 'draft', created_at: new Date().toISOString(), step1_result: '', step2_report: '', step2_schema: null };
+    clients.unshift(newClient);
+    saveClients(clients);
+    renderClientList();
+    openClient(newClient.id);
+}
+
+function openClient(id) {
+    currentClientId = id;
+    const c = getClient(id);
+    if (!c) return;
+    showPage('detail');
+    document.getElementById('detail-name').textContent = c.name;
+    document.getElementById('detail-industry').textContent = c.industry || '';
+    const statusMap = { draft: ['待填写','status-draft'], listed: ['已生成清单','status-listed'], waiting: ['待上传转写','status-waiting'], done: ['已完成','status-done'] };
+    const [label, cls] = statusMap[c.status] || ['',''];
+    const el = document.getElementById('detail-status');
+    el.textContent = label; el.className = cls;
+
+    // Restore Step1
+    document.getElementById('s1-industry').value = c.industry || '';
+    document.getElementById('s1-business').value = c.business_desc || '';
+    document.getElementById('s1-pain').value = c.pain_points || '';
+    if (c.step1_result) {
+        document.getElementById('s1-content').innerHTML = renderWithTags(c.step1_result);
+        document.getElementById('s1-result').style.display = 'block';
+    } else {
+        document.getElementById('s1-result').style.display = 'none';
+    }
+
+    // Restore Step2
+    document.getElementById('s2-transcript').value = c.transcript || '';
+    if (c.step2_report) {
+        document.getElementById('s2-report').innerHTML = renderMarkdown(c.step2_report);
+        document.getElementById('s2-result').style.display = 'block';
+    } else {
+        document.getElementById('s2-result').style.display = 'none';
+    }
+    if (c.step2_schema) {
+        demoSchema = c.step2_schema;
+        renderSchema(demoSchema);
+    }
+
+    switchStep('step1');
+    // If already has Step1 result, show Step2 as active
+    if (c.status === 'waiting' || c.status === 'done') {
+        switchStep('step2');
+    }
+}
+
+function goBack() { showPage('list'); renderClientList(); currentClientId = null; }
+
+function switchStep(step) {
+    document.querySelectorAll('.step-nav').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(step).classList.add('active');
+    const idx = step === 'step1' ? 0 : 1;
+    document.querySelectorAll('.step-nav')[idx].classList.add('active');
+}
+
+// === Step 1 ===
+async function generateStep1() {
+    const industry = document.getElementById('s1-industry').value.trim();
+    const business = document.getElementById('s1-business').value.trim();
+    const pain = document.getElementById('s1-pain').value.trim();
+    if (!industry) { alert('请填写客户行业'); return; }
+
+    // Save inputs
+    updateClient(currentClientId, { industry, business_desc: business, pain_points: pain });
+
+    document.getElementById('s1-loading').classList.add('visible');
+    document.getElementById('s1-result').style.display = 'none';
+
+    try {
+        const resp = await fetch('/api/question_list', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ industry, business_desc: business, pain_points: pain, direction: business }) });
+        const data = await resp.json();
+        if (data.error) { alert(data.error); return; }
+
+        const ctx = data.context_used || {};
+        document.getElementById('s1-badges').innerHTML = renderBadges(ctx, 'template_matched');
+        document.getElementById('s1-content').innerHTML = renderWithTags(data.question_list || '');
+        document.getElementById('s1-result').style.display = 'block';
+
+        // Persist
+        updateClient(currentClientId, { step1_result: data.question_list, status: 'waiting' });
+        document.getElementById('detail-industry').textContent = industry;
+    } catch (e) { alert('请求失败: ' + e.message); }
+    finally { document.getElementById('s1-loading').classList.remove('visible'); }
+}
+
+// === Step 2 ===
+async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    document.getElementById('upload-filename').textContent = file.name + ' (解析中...)';
+    if (file.name.endsWith('.txt')) {
+        const reader = new FileReader();
+        reader.onload = (e) => { document.getElementById('s2-transcript').value = e.target.result; document.getElementById('upload-filename').textContent = file.name + ` (${e.target.result.length}字)`; };
+        reader.readAsText(file);
+    } else {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const b64 = btoa(String.fromCharCode(...new Uint8Array(e.target.result)));
             try {
-                const resp = await fetch('/api/question_list', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        industry,
-                        business_desc: business,
-                        pain_points: pain,
-                        direction: business
-                    })
-                });
+                const resp = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, file_data: b64 }) });
                 const data = await resp.json();
-                if (data.error) { alert(data.error); return; }
+                if (data.text) { document.getElementById('s2-transcript').value = data.text; document.getElementById('upload-filename').textContent = file.name + ` (${data.char_count}字)`; }
+                else { document.getElementById('upload-filename').textContent = file.name + ' (解析失败)'; }
+            } catch (err) { document.getElementById('upload-filename').textContent = file.name + ' (上传失败)'; }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+}
 
-                const ctx = data.context_used || {};
-                document.getElementById('s1-context-info').innerHTML = renderBadges(ctx, 'template_matched');
+async function generateStep2() {
+    const transcript = document.getElementById('s2-transcript').value.trim();
+    if (!transcript) { alert('请粘贴或上传沟通记录'); return; }
+    const c = getClient(currentClientId);
+    const industry = c ? c.industry : '';
 
-                // 渲染结果 - 把 [维度名] 转为标签样式
-                let html = renderMarkdown(data.question_list || '');
-                // 把 [维度名] 和 【维度名】 转为彩色标签
-                html = html.replace(/[\[【]([^\]】]+)[\]】]/g, '<span style="display:inline-block;background:#eef4ff;color:#0052d9;font-size:11px;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:500;vertical-align:middle">$1</span>');
+    updateClient(currentClientId, { transcript });
+    document.getElementById('s2-loading').classList.add('visible');
+    document.getElementById('s2-result').style.display = 'none';
 
-                document.getElementById('s1-content').innerHTML = html;
-                document.getElementById('s1-result').classList.add('visible');
-            } catch (e) {
-                alert('请求失败: ' + e.message);
-            } finally {
-                document.getElementById('s1-loading').classList.remove('visible');
-            }
+    try {
+        const resp = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ industry, transcript, output_type: 'all' }) });
+        const data = await resp.json();
+        if (data.error) { alert(data.error); return; }
+
+        if (data.report) { document.getElementById('s2-report').innerHTML = renderMarkdown(data.report); }
+        if (data.schema || data.demo_json) {
+            let schema = data.demo_json;
+            if (!schema) { try { const m = data.schema.match(/```(?:json)?\s*([\s\S]*?)```/); schema = m ? JSON.parse(m[1]) : JSON.parse(data.schema); } catch {} }
+            if (schema && schema.sheets) { demoSchema = schema; renderSchema(schema); }
+            else if (data.schema) { document.getElementById('s2-schema').innerHTML = renderMarkdown(data.schema); document.getElementById('s2-schema-card').style.display = 'block'; }
         }
+        document.getElementById('s2-result').style.display = 'block';
+        updateClient(currentClientId, { step2_report: data.report || '', step2_schema: demoSchema, status: 'done' });
+    } catch (e) { alert('请求失败: ' + e.message); }
+    finally { document.getElementById('s2-loading').classList.remove('visible'); }
+}
 
-        // === Step 2 ===
-        let uploadedText = '';
-        let demoSchema = null;
+function renderSchema(schema) {
+    let html = '<h4 style="color:#0052d9;margin-bottom:12px">' + (schema.doc_name||'Demo') + '</h4>';
+    schema.sheets.forEach((s, i) => {
+        html += '<div style="margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden">';
+        html += '<div style="background:#f8faf8;padding:8px 12px;font-size:13px;font-weight:600;color:#155724;border-bottom:1px solid #eee">子表'+(i+1)+'：'+s.sheet_name+'</div>';
+        html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><tr>';
+        s.fields.forEach(f => { html += '<th style="background:#fafafa;padding:5px 8px;border-bottom:1px solid #eee;font-weight:500;text-align:left">'+f.field_title+'</th>'; });
+        html += '</tr>';
+        if (s.sample_records) { s.sample_records.forEach(rec => { html += '<tr>'; s.fields.forEach(f => { html += '<td style="padding:5px 8px;border-bottom:1px solid #f5f5f5">'+(rec[f.field_title]||'')+'</td>'; }); html += '</tr>'; }); }
+        html += '</table></div>';
+    });
+    document.getElementById('s2-schema').innerHTML = html;
+    document.getElementById('s2-schema-card').style.display = 'block';
+    document.getElementById('btn-create').style.display = 'inline-flex';
+}
 
-        async function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            document.getElementById('upload-filename').textContent = file.name + ' (解析中...)';
+async function createSmartsheet() {
+    if (!demoSchema) return;
+    const btn = document.getElementById('btn-create');
+    btn.disabled = true; btn.textContent = '创建中...';
+    try {
+        const resp = await fetch('/api/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(demoSchema) });
+        const data = await resp.json();
+        const div = document.getElementById('s2-create-result');
+        if (data.success && data.url) {
+            div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;font-size:14px"><strong>智能表格创建成功</strong><br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;margin-top:4px;display:inline-block">打开企微智能表格 →</a></div>';
+        } else { div.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:12px;font-size:13px;color:#c62828">失败：'+(data.error||'')+'</div>'; }
+        div.style.display = 'block';
+    } catch (e) { alert(e.message); }
+    finally { btn.disabled = false; btn.textContent = '创建企微智能表格'; }
+}
 
-            // 对于 .txt 直接前端读取
-            if (file.name.endsWith('.txt')) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    uploadedText = e.target.result;
-                    document.getElementById('upload-filename').textContent = file.name + ` (${uploadedText.length}字)`;
-                    document.getElementById('s2-transcript').value = uploadedText;
-                };
-                reader.readAsText(file);
-            } else {
-                // 对于 .docx 发送到服务端解析
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const base64Data = btoa(String.fromCharCode(...new Uint8Array(e.target.result)));
-                    try {
-                        const resp = await fetch('/api/upload', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ filename: file.name, file_data: base64Data })
-                        });
-                        const data = await resp.json();
-                        if (data.text) {
-                            uploadedText = data.text;
-                            document.getElementById('upload-filename').textContent = file.name + ` (${data.char_count}字)`;
-                            document.getElementById('s2-transcript').value = uploadedText;
-                        } else {
-                            document.getElementById('upload-filename').textContent = file.name + ' (解析失败: ' + (data.error||'') + ')';
-                        }
-                    } catch (err) {
-                        document.getElementById('upload-filename').textContent = file.name + ' (上传失败)';
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-            }
-        }
+// === Helpers ===
+function renderMarkdown(text) { text = text.replace(/^(好的|作为|我已经|根据您|以下是).*?(\n---|\n##|\n###)/s, '$2'); return marked.parse(text); }
+function renderWithTags(text) { let html = renderMarkdown(text); html = html.replace(/[\[【]([^\]】]+)[\]】]/g, '<span style="display:inline-block;background:#eef4ff;color:#0052d9;font-size:11px;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:500">$1</span>'); return html; }
+function renderBadges(ctx, tplKey) { return `<span class="status-badge ${ctx.industry_matched?'matched':'unmatched'}">${ctx.industry_matched?'行业':'无行业'}</span><span class="status-badge ${ctx.cases_matched?'matched':'unmatched'}">${ctx.cases_matched?'案例':'无案例'}</span><span class="status-badge ${ctx[tplKey]?'matched':'unmatched'}">${ctx[tplKey]?'模板':'无模板'}</span>`; }
 
-        // Drag and drop
-        const uploadArea = document.getElementById('upload-area');
-        if (uploadArea) {
-            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-            uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); });
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault(); uploadArea.classList.remove('dragover');
-                const file = e.dataTransfer.files[0];
-                if (file) {
-                    document.getElementById('file-input').files = e.dataTransfer.files;
-                    handleFileUpload({ target: { files: [file] } });
-                }
-            });
-        }
+function copyRendered(id) { navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => showToast('已复制')); }
+function toggleExport(id) { closeAllExports(); document.getElementById(id).classList.toggle('visible'); }
+function closeAllExports() { document.querySelectorAll('.export-dropdown').forEach(d => d.classList.remove('visible')); }
+document.addEventListener('click', e => { if (!e.target.closest('.export-group')) closeAllExports(); });
 
-        async function analyzeTranscript() {
-            const industry = document.getElementById('s2-industry').value.trim();
-            const transcript = document.getElementById('s2-transcript').value.trim();
-            const outputType = document.getElementById('s2-output-type').value;
-            if (!transcript) { alert('请粘贴沟通记录或上传文档'); return; }
+function exportWord(elId, title) { const html = `<html><head><meta charset="utf-8"><style>body{font-family:"Microsoft YaHei";font-size:12pt;line-height:1.8}h1,h2,h3{color:#0052d9}strong{color:#0052d9}</style></head><body>${document.getElementById(elId).innerHTML}</body></html>`; const blob = new Blob([html],{type:'application/msword'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=title+'.doc'; a.click(); closeAllExports(); }
+function exportPDF(elId, title) { html2pdf().set({margin:15,filename:title+'.pdf',html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4'}}).from(document.getElementById(elId)).save(); closeAllExports(); }
+async function exportWecomDoc(elId, title) { closeAllExports(); showToast('正在创建企微文档...'); try { const resp = await fetch('/api/export_doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,content:document.getElementById(elId).innerText})}); const data = await resp.json(); if(data.success&&data.url){showToast('企微文档已创建'); const div=document.createElement('div'); div.innerHTML='<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>'; document.getElementById(elId).closest('.card').appendChild(div);} else{showToast('失败: '+(data.error||''));} } catch(e){showToast('请求失败');} }
+function showToast(msg) { const t=document.createElement('div'); t.textContent=msg; t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:6px;font-size:13px;z-index:9999'; document.body.appendChild(t); setTimeout(()=>t.remove(),2000); }
 
-            document.getElementById('s2-loading').classList.add('visible');
-            document.getElementById('s2-result').classList.remove('visible');
-
-            try {
-                const resp = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ industry, transcript, output_type: outputType })
-                });
-                const data = await resp.json();
-                if (data.error) { alert(data.error); return; }
-
-                const ctx = data.context_used || {};
-                document.getElementById('s2-context-info').innerHTML = renderBadges(ctx, 'templates_matched');
-
-                if (data.report) {
-                    document.getElementById('s2-report').innerHTML = renderMarkdown(data.report);
-                }
-                if (data.schema) {
-                    // 尝试解析为JSON并渲染Demo预览
-                    let schema = data.demo_json;
-                    if (!schema) {
-                        try {
-                            const m = data.schema.match(/```(?:json)?\s*([\s\S]*?)```/);
-                            schema = m ? JSON.parse(m[1]) : JSON.parse(data.schema);
-                        } catch {}
-                    }
-
-                    if (schema && schema.sheets) {
-                        demoSchema = schema;
-                        // 渲染表格预览
-                        let html = '<h4 style="margin-bottom:12px;color:#0052d9">' + (schema.doc_name||'Demo智能表格') + '</h4>';
-                        schema.sheets.forEach((s, i) => {
-                            html += '<div style="margin-bottom:16px;border:1px solid #eee;border-radius:8px;overflow:hidden">';
-                            html += '<div style="background:#f8faf8;padding:8px 14px;font-size:13px;font-weight:600;color:#155724;border-bottom:1px solid #eee">子表'+(i+1)+'：'+s.sheet_name+'</div>';
-                            html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>';
-                            s.fields.forEach(f => {
-                                const t = f.field_type.replace('FIELD_TYPE_','').toLowerCase();
-                                html += '<th style="background:#fafafa;padding:6px 8px;text-align:left;border-bottom:1px solid #eee;font-weight:500">'+f.field_title+'<br><span style="font-size:10px;color:#999">'+t+'</span></th>';
-                            });
-                            html += '</tr></thead><tbody>';
-                            if (s.sample_records) {
-                                s.sample_records.forEach(rec => {
-                                    html += '<tr>';
-                                    s.fields.forEach(f => {
-                                        const v = rec[f.field_title] || '';
-                                        html += '<td style="padding:6px 8px;border-bottom:1px solid #f5f5f5">'+(typeof v==='object'?JSON.stringify(v):v)+'</td>';
-                                    });
-                                    html += '</tr>';
-                                });
-                            }
-                            html += '</tbody></table></div>';
-                        });
-                        document.getElementById('s2-schema').innerHTML = html;
-                        document.getElementById('btn-create-sheet').style.display = 'inline-flex';
-                    } else {
-                        document.getElementById('s2-schema').innerHTML = renderMarkdown(data.schema);
-                        document.getElementById('btn-create-sheet').style.display = 'none';
-                    }
-                    document.getElementById('s2-schema-card').style.display = 'block';
-                } else {
-                    document.getElementById('s2-schema-card').style.display = 'none';
-                }
-                document.getElementById('s2-result').classList.add('visible');
-            } catch (e) {
-                alert('请求失败: ' + e.message);
-            } finally {
-                document.getElementById('s2-loading').classList.remove('visible');
-            }
-        }
-
-        // 创建企微智能表格
-        async function createSmartsheet() {
-            if (!demoSchema) { showToast('无可用的表格结构'); return; }
-            const btn = document.getElementById('btn-create-sheet');
-            btn.disabled = true; btn.textContent = '正在创建...';
-            const resultDiv = document.getElementById('s2-create-result');
-
-            try {
-                const resp = await fetch('/api/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(demoSchema)
-                });
-                const data = await resp.json();
-
-                if (data.success && data.url) {
-                    resultDiv.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:14px;font-size:14px"><strong>智能表格已创建成功</strong><br>包含 '+data.sheets.length+' 个子表<br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;text-decoration:underline;font-size:15px;display:inline-block;margin-top:6px">点击打开企微智能表格 →</a></div>';
-                    resultDiv.style.display = 'block';
-                } else {
-                    resultDiv.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:14px;font-size:13px;color:#c62828">创建失败：'+(data.error||'未知错误')+'</div>';
-                    resultDiv.style.display = 'block';
-                }
-            } catch (e) {
-                resultDiv.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:14px;font-size:13px;color:#c62828">请求失败：'+e.message+'</div>';
-                resultDiv.style.display = 'block';
-            } finally {
-                btn.disabled = false; btn.textContent = '创建企微智能表格';
-            }
-        }
-
-        // === Helpers ===
-        function renderBadges(ctx, templateKey) {
-            return `<span class="status-badge ${ctx.industry_matched ? 'matched' : 'unmatched'}">${ctx.industry_matched ? '行业' : '行业未匹配'}</span>` +
-                   `<span class="status-badge ${ctx.cases_matched ? 'matched' : 'unmatched'}">${ctx.cases_matched ? '案例' : '无案例'}</span>` +
-                   `<span class="status-badge ${ctx[templateKey] ? 'matched' : 'unmatched'}">${ctx[templateKey] ? '模板' : '无模板'}</span>`;
-        }
-
-        function copyRendered(elementId) {
-            const el = document.getElementById(elementId);
-            const text = el.innerText;
-            navigator.clipboard.writeText(text).then(() => showToast('已复制'));
-        }
-
-        function copyForWecom(elementId) {
-            // Legacy: copy as rich text
-            const el = document.getElementById(elementId);
-            const selection = window.getSelection();
-            const range = document.createRange();
-            range.selectNodeContents(el);
-            selection.removeAllRanges();
-            selection.addRange(range);
-            document.execCommand('copy');
-            selection.removeAllRanges();
-            showToast('已复制富文本');
-            closeAllExports();
-        }
-
-        // 导出为企微文档（真实API创建）
-        async function exportWecomDoc(elementId, title) {
-            closeAllExports();
-            const el = document.getElementById(elementId);
-            const text = el.innerText;
-            if (!text) { showToast('没有内容可导出'); return; }
-
-            showToast('正在创建企微文档...');
-
-            try {
-                const resp = await fetch('/api/export_doc', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title: title, content: text })
-                });
-                const data = await resp.json();
-
-                if (data.success && data.url) {
-                    // 显示成功结果和链接
-                    const resultDiv = el.closest('.card').querySelector('[id$="-wecom-result"]') ||
-                                      el.closest('.card').querySelector('.actions');
-                    const linkHtml = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;margin-top:12px;font-size:14px">' +
-                        '<strong>企微文档已创建</strong><br>' +
-                        '<a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;text-decoration:underline;display:inline-block;margin-top:4px">点击打开企微文档 →</a></div>';
-
-                    // 找到对应的result div或在actions后插入
-                    let targetDiv = document.getElementById(elementId.replace('-content','-wecom-result').replace('-report','-wecom-result'));
-                    if (!targetDiv) {
-                        targetDiv = document.createElement('div');
-                        targetDiv.style.marginTop = '12px';
-                        el.closest('.card').appendChild(targetDiv);
-                    }
-                    targetDiv.innerHTML = linkHtml;
-                    targetDiv.style.display = 'block';
-                    showToast('企微文档创建成功');
-                } else {
-                    showToast('创建失败: ' + (data.error || ''));
-                }
-            } catch (e) {
-                showToast('请求失败: ' + e.message);
-            }
-        }
-
-        function toggleExport(id) {
-            closeAllExports();
-            document.getElementById(id).classList.toggle('visible');
-        }
-
-        function closeAllExports() {
-            document.querySelectorAll('.export-dropdown').forEach(d => d.classList.remove('visible'));
-        }
-
-        // Close export menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.export-group')) closeAllExports();
-        });
-
-        // === Export Functions ===
-        function exportWord(elementId, title) {
-            const content = document.getElementById(elementId).innerHTML;
-            const html = `
-                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
-                <head><meta charset="utf-8"><title>${title}</title>
-                <style>body{font-family:"Microsoft YaHei",sans-serif;font-size:12pt;line-height:1.8}
-                h1{font-size:18pt;color:#0052d9}h2{font-size:15pt;color:#0052d9}h3{font-size:13pt}
-                strong{color:#0052d9}em{color:#666}li{margin-bottom:4pt}
-                blockquote{border-left:3px solid #0052d9;padding-left:12px;color:#555}</style>
-                </head><body>${content}</body></html>`;
-            const blob = new Blob([html], { type: 'application/msword' });
-            downloadBlob(blob, `${title}.doc`);
-            closeAllExports();
-        }
-
-        function exportPDF(elementId, title) {
-            const el = document.getElementById(elementId);
-            const opt = {
-                margin: [15, 15, 15, 15],
-                filename: `${title}.pdf`,
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(el).save();
-            closeAllExports();
-        }
-
-        function downloadBlob(blob, filename) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = filename;
-            document.body.appendChild(a); a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.textContent = msg;
-            toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:6px;font-size:14px;z-index:9999;animation:fadeInOut 2s ease-in-out';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
-        }
-    </script>
-    <style>
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            85% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-    </style>
+// Init
+renderClientList();
+</script>
 </body>
 </html>
