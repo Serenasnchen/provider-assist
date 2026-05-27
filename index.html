@@ -109,7 +109,8 @@
             <h3 style="margin:0;font-size:15px">我的客户</h3>
             <button class="btn btn-primary btn-sm" onclick="createClient()">+ 新建客户</button>
         </div>
-        <div id="client-grid" class="client-grid"></div>
+        <div id="list-inprogress"></div>
+        <div id="list-done"></div>
         <div id="empty-state" class="empty-state" style="display:none">
             <p>还没有客户项目</p>
             <button class="btn btn-primary" onclick="createClient()">+ 新建第一个客户</button>
@@ -243,32 +244,54 @@ function showPage(name) {
 
 function renderClientList() {
     const clients = getClients();
-    const grid = document.getElementById('client-grid');
     const empty = document.getElementById('empty-state');
-    if (!clients.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+    if (!clients.length) { document.getElementById('list-inprogress').innerHTML = ''; document.getElementById('list-done').innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
-    const statusMap = { draft: ['待填写','status-draft'], listed: ['已生成清单','status-listed'], waiting: ['待上传转写','status-waiting'], done: ['已完成','status-done'] };
-    grid.innerHTML = clients.map(c => {
-        const [label, cls] = statusMap[c.status] || ['', ''];
-        // 产出物链接
+
+    const inProgress = clients.filter(c => c.status !== 'done');
+    const done = clients.filter(c => c.status === 'done');
+    const statusLabels = { draft: '待填写', listed: '已生成清单', waiting: '待上传转写', done: '已完成' };
+
+    function renderCard(c) {
+        const label = statusLabels[c.status] || '';
+        const statusCls = c.status === 'done' ? 'status-done' : c.status === 'waiting' ? 'status-waiting' : c.status === 'listed' ? 'status-listed' : 'status-draft';
         let outputs = '';
-        if (c.step1_doc_url) {
-            outputs += `<a href="${c.step1_doc_url}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#0052d9;margin-right:8px">提问清单</a>`;
-        }
-        if (c.report_doc_url) {
-            outputs += `<a href="${c.report_doc_url}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#0052d9;margin-right:8px">调研报告</a>`;
-        }
-        if (c.demo_url) {
-            outputs += `<a href="${c.demo_url}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:#0052d9">Demo表格</a>`;
-        }
-        const outputsHtml = outputs ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0">${outputs}</div>` : '';
-        return `<div class="client-card" onclick="openClient('${c.id}')">
-            <span class="status ${cls}">${label}</span>
-            <div class="name">${c.name || '未命名客户'}</div>
-            <div class="meta">${c.industry || ''} · ${new Date(c.created_at).toLocaleDateString()}</div>
+        if (c.step1_doc_url) outputs += `<a href="${c.step1_doc_url}" target="_blank" onclick="event.stopPropagation()" style="font-size:12px;color:#0052d9;background:#eef4ff;padding:3px 10px;border-radius:4px;text-decoration:none;margin-right:6px">提问清单</a>`;
+        if (c.report_doc_url) outputs += `<a href="${c.report_doc_url}" target="_blank" onclick="event.stopPropagation()" style="font-size:12px;color:#0052d9;background:#eef4ff;padding:3px 10px;border-radius:4px;text-decoration:none;margin-right:6px">调研报告</a>`;
+        if (c.demo_url) outputs += `<a href="${c.demo_url}" target="_blank" onclick="event.stopPropagation()" style="font-size:12px;color:#2e7d32;background:#e8f5e9;padding:3px 10px;border-radius:4px;text-decoration:none">Demo表格</a>`;
+        const outputsHtml = outputs ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px">${outputs}</div>` : '';
+        return `<div class="client-card" onclick="openClient('${c.id}')" style="display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div><div class="name">${c.name || '未命名'}</div><div class="meta">${c.industry || ''} · ${new Date(c.created_at).toLocaleDateString()}</div></div>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <span class="status ${statusCls}" style="position:static">${label}</span>
+                    <span onclick="event.stopPropagation();deleteClient('${c.id}')" style="cursor:pointer;font-size:18px;color:#ccc;padding:2px 6px;border-radius:4px" title="删除客户">&times;</span>
+                </div>
+            </div>
             ${outputsHtml}
         </div>`;
-    }).join('') + '<div class="add-card" onclick="createClient()">+ 新建客户</div>';
+    }
+
+    let html1 = '';
+    if (inProgress.length) {
+        html1 = `<div style="margin-top:16px"><div style="font-size:13px;font-weight:500;color:#666;margin-bottom:10px;padding-left:4px">进行中 (${inProgress.length})</div><div class="client-grid">${inProgress.map(renderCard).join('')}<div class="add-card" onclick="createClient()">+ 新建客户</div></div></div>`;
+    } else {
+        html1 = `<div style="margin-top:16px"><div class="client-grid"><div class="add-card" onclick="createClient()">+ 新建客户</div></div></div>`;
+    }
+    document.getElementById('list-inprogress').innerHTML = html1;
+
+    let html2 = '';
+    if (done.length) {
+        html2 = `<div style="margin-top:24px"><div style="font-size:13px;font-weight:500;color:#666;margin-bottom:10px;padding-left:4px">已完成 (${done.length})</div><div class="client-grid">${done.map(renderCard).join('')}</div></div>`;
+    }
+    document.getElementById('list-done').innerHTML = html2;
+}
+
+function deleteClient(id) {
+    if (!confirm('确定删除这个客户吗？')) return;
+    const clients = getClients().filter(c => c.id !== id);
+    saveClients(clients);
+    renderClientList();
 }
 
 function createClient() {
