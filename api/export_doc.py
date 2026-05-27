@@ -50,16 +50,56 @@ def extract(mcp_resp):
     return result
 
 
-def markdown_to_doc_content(markdown_text):
-    """将Markdown文本转为企微文档API可接受的内容格式"""
-    # 企微文档 insert_content_to_doc 接受 Markdown 格式的 content
-    # 清理一些格式问题
-    content = markdown_text.strip()
-    return content
+def format_for_wecom_doc(title, raw_content):
+    """将原始文本格式化为企微文档友好的Markdown"""
+    lines = []
+    # 文档标题
+    lines.append(f"# {title}")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    # 处理原始内容：确保格式整洁
+    for line in raw_content.split("\n"):
+        stripped = line.strip()
+        # 标准化标题级别
+        if stripped.startswith("## "):
+            lines.append("")
+            lines.append(stripped)
+            lines.append("")
+        elif stripped.startswith("### "):
+            lines.append("")
+            lines.append(stripped)
+            lines.append("")
+        elif stripped.startswith("> "):
+            lines.append(stripped)
+        elif stripped.startswith("- ") or stripped.startswith("* "):
+            lines.append(stripped)
+        elif stripped and stripped[0].isdigit() and ". " in stripped[:4]:
+            lines.append(stripped)
+        elif stripped == "---":
+            lines.append("")
+            lines.append("---")
+            lines.append("")
+        elif stripped:
+            lines.append(stripped)
+        else:
+            lines.append("")
+
+    # 添加页脚
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+    lines.append("*由「服务商助手」AI 生成*")
+
+    return "\n".join(lines)
 
 
 def create_wecom_doc(title, content):
     """创建企微文档并写入内容"""
+    # 0. 格式化内容
+    formatted_content = format_for_wecom_doc(title, content)
+
     # 1. 创建文档 (doc_type=3 为企微文档)
     r = extract(call_mcp("create_doc", {"doc_type": 3, "doc_name": title}))
     if not r:
@@ -74,11 +114,11 @@ def create_wecom_doc(title, content):
     if not docid:
         return {"success": False, "error": "未获取到文档ID", "detail": str(r)}
 
-    # 2. 用 edit_doc_content 写入 Markdown 内容
+    # 2. 用 edit_doc_content 写入格式化的 Markdown 内容
     try:
         write_result = call_mcp("edit_doc_content", {
             "docid": docid,
-            "content": content,
+            "content": formatted_content,
             "content_type": 1
         })
     except Exception as e:
