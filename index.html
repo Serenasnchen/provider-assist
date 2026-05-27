@@ -322,6 +322,21 @@ function switchStep(step) {
     document.querySelectorAll('.step-nav')[idx].classList.add('active');
 }
 
+// === DeepSeek API (前端直调，无超时限制) ===
+const DEEPSEEK_KEY = 'sk-63d4e005ecb646b08538368c5172ed82';
+const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
+
+async function callDeepSeek(systemPrompt, userPrompt) {
+    const resp = await fetch(DEEPSEEK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_KEY },
+        body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], max_tokens: 4500, temperature: 0.7 })
+    });
+    if (!resp.ok) { throw new Error('DeepSeek API错误: ' + resp.status); }
+    const d = await resp.json();
+    return d.choices[0].message.content;
+}
+
 // === Step 1 ===
 async function generateStep1() {
     const industry = document.getElementById('s1-industry').value.trim();
@@ -336,21 +351,24 @@ async function generateStep1() {
     document.getElementById('s1-result').style.display = 'none';
 
     try {
-        const resp = await fetch('/api/question_list', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        // Step1: 后端匹配知识库，返回prompt
+        const matchResp = await fetch('/api/question_list', { method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ industry, business_desc: business, pain_points: pain, direction: business }) });
-        if (!resp.ok) { const t = await resp.text(); alert('服务器错误(' + resp.status + '): ' + t.substring(0,100)); return; }
-        const text = await resp.text();
-        let data;
-        try { data = JSON.parse(text); } catch(e) { alert('返回数据解析失败，可能是请求超时，请重试'); return; }
-        if (data.error) { alert(data.error); return; }
+        if (!matchResp.ok) { alert('知识库匹配失败(' + matchResp.status + ')'); return; }
+        const matchData = await matchResp.json();
+        if (matchData.error) { alert(matchData.error); return; }
 
-        const ctx = data.context_used || {};
+        const ctx = matchData.context_used || {};
         document.getElementById('s1-badges').innerHTML = renderBadges(ctx, 'template_matched');
-        document.getElementById('s1-content').innerHTML = renderWithTags(data.question_list || '');
+
+        // Step2: 前端直接调DeepSeek（无超时限制）
+        const result = await callDeepSeek(matchData.system_prompt, matchData.user_prompt);
+
+        document.getElementById('s1-content').innerHTML = renderWithTags(result);
         document.getElementById('s1-result').style.display = 'block';
 
         // Persist
-        updateClient(currentClientId, { step1_result: data.question_list, status: 'waiting' });
+        updateClient(currentClientId, { step1_result: result, status: 'waiting' });
         document.getElementById('detail-industry').textContent = industry;
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s1-loading').classList.remove('visible'); }
