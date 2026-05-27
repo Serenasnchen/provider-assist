@@ -317,7 +317,19 @@ let demoSchema = null;
 
 // === Storage ===
 function getClients() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-function saveClients(clients) { localStorage.setItem(STORAGE_KEY, JSON.stringify(clients)); }
+function saveClients(clients) {
+    try {
+        const data = JSON.stringify(clients);
+        if (data.length > 4 * 1024 * 1024) { // 4MB warning
+            showToast('存储空间即将用满，建议导出并删除已完成客户');
+        }
+        localStorage.setItem(STORAGE_KEY, data);
+    } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+            showToast('存储空间已满，请删除部分已完成客户');
+        }
+    }
+}
 function getClient(id) { return getClients().find(c => c.id === id); }
 function updateClient(id, updates) {
     const clients = getClients();
@@ -604,18 +616,19 @@ function updateTimeline(c) {
     document.getElementById('node-4-outputs').innerHTML = n4;
 }
 
-// === DeepSeek API (前端直调，无超时限制) ===
-const DEEPSEEK_KEY = 'sk-63d4e005ecb646b08538368c5172ed82';
-const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
-
+// === DeepSeek API (通过后端代理，Key不暴露) ===
 async function callDeepSeek(systemPrompt, userPrompt) {
-    const resp = await fetch(DEEPSEEK_URL, {
+    const resp = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_KEY },
-        body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], max_tokens: 4500, temperature: 0.7 })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], max_tokens: 4500, temperature: 0.7 })
     });
-    if (!resp.ok) { throw new Error('DeepSeek API错误: ' + resp.status); }
+    if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        throw new Error('AI 服务错误(' + resp.status + '): ' + errText.substring(0, 100));
+    }
     const d = await resp.json();
+    if (!d.choices || !d.choices[0]) throw new Error('AI 返回异常');
     return d.choices[0].message.content;
 }
 
@@ -775,22 +788,31 @@ async function generateStep2() {
         const todoUserPrompt = '## 沟通记录\n\n' + transcript.substring(0, 3000) + '\n\n请列出待确认事项。';
         const schemaUserPrompt = kbContext + '## 沟通记录\n\n' + transcript.substring(0, 2000) + '\n\n设计智能表格Demo。';
 
-        // 并行执行3个调用
-        const [report, todoResult, schemaText] = await Promise.all([
+        // 并行执行3个调用（部分失败不影响其他）
+        const results = await Promise.allSettled([
             callDeepSeek(reportPrompt, reportUserPrompt),
             callDeepSeek(todoPrompt, todoUserPrompt),
             callDeepSeek(schemaPrompt, schemaUserPrompt)
         ]);
+        const report = results[0].status === 'fulfilled' ? results[0].value : '';
+        const todoResult = results[1].status === 'fulfilled' ? results[1].value : '';
+        const schemaText = results[2].status === 'fulfilled' ? results[2].value : '';
 
         // 渲染报告
-        document.getElementById('s2-report').innerHTML = renderMarkdown(report);
+        if (report) {
+            document.getElementById('s2-report').innerHTML = renderMarkdown(report);
+        } else {
+            document.getElementById('s2-report').innerHTML = '<p style="color:#e53935">报告生成失败，请重试</p>';
+        }
 
         // 解析并渲染schema
         let schema = null;
-        try { schema = JSON.parse(schemaText); } catch {
-            const m = schemaText.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (m) try { schema = JSON.parse(m[1]); } catch {}
-            if (!schema) { const j = schemaText.match(/\{[\s\S]*\}/); if (j) try { schema = JSON.parse(j[0]); } catch {} }
+        if (schemaText) {
+            try { schema = JSON.parse(schemaText); } catch {
+                const m = schemaText.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (m) try { schema = JSON.parse(m[1]); } catch {}
+                if (!schema) { const j = schemaText.match(/\{[\s\S]*\}/); if (j) try { schema = JSON.parse(j[0]); } catch {} }
+            }
         }
         if (schema && schema.sheets) { demoSchema = schema; renderSchema(schema); }
 

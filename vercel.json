@@ -4,10 +4,13 @@
     "submodules": true
   },
   "functions": {
+    "api/chat.py": { "maxDuration": 60 },
     "api/question_list.py": { "maxDuration": 60 },
     "api/analyze.py": { "maxDuration": 60 }
   },
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/style.css", "destination": "/style.css" },
+    { "source": "/app.js", "destination": "/app.js" },
+    { "source": "/((?!api/)(?!style\\.css)(?!app\\.js).*)", "destination": "/index.html" }
   ]
 }
