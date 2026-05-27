@@ -273,9 +273,10 @@
                 </div>
 
                 <div id="s2-schema-card" class="card">
-                    <h3>字段设计方案</h3>
+                    <h3>字段设计方案 / Demo 预览</h3>
                     <div id="s2-schema" class="rendered-content"></div>
                     <div class="actions">
+                        <button class="btn btn-primary btn-icon" id="btn-create-sheet" style="display:none" onclick="createSmartsheet()">创建企微智能表格</button>
                         <button class="btn btn-secondary btn-icon" onclick="copyRendered('s2-schema')">复制文本</button>
                         <div class="export-group">
                             <button class="btn btn-secondary btn-icon" onclick="toggleExport('s2-schema-export')">导出</button>
@@ -286,6 +287,7 @@
                             </div>
                         </div>
                     </div>
+                    <div id="s2-create-result" style="margin-top:12px;display:none"></div>
                 </div>
             </div>
         </div>
@@ -347,24 +349,46 @@
 
         // === Step 2 ===
         let uploadedText = '';
+        let demoSchema = null;
 
-        function handleFileUpload(event) {
+        async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            document.getElementById('upload-filename').textContent = file.name;
+            document.getElementById('upload-filename').textContent = file.name + ' (解析中...)';
 
+            // 对于 .txt 直接前端读取
             if (file.name.endsWith('.txt')) {
-                const reader = new FileReader();
-                reader.onload = (e) => { uploadedText = e.target.result; };
-                reader.readAsText(file);
-            } else {
-                // For doc/docx/pdf, we read as text (basic) or show notice
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     uploadedText = e.target.result;
+                    document.getElementById('upload-filename').textContent = file.name + ` (${uploadedText.length}字)`;
+                    document.getElementById('s2-transcript').value = uploadedText;
                 };
                 reader.readAsText(file);
-                // Note: full docx/pdf parsing would need server-side processing
+            } else {
+                // 对于 .docx 发送到服务端解析
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const base64Data = btoa(String.fromCharCode(...new Uint8Array(e.target.result)));
+                    try {
+                        const resp = await fetch('/api/upload', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ filename: file.name, file_data: base64Data })
+                        });
+                        const data = await resp.json();
+                        if (data.text) {
+                            uploadedText = data.text;
+                            document.getElementById('upload-filename').textContent = file.name + ` (${data.char_count}字)`;
+                            document.getElementById('s2-transcript').value = uploadedText;
+                        } else {
+                            document.getElementById('upload-filename').textContent = file.name + ' (解析失败: ' + (data.error||'') + ')';
+                        }
+                    } catch (err) {
+                        document.getElementById('upload-filename').textContent = file.name + ' (上传失败)';
+                    }
+                };
+                reader.readAsArrayBuffer(file);
             }
         }
 
@@ -385,7 +409,7 @@
 
         async function analyzeTranscript() {
             const industry = document.getElementById('s2-industry').value.trim();
-            const transcript = uploadedText || document.getElementById('s2-transcript').value.trim();
+            const transcript = document.getElementById('s2-transcript').value.trim();
             const outputType = document.getElementById('s2-output-type').value;
             if (!transcript) { alert('请粘贴沟通记录或上传文档'); return; }
 
@@ -408,7 +432,46 @@
                     document.getElementById('s2-report').innerHTML = renderMarkdown(data.report);
                 }
                 if (data.schema) {
-                    document.getElementById('s2-schema').innerHTML = renderMarkdown(data.schema);
+                    // 尝试解析为JSON并渲染Demo预览
+                    let schema = data.demo_json;
+                    if (!schema) {
+                        try {
+                            const m = data.schema.match(/```(?:json)?\s*([\s\S]*?)```/);
+                            schema = m ? JSON.parse(m[1]) : JSON.parse(data.schema);
+                        } catch {}
+                    }
+
+                    if (schema && schema.sheets) {
+                        demoSchema = schema;
+                        // 渲染表格预览
+                        let html = '<h4 style="margin-bottom:12px;color:#0052d9">' + (schema.doc_name||'Demo智能表格') + '</h4>';
+                        schema.sheets.forEach((s, i) => {
+                            html += '<div style="margin-bottom:16px;border:1px solid #eee;border-radius:8px;overflow:hidden">';
+                            html += '<div style="background:#f8faf8;padding:8px 14px;font-size:13px;font-weight:600;color:#155724;border-bottom:1px solid #eee">子表'+(i+1)+'：'+s.sheet_name+'</div>';
+                            html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>';
+                            s.fields.forEach(f => {
+                                const t = f.field_type.replace('FIELD_TYPE_','').toLowerCase();
+                                html += '<th style="background:#fafafa;padding:6px 8px;text-align:left;border-bottom:1px solid #eee;font-weight:500">'+f.field_title+'<br><span style="font-size:10px;color:#999">'+t+'</span></th>';
+                            });
+                            html += '</tr></thead><tbody>';
+                            if (s.sample_records) {
+                                s.sample_records.forEach(rec => {
+                                    html += '<tr>';
+                                    s.fields.forEach(f => {
+                                        const v = rec[f.field_title] || '';
+                                        html += '<td style="padding:6px 8px;border-bottom:1px solid #f5f5f5">'+(typeof v==='object'?JSON.stringify(v):v)+'</td>';
+                                    });
+                                    html += '</tr>';
+                                });
+                            }
+                            html += '</tbody></table></div>';
+                        });
+                        document.getElementById('s2-schema').innerHTML = html;
+                        document.getElementById('btn-create-sheet').style.display = 'inline-flex';
+                    } else {
+                        document.getElementById('s2-schema').innerHTML = renderMarkdown(data.schema);
+                        document.getElementById('btn-create-sheet').style.display = 'none';
+                    }
                     document.getElementById('s2-schema-card').style.display = 'block';
                 } else {
                     document.getElementById('s2-schema-card').style.display = 'none';
@@ -418,6 +481,36 @@
                 alert('请求失败: ' + e.message);
             } finally {
                 document.getElementById('s2-loading').classList.remove('visible');
+            }
+        }
+
+        // 创建企微智能表格
+        async function createSmartsheet() {
+            if (!demoSchema) { showToast('无可用的表格结构'); return; }
+            const btn = document.getElementById('btn-create-sheet');
+            btn.disabled = true; btn.textContent = '正在创建...';
+            const resultDiv = document.getElementById('s2-create-result');
+
+            try {
+                const resp = await fetch('/api/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(demoSchema)
+                });
+                const data = await resp.json();
+
+                if (data.success && data.url) {
+                    resultDiv.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:14px;font-size:14px"><strong>智能表格已创建成功</strong><br>包含 '+data.sheets.length+' 个子表<br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;text-decoration:underline;font-size:15px;display:inline-block;margin-top:6px">点击打开企微智能表格 →</a></div>';
+                    resultDiv.style.display = 'block';
+                } else {
+                    resultDiv.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:14px;font-size:13px;color:#c62828">创建失败：'+(data.error||'未知错误')+'</div>';
+                    resultDiv.style.display = 'block';
+                }
+            } catch (e) {
+                resultDiv.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:14px;font-size:13px;color:#c62828">请求失败：'+e.message+'</div>';
+                resultDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false; btn.textContent = '创建企微智能表格';
             }
         }
 
