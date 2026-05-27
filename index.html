@@ -537,12 +537,14 @@ function saveProfile() {
     const pain = document.getElementById('s1-pain').value.trim();
     updateClient(currentClientId, { industry, business_desc: business, pain_points: pain });
     // Update view
-    document.getElementById('pv-industry').textContent = industry || '-';
-    document.getElementById('pv-business').textContent = (business || '-').substring(0, 30) + (business.length > 30 ? '...' : '');
-    document.getElementById('pv-pain').textContent = (pain || '-').substring(0, 30) + (pain.length > 30 ? '...' : '');
-    document.getElementById('detail-industry').textContent = industry;
+    const pvBiz = document.getElementById('pv-business');
+    const pvPain = document.getElementById('pv-pain');
+    if (pvBiz) pvBiz.textContent = (business || '-').substring(0, 30);
+    if (pvPain) pvPain.textContent = (pain || '-').substring(0, 30);
+    document.getElementById('detail-industry').textContent = industry + (business ? ' · ' + business.substring(0,15) : '');
     toggleProfile();
     updateTimeline(getClient(currentClientId));
+    showToast('已保存');
 }
 
 function renderOutputs(c) {
