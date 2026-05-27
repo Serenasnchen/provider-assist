@@ -162,7 +162,14 @@ def build_context(industry, pain_points, direction):
                     case_context += f" 使用者：{usage_role}"
                 case_context += "\n"
                 if fields:
-                    case_context += f"    字段：{', '.join(fields[:15])}\n"
+                    # fields可能是字符串列表或dict列表
+                    field_names = []
+                    for f in fields[:15]:
+                        if isinstance(f, str):
+                            field_names.append(f)
+                        elif isinstance(f, dict):
+                            field_names.append(f.get("field_title", f.get("title", "")))
+                    case_context += f"    字段：{', '.join(field_names)}\n"
 
         # 自动化规则（帮助AI知道该问什么自动化需求）
         auto_rules = solution.get("automation_rules", [])
