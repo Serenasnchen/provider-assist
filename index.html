@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务商助手 - 智能需求调研工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            padding: 30px 0 20px;
+        }
+        header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        header p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 24px;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            color: #0052d9;
+            border-bottom-color: #0052d9;
+            background: #f0f5ff;
+        }
+        .tab:hover:not(.active) {
+            background: #fafafa;
+        }
+
+        /* Cards */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+        .card label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        .card input, .card textarea, .card select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 14px;
+            transition: border-color 0.2s;
+        }
+        .card input:focus, .card textarea:focus {
+            outline: none;
+            border-color: #0052d9;
+        }
+        .card textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .card textarea.large {
+            min-height: 250px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #0052d9;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #003eb3;
+        }
+        .btn-primary:disabled {
+            background: #a0c4ff;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        /* Results */
+        .result-section {
+            display: none;
+        }
+        .result-section.visible {
+            display: block;
+        }
+        .result-content {
+            background: #fafbfc;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .loading.visible {
+            display: block;
+        }
+        .loading .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #0052d9;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status badge */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 6px;
+        }
+        .status-badge.matched { background: #e8f5e9; color: #2e7d32; }
+        .status-badge.unmatched { background: #f5f5f5; color: #999; }
+
+        /* Sections visibility */
+        .step-panel { display: none; }
+        .step-panel.active { display: block; }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>服务商助手</h1>
+            <p>智能提问清单 + 需求结构化转化</p>
+        </header>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('step1')">Step 1: 智能提问清单</div>
+            <div class="tab" onclick="switchTab('step2')">Step 2: 需求结构化转化</div>
+        </div>
+
+        <!-- Step 1: 智能提问清单 -->
+        <div id="step1-panel" class="step-panel active">
+            <div class="card">
+                <h3>客户基本信息</h3>
+                <label>客户行业 *</label>
+                <input type="text" id="s1-industry" placeholder="如：制造业、餐饮、服装外贸、装修...">
+
+                <label>客户描述/痛点</label>
+                <textarea id="s1-pain" placeholder="客户是怎么描述他们的问题的？比如：&#10;- 我们现在用Excel管订单，经常出错&#10;- 生产进度没办法实时追踪&#10;- 老板想看数据报表但没有..."></textarea>
+
+                <label>需求方向（可选）</label>
+                <input type="text" id="s1-direction" placeholder="如：订单管理、CRM、生产进度追踪...">
+
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="generateQuestionList()">生成提问清单</button>
+                </div>
+            </div>
+
+            <div id="s1-loading" class="loading">
+                <div class="spinner"></div>
+                <p>正在结合知识库生成提问清单...</p>
+            </div>
+
+            <div id="s1-result" class="result-section">
+                <div class="card">
+                    <h3>智能提问清单</h3>
+                    <div id="s1-context-info"></div>
+                    <div id="s1-content" class="result-content"></div>
+                    <div class="actions">
+                        <button class="btn btn-secondary" onclick="copyResult('s1-content')">复制清单</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: 需求结构化转化 -->
+        <div id="step2-panel" class="step-panel">
+            <div class="card">
+                <h3>沟通记录输入</h3>
+                <label>客户行业 *</label>
+                <input type="text" id="s2-industry" placeholder="如：制造业、餐饮、服装外贸...">
+
+                <label>会议转写 / 沟通记录 *</label>
+                <textarea id="s2-transcript" class="large" placeholder="粘贴腾讯会议的文字转写内容，或服务商与客户的沟通记录...&#10;&#10;支持任意格式的文本，AI 会自动提取需求信息。"></textarea>
+
+                <label>输出类型</label>
+                <select id="s2-output-type">
+                    <option value="all">全部（报告 + 字段设计 + Demo）</option>
+                    <option value="report">仅需求分析报告</option>
+                    <option value="schema">仅字段设计方案</option>
+                </select>
+
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="analyzeTranscript()">开始分析</button>
+                </div>
+            </div>
+
+            <div id="s2-loading" class="loading">
+                <div class="spinner"></div>
+                <p>正在分析沟通记录并生成结构化产物...</p>
+            </div>
+
+            <div id="s2-result" class="result-section">
+                <div class="card">
+                    <h3>需求分析报告</h3>
+                    <div id="s2-context-info"></div>
+                    <div id="s2-report" class="result-content"></div>
+                    <div class="actions">
+                        <button class="btn btn-secondary" onclick="copyResult('s2-report')">复制报告</button>
+                    </div>
+                </div>
+
+                <div id="s2-schema-card" class="card">
+                    <h3>字段设计方案</h3>
+                    <div id="s2-schema" class="result-content"></div>
+                    <div class="actions">
+                        <button class="btn btn-secondary" onclick="copyResult('s2-schema')">复制方案</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(step) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+
+            if (step === 'step1') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('step1-panel').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('step2-panel').classList.add('active');
+            }
+        }
+
+        async function generateQuestionList() {
+            const industry = document.getElementById('s1-industry').value.trim();
+            const pain = document.getElementById('s1-pain').value.trim();
+            const direction = document.getElementById('s1-direction').value.trim();
+
+            if (!industry) {
+                alert('请填写客户行业');
+                return;
+            }
+
+            document.getElementById('s1-loading').classList.add('visible');
+            document.getElementById('s1-result').classList.remove('visible');
+
+            try {
+                const resp = await fetch('/api/question_list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        industry: industry,
+                        pain_points: pain,
+                        direction: direction,
+                        description: `${pain} ${direction}`.trim()
+                    })
+                });
+                const data = await resp.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                // 显示知识库匹配状态
+                const ctx = data.context_used || {};
+                let badges = '';
+                badges += `<span class="status-badge ${ctx.industry_matched ? 'matched' : 'unmatched'}">${ctx.industry_matched ? '行业知识已匹配' : '行业未匹配'}</span>`;
+                badges += `<span class="status-badge ${ctx.cases_matched ? 'matched' : 'unmatched'}">${ctx.cases_matched ? '案例已匹配' : '无匹配案例'}</span>`;
+                badges += `<span class="status-badge ${ctx.template_matched ? 'matched' : 'unmatched'}">${ctx.template_matched ? '字段模板已匹配' : '无匹配模板'}</span>`;
+                document.getElementById('s1-context-info').innerHTML = `<p style="margin-bottom:12px">${badges}</p>`;
+
+                document.getElementById('s1-content').textContent = data.question_list || '生成失败';
+                document.getElementById('s1-result').classList.add('visible');
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            } finally {
+                document.getElementById('s1-loading').classList.remove('visible');
+            }
+        }
+
+        async function analyzeTranscript() {
+            const industry = document.getElementById('s2-industry').value.trim();
+            const transcript = document.getElementById('s2-transcript').value.trim();
+            const outputType = document.getElementById('s2-output-type').value;
+
+            if (!transcript) {
+                alert('请粘贴沟通记录');
+                return;
+            }
+
+            document.getElementById('s2-loading').classList.add('visible');
+            document.getElementById('s2-result').classList.remove('visible');
+
+            try {
+                const resp = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        industry: industry,
+                        transcript: transcript,
+                        output_type: outputType
+                    })
+                });
+                const data = await resp.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                // 匹配状态
+                const ctx = data.context_used || {};
+                let badges = '';
+                badges += `<span class="status-badge ${ctx.industry_matched ? 'matched' : 'unmatched'}">${ctx.industry_matched ? '行业知识已匹配' : '行业未匹配'}</span>`;
+                badges += `<span class="status-badge ${ctx.cases_matched ? 'matched' : 'unmatched'}">${ctx.cases_matched ? '案例已匹配' : '无匹配案例'}</span>`;
+                badges += `<span class="status-badge ${ctx.templates_matched ? 'matched' : 'unmatched'}">${ctx.templates_matched ? '字段模板已匹配' : '无匹配模板'}</span>`;
+                document.getElementById('s2-context-info').innerHTML = `<p style="margin-bottom:12px">${badges}</p>`;
+
+                // 显示报告
+                if (data.report) {
+                    document.getElementById('s2-report').textContent = data.report;
+                }
+
+                // 显示字段设计
+                if (data.schema) {
+                    document.getElementById('s2-schema').textContent = data.schema;
+                    document.getElementById('s2-schema-card').style.display = 'block';
+                } else {
+                    document.getElementById('s2-schema-card').style.display = 'none';
+                }
+
+                document.getElementById('s2-result').classList.add('visible');
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            } finally {
+                document.getElementById('s2-loading').classList.remove('visible');
+            }
+        }
+
+        function copyResult(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制到剪贴板');
+            });
+        }
+    </script>
+</body>
+</html>
