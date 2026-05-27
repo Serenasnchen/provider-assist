@@ -3,13 +3,7 @@
   "git": {
     "submodules": true
   },
-  "buildCommand": "bash build.sh",
-  "builds": [
-    { "src": "api/**/*.py", "use": "@vercel/python" },
-    { "src": "index.html", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
