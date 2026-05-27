@@ -178,19 +178,19 @@
             <div class="card">
                 <h3>客户基本信息</h3>
                 <label>客户行业</label>
-                <input type="text" id="s1-industry" placeholder="如：制造业、餐饮、服装外贸、装修...">
-                <label>客户描述 / 痛点</label>
-                <textarea id="s1-pain" placeholder="客户是怎么描述他们的问题的？比如：&#10;我们现在用Excel管订单，经常出错&#10;生产进度没办法实时追踪&#10;老板想看数据报表但没有"></textarea>
-                <label>需求方向（可选）</label>
-                <input type="text" id="s1-direction" placeholder="如：订单管理、CRM、生产进度追踪...">
+                <input type="text" id="s1-industry" placeholder="如：制造业、汽车金融、服装外贸、装修、餐饮...">
+                <label>客户业务描述</label>
+                <textarea id="s1-business" placeholder="客户的业务是怎么运转的？比如：&#10;我们是做汽车贷款担保的，业务员在4S店收件，提交到公司中台审核，审核通过后报银行放款，放款后要上牌抵押归档"></textarea>
+                <label>希望智能表格解决什么痛点</label>
+                <textarea id="s1-pain" placeholder="客户目前最头疼的问题，比如：&#10;订单都是后台一个人录入，重复录入工作量大&#10;各环节靠微信群同步，进度不透明&#10;老板想看数据但没有统一报表"></textarea>
                 <div class="actions">
-                    <button class="btn btn-primary" onclick="generateQuestionList()">生成提问清单</button>
+                    <button class="btn btn-primary" onclick="generateQuestionList()">生成调研准备材料</button>
                 </div>
             </div>
 
             <div id="s1-loading" class="loading">
                 <div class="spinner"></div>
-                <p>正在结合知识库生成提问清单...</p>
+                <p>正在结合知识库生成调研准备材料...</p>
             </div>
 
             <div id="s1-result" class="result-section">
@@ -321,8 +321,8 @@
         // === Step 1 ===
         async function generateQuestionList() {
             const industry = document.getElementById('s1-industry').value.trim();
+            const business = document.getElementById('s1-business').value.trim();
             const pain = document.getElementById('s1-pain').value.trim();
-            const direction = document.getElementById('s1-direction').value.trim();
             if (!industry) { alert('请填写客户行业'); return; }
 
             document.getElementById('s1-loading').classList.add('visible');
@@ -332,14 +332,25 @@
                 const resp = await fetch('/api/question_list', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ industry, pain_points: pain, direction, description: `${pain} ${direction}`.trim() })
+                    body: JSON.stringify({
+                        industry,
+                        business_desc: business,
+                        pain_points: pain,
+                        direction: business
+                    })
                 });
                 const data = await resp.json();
                 if (data.error) { alert(data.error); return; }
 
                 const ctx = data.context_used || {};
                 document.getElementById('s1-context-info').innerHTML = renderBadges(ctx, 'template_matched');
-                document.getElementById('s1-content').innerHTML = renderMarkdown(data.question_list || '');
+
+                // 渲染结果 - 把 [维度名] 转为标签样式
+                let html = renderMarkdown(data.question_list || '');
+                // 把 [维度名] 和 【维度名】 转为彩色标签
+                html = html.replace(/[\[【]([^\]】]+)[\]】]/g, '<span style="display:inline-block;background:#eef4ff;color:#0052d9;font-size:11px;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:500;vertical-align:middle">$1</span>');
+
+                document.getElementById('s1-content').innerHTML = html;
                 document.getElementById('s1-result').classList.add('visible');
             } catch (e) {
                 alert('请求失败: ' + e.message);
