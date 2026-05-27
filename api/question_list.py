@@ -110,21 +110,21 @@ def match_field_template(query, templates):
 
 
 def build_context(industry, pain_points, direction):
-    """构建知识库上下文供AI生成提问清单"""
+    """构建知识库上下文供AI生成提问清单 - 深度引用所有层级"""
     query = f"{industry} {direction} {pain_points}".strip()
 
     industry_knowledge = load_industry_knowledge()
     detailed_cases = load_detailed_cases()
     field_templates = load_field_templates()
 
-    # 匹配行业知识
+    # 1. 行业知识（完整传入）
     industry_data = match_industry(industry, industry_knowledge)
     industry_text = ""
     if industry_data:
         content = industry_data.get("content", "")
-        industry_text = content[:2500] if len(content) > 2500 else content
+        industry_text = content[:3000] if len(content) > 3000 else content
 
-    # 匹配案例 - 重点提取服务商的提问方式和沟通记录
+    # 2. 案例深度提取 - 所有可用信息都传给AI
     matched_cases = match_cases(query, detailed_cases, top_k=3)
     case_context = ""
     for case in matched_cases:
@@ -134,45 +134,104 @@ def build_context(industry, pain_points, direction):
         tables = solution.get("tables", [])
         comm_record = case.get("communication_record", "")
         comm_highlights = case.get("communication_highlights", [])
+        delivery_desc = case.get("delivery_description", "")
 
-        case_context += f"【真实案例：{meta.get('industry', '')} - {meta.get('scene', '')}】\n"
+        case_context += f"### 真实交付案例：{meta.get('industry', '')} - {meta.get('scene', '')}\n"
+        case_context += f"客户规模：{meta.get('scale', '未知')}\n"
+
+        # 客户痛点（学习客户会有什么疑问和需求）
         if pain:
-            case_context += f"  客户痛点：{'; '.join(pain[:5])}\n"
+            case_context += f"客户原始痛点：\n"
+            for p in pain:
+                case_context += f"  - {p}\n"
+
+        # 方案架构
+        if solution.get("architecture"):
+            case_context += f"最终方案：{solution['architecture']}\n"
+
+        # 完整的表结构和字段（学习该行业需要了解哪些数据维度）
         if tables:
-            table_names = [t.get("table_name", "") for t in tables[:8]]
-            case_context += f"  最终方案涉及的子表：{', '.join(table_names)}\n"
+            case_context += f"方案包含的子表和字段（这些是服务商通过调研后确定的最终方案）：\n"
+            for t in tables[:6]:
+                tname = t.get("table_name", "")
+                purpose = t.get("purpose", "")
+                usage_role = t.get("usage_role", "")
+                fields = t.get("fields", [])
+                case_context += f"  表「{tname}」({purpose})"
+                if usage_role:
+                    case_context += f" 使用者：{usage_role}"
+                case_context += "\n"
+                if fields:
+                    case_context += f"    字段：{', '.join(fields[:15])}\n"
 
-        # 关键：把服务商的沟通记录传给AI，让它学习提问方式
-        if comm_record:
-            case_context += f"  服务商与客户的沟通记录：\n  {comm_record}\n"
-        if comm_highlights:
-            case_context += f"  沟通中确认的关键信息点：\n"
-            for h in comm_highlights[:12]:
-                case_context += f"    - {h}\n"
-
-        # 自动化规则也能帮助AI知道该问什么
+        # 自动化规则（帮助AI知道该问什么自动化需求）
         auto_rules = solution.get("automation_rules", [])
+        if not auto_rules:
+            auto_rules = case.get("automation_rules", [])
         if auto_rules:
-            case_context += f"  该案例配置的自动化：{'; '.join(auto_rules[:4])}\n"
+            case_context += f"配置的自动化规则：\n"
+            for r in auto_rules[:5]:
+                case_context += f"  - {r}\n"
+
+        # 服务商沟通记录（学习如何提问）
+        if comm_record:
+            case_context += f"服务商与客户沟通记录：\n  {comm_record}\n"
+
+        # 沟通亮点（学习服务商确认了哪些关键信息）
+        if comm_highlights:
+            case_context += f"沟通中确认的关键信息点（服务商在实际调研中需要弄清楚的）：\n"
+            for h in comm_highlights:
+                case_context += f"  - {h}\n"
+
+        # 交付描述
+        if delivery_desc:
+            desc = delivery_desc[:300] if len(delivery_desc) > 300 else delivery_desc
+            case_context += f"交付说明：{desc}\n"
 
         case_context += "\n"
 
-    # 匹配字段模板 - 提供详细的字段维度供AI参考提问方向
+    # 如果精确匹配的案例没有沟通记录，补充一些有沟通记录的案例作为提问方式参考
+    has_comm = any(
+        c.get("communication_record") or c.get("communication_highlights")
+        for c in matched_cases
+    )
+    if not has_comm:
+        comm_examples = ""
+        for case in detailed_cases:
+            ch = case.get("communication_highlights", [])
+            cr = case.get("communication_record", "")
+            if ch or cr:
+                meta = case.get("meta", {})
+                comm_examples += f"参考案例（{meta.get('industry','')}-{meta.get('scene','')[:20]}）中服务商确认的信息点：\n"
+                if cr:
+                    comm_examples += f"  沟通记录：{cr[:200]}\n"
+                for h in ch[:6]:
+                    comm_examples += f"  - {h}\n"
+                comm_examples += "\n"
+                if len(comm_examples) > 1500:
+                    break
+        if comm_examples:
+            case_context += "\n### 其他行业的服务商提问参考（学习提问深度和方式）\n" + comm_examples
+
+    # 3. 字段模板（完整传入字段细节）
     matched_tpl = match_field_template(query, field_templates)
     tpl_context = ""
     if matched_tpl:
         meta = matched_tpl.get("meta", {})
-        tpl_context = f"【字段经验池：{meta.get('industry', '')} - {meta.get('scene', '')}】\n"
-        tpl_context += f"  该行业真实交付过{meta.get('total_tables', '?')}张表，{meta.get('total_fields', '?')}个字段\n"
-        tpl_context += f"  你需要据此判断该行业的调研应该覆盖哪些方面\n"
-        for table in matched_tpl.get("tables", [])[:6]:
-            tpl_context += f"  - 表「{table.get('table_name', '')}」: "
-            groups = table.get("field_groups", [])
-            for g in groups[:4]:
+        tpl_context = f"### 字段经验池：{meta.get('industry', '')} - {meta.get('scene', '')}\n"
+        tpl_context += f"该行业真实交付过{meta.get('total_tables', '?')}张表，{meta.get('total_fields', '?')}个字段\n"
+        if meta.get("design_principle"):
+            tpl_context += f"设计原则：{meta['design_principle']}\n"
+        tpl_context += f"你需要据此判断该行业需要调研的方面：\n"
+        for table in matched_tpl.get("tables", [])[:8]:
+            tpl_context += f"  表「{table.get('table_name', '')}」"
+            if table.get("description"):
+                tpl_context += f"（{table['description']}）"
+            tpl_context += ":\n"
+            for g in table.get("field_groups", [])[:5]:
                 gname = g.get("group_name", "")
-                fields = [f.get("title", "") for f in g.get("fields", [])[:5]]
-                tpl_context += f"[{gname}]{','.join(fields)} "
-            tpl_context += "\n"
+                fields = [f.get("title", "") for f in g.get("fields", [])[:8]]
+                tpl_context += f"    [{gname}] {', '.join(fields)}\n"
 
     return {
         "industry_knowledge": industry_text,
