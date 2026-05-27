@@ -180,7 +180,7 @@ def call_deepseek(system_prompt, user_prompt):
     """调用DeepSeek API"""
     import urllib.request
 
-    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    api_key = os.environ.get("DEEPSEEK_API_KEY", "sk-63d4e005ecb646b08538368c5172ed82")
     if not api_key:
         return "Error: DEEPSEEK_API_KEY not configured"
 
