@@ -384,10 +384,12 @@ function deleteClient(id) {
 }
 
 function createClient() {
-    const name = prompt('客户名称');
+    const input = prompt('请输入：客户名称 / 行业\n例如：鹏宁担保 / 金融');
+    if (!input) return;
+    const parts = input.split(/[\/,，、|]/).map(s => s.trim());
+    const name = parts[0] || '';
+    const industry = parts[1] || '';
     if (!name) return;
-    const industry = prompt('客户行业（如：制造业、金融、服装外贸、装修）');
-    if (!industry) return;
     const clients = getClients();
     const newClient = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), name, industry, status: 'draft', created_at: new Date().toISOString(), step1_result: '', step2_report: '', step2_schema: null };
     clients.unshift(newClient);
