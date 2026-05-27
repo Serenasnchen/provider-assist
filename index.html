@@ -130,6 +130,50 @@
             </div>
         </div>
 
+        <!-- 进度时间轴 -->
+        <div class="card" style="padding:20px 24px" id="progress-timeline">
+            <div style="display:flex;align-items:flex-start;position:relative">
+                <!-- 连接线 -->
+                <div style="position:absolute;top:14px;left:40px;right:40px;height:2px;background:#e0e0e0;z-index:0"></div>
+                <div id="progress-line" style="position:absolute;top:14px;left:40px;height:2px;background:#0052d9;z-index:1;transition:width 0.3s"></div>
+
+                <!-- 节点1: 录入信息 -->
+                <div style="flex:1;text-align:center;position:relative;z-index:2">
+                    <div id="node-0" class="progress-node" style="width:28px;height:28px;border-radius:50%;background:#e0e0e0;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500">1</div>
+                    <div style="font-size:11px;color:#666;margin-top:6px">录入信息</div>
+                    <div id="node-0-outputs" style="margin-top:6px"></div>
+                </div>
+
+                <!-- 节点2: 生成清单 -->
+                <div style="flex:1;text-align:center;position:relative;z-index:2">
+                    <div id="node-1" class="progress-node" style="width:28px;height:28px;border-radius:50%;background:#e0e0e0;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500">2</div>
+                    <div style="font-size:11px;color:#666;margin-top:6px">调研准备</div>
+                    <div id="node-1-outputs" style="margin-top:6px"></div>
+                </div>
+
+                <!-- 节点3: 客户沟通 -->
+                <div style="flex:1;text-align:center;position:relative;z-index:2">
+                    <div id="node-2" class="progress-node" style="width:28px;height:28px;border-radius:50%;background:#e0e0e0;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500">3</div>
+                    <div style="font-size:11px;color:#666;margin-top:6px">客户沟通</div>
+                    <div id="node-2-outputs" style="margin-top:6px"></div>
+                </div>
+
+                <!-- 节点4: 需求报告 -->
+                <div style="flex:1;text-align:center;position:relative;z-index:2">
+                    <div id="node-3" class="progress-node" style="width:28px;height:28px;border-radius:50%;background:#e0e0e0;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500">4</div>
+                    <div style="font-size:11px;color:#666;margin-top:6px">需求报告</div>
+                    <div id="node-3-outputs" style="margin-top:6px"></div>
+                </div>
+
+                <!-- 节点5: Demo交付 -->
+                <div style="flex:1;text-align:center;position:relative;z-index:2">
+                    <div id="node-4" class="progress-node" style="width:28px;height:28px;border-radius:50%;background:#e0e0e0;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500">5</div>
+                    <div style="font-size:11px;color:#666;margin-top:6px">Demo交付</div>
+                    <div id="node-4-outputs" style="margin-top:6px"></div>
+                </div>
+            </div>
+        </div>
+
         <div class="steps-nav">
             <div class="step-nav active" onclick="switchStep('step1')">Step 1: 调研准备</div>
             <div class="step-nav" onclick="switchStep('step2')">Step 2: 需求转化</div>
@@ -346,6 +390,8 @@ function openClient(id) {
     if (c.status === 'waiting' || c.status === 'done') {
         switchStep('step2');
     }
+    // 更新时间轴
+    updateTimeline(c);
 }
 
 function goBack() { showPage('list'); renderClientList(); currentClientId = null; }
@@ -356,6 +402,57 @@ function switchStep(step) {
     document.getElementById(step).classList.add('active');
     const idx = step === 'step1' ? 0 : 1;
     document.querySelectorAll('.step-nav')[idx].classList.add('active');
+}
+
+function updateTimeline(c) {
+    if (!c) return;
+    // 确定当前进度级别：0=录入 1=已生成清单 2=待沟通 3=已生成报告 4=已交付Demo
+    let level = 0;
+    if (c.industry) level = 1;
+    if (c.step1_result) level = 2;
+    if (c.transcript) level = 3;
+    if (c.step2_report) level = 4;
+    if (c.demo_url) level = 5;
+
+    // 更新节点颜色
+    for (let i = 0; i < 5; i++) {
+        const node = document.getElementById('node-' + i);
+        if (i < level) { node.style.background = '#0052d9'; }
+        else if (i === level) { node.style.background = '#64b5f6'; }
+        else { node.style.background = '#e0e0e0'; }
+    }
+
+    // 更新进度线宽度
+    const lineWidths = ['0%', '12%', '37%', '62%', '87%', '100%'];
+    document.getElementById('progress-line').style.width = lineWidths[Math.min(level, 5)];
+
+    // 产出物链接
+    const outputStyle = 'display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;text-decoration:none;margin:1px;';
+
+    // 节点0: 录入信息
+    document.getElementById('node-0-outputs').innerHTML = c.industry ? `<span style="${outputStyle}background:#e8f5e9;color:#2e7d32">已录入</span>` : '';
+
+    // 节点1: 调研准备产出
+    let n1 = '';
+    if (c.step1_result) n1 += `<span style="${outputStyle}background:#e3f2fd;color:#1565c0;cursor:pointer" onclick="switchStep('step1')">清单</span>`;
+    if (c.step1_doc_url) n1 += `<a href="${c.step1_doc_url}" target="_blank" style="${outputStyle}background:#eef4ff;color:#0052d9">企微文档</a>`;
+    document.getElementById('node-1-outputs').innerHTML = n1;
+
+    // 节点2: 客户沟通
+    document.getElementById('node-2-outputs').innerHTML = c.transcript ? `<span style="${outputStyle}background:#e8f5e9;color:#2e7d32">已上传</span>` : `<span style="${outputStyle}background:#fff3e0;color:#e65100">待沟通</span>`;
+
+    // 节点3: 需求报告
+    let n3 = '';
+    if (c.step2_report) n3 += `<span style="${outputStyle}background:#e3f2fd;color:#1565c0;cursor:pointer" onclick="switchStep('step2')">报告</span>`;
+    if (c.report_doc_url) n3 += `<a href="${c.report_doc_url}" target="_blank" style="${outputStyle}background:#eef4ff;color:#0052d9">企微文档</a>`;
+    if (c.step2_todo) n3 += `<span style="${outputStyle}background:#fff3e0;color:#e65100;cursor:pointer" onclick="switchStep('step2')">待确认</span>`;
+    document.getElementById('node-3-outputs').innerHTML = n3;
+
+    // 节点4: Demo交付
+    let n4 = '';
+    if (c.demo_url) n4 += `<a href="${c.demo_url}" target="_blank" style="${outputStyle}background:#e8f5e9;color:#2e7d32">Demo表格</a>`;
+    else if (c.step2_schema) n4 += `<span style="${outputStyle}background:#e3f2fd;color:#1565c0;cursor:pointer" onclick="switchStep('step2')">待创建</span>`;
+    document.getElementById('node-4-outputs').innerHTML = n4;
 }
 
 // === DeepSeek API (前端直调，无超时限制) ===
@@ -405,6 +502,7 @@ async function generateStep1() {
 
         // Persist
         updateClient(currentClientId, { step1_result: result, status: 'waiting' });
+        updateTimeline(getClient(currentClientId));
         document.getElementById('detail-industry').textContent = industry;
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s1-loading').classList.remove('visible'); }
@@ -546,6 +644,7 @@ async function generateStep2() {
 
         document.getElementById('s2-result').style.display = 'block';
         updateClient(currentClientId, { step2_report: report || '', step2_todo: todoResult || '', step2_schema: demoSchema, status: 'done' });
+        updateTimeline(getClient(currentClientId));
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s2-loading').classList.remove('visible'); }
 }
