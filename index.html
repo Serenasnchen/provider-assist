@@ -386,8 +386,10 @@ function deleteClient(id) {
 function createClient() {
     const name = prompt('客户名称');
     if (!name) return;
+    const industry = prompt('客户行业（如：制造业、金融、服装外贸、装修）');
+    if (!industry) return;
     const clients = getClients();
-    const newClient = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), name, industry: '', status: 'draft', created_at: new Date().toISOString(), step1_result: '', step2_report: '', step2_schema: null };
+    const newClient = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), name, industry, status: 'draft', created_at: new Date().toISOString(), step1_result: '', step2_report: '', step2_schema: null };
     clients.unshift(newClient);
     saveClients(clients);
     renderClientList();
