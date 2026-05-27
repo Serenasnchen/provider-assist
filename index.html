@@ -8,106 +8,128 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f7fa; color: #1a1a1a; line-height: 1.6; min-height: 100vh; }
-        .container { max-width: 920px; margin: 0 auto; padding: 20px; }
-        header { text-align: center; padding: 24px 0 16px; }
-        header h1 { font-size: 22px; font-weight: 600; }
-        header p { color: #666; font-size: 13px; margin-top: 4px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif; background: #f8f9fb; color: #1a1a1a; line-height: 1.6; min-height: 100vh; }
+        .container { max-width: 780px; margin: 0 auto; padding: 20px; }
 
-        .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-        .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-        .card label { display: block; font-size: 13px; font-weight: 500; color: #333; margin-bottom: 6px; }
-        .card input, .card textarea, .card select { width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; margin-bottom: 14px; transition: border-color 0.2s; }
-        .card input:focus, .card textarea:focus { outline: none; border-color: #0052d9; }
-        .card textarea { min-height: 100px; resize: vertical; }
+        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .app-header h1 { font-size: 17px; font-weight: 500; }
+        .app-header p { font-size: 12px; color: #888; margin-top: 2px; }
 
-        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-        .btn-primary { background: #0052d9; color: #fff; }
-        .btn-primary:hover { background: #003eb3; }
-        .btn-primary:disabled { background: #a0c4ff; cursor: not-allowed; }
-        .btn-secondary { background: #f0f0f0; color: #333; }
-        .btn-secondary:hover { background: #e0e0e0; }
-        .btn-danger { background: #fff; color: #e53935; border: 1px solid #ffcdd2; }
-        .btn-danger:hover { background: #ffebee; }
-        .btn-sm { padding: 6px 14px; font-size: 13px; }
-        .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+        .card { background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; border: 0.5px solid rgba(0,0,0,0.06); }
+        .card h3 { font-size: 14px; font-weight: 500; margin-bottom: 14px; color: #333; }
+        .card label { display: block; font-size: 12px; font-weight: 500; color: #555; margin-bottom: 5px; }
+        .card input, .card textarea, .card select { width: 100%; padding: 9px 12px; border: 0.5px solid #ddd; border-radius: 8px; font-size: 13px; margin-bottom: 12px; transition: border-color 0.2s; background: #fafbfc; }
+        .card input:focus, .card textarea:focus { outline: none; border-color: #185FA5; background: #fff; }
+        .card textarea { min-height: 80px; resize: vertical; }
 
-        /* Client List */
-        .client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 16px; }
-        .client-card { background: #fff; border-radius: 10px; padding: 18px; cursor: pointer; border: 1px solid #eee; transition: all 0.2s; position: relative; }
-        .client-card:hover { border-color: #0052d9; box-shadow: 0 2px 8px rgba(0,82,217,0.08); }
-        .client-card .name { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-        .client-card .meta { font-size: 12px; color: #888; }
-        .client-card .status { position: absolute; top: 14px; right: 14px; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
-        .status-draft { background: #f5f5f5; color: #999; }
-        .status-listed { background: #e3f2fd; color: #1565c0; }
-        .status-waiting { background: #fff3e0; color: #e65100; }
-        .status-done { background: #e8f5e9; color: #2e7d32; }
-        .add-card { background: #fafbfc; border: 2px dashed #d0d5dd; display: flex; align-items: center; justify-content: center; min-height: 100px; border-radius: 10px; cursor: pointer; font-size: 14px; color: #666; transition: all 0.2s; }
-        .add-card:hover { border-color: #0052d9; color: #0052d9; background: #f8faff; }
+        .btn { display: inline-flex; align-items: center; gap: 5px; padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .btn-primary { background: #185FA5; color: #fff; }
+        .btn-primary:hover { background: #0C447C; }
+        .btn-primary:disabled { background: #B5D4F4; cursor: not-allowed; }
+        .btn-secondary { background: #f0f1f3; color: #444; }
+        .btn-secondary:hover { background: #e4e5e8; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+        .section-label { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 10px; }
+
+        /* Client cards */
+        .client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+        .client-card { background: #fff; border-radius: 12px; padding: 16px; cursor: pointer; border: 0.5px solid rgba(0,0,0,0.06); transition: all 0.15s; }
+        .client-card:hover { border-color: #185FA5; }
+        .client-card .name { font-size: 14px; font-weight: 500; }
+        .client-card .meta { font-size: 11px; color: #999; margin-top: 3px; }
+        .client-card .progress-dots { display: flex; gap: 4px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid #f0f0f0; }
+        .client-card .progress-dots .dot { width: 7px; height: 7px; border-radius: 50%; }
+        .add-card { background: transparent; border: 1.5px dashed #d0d5dd; display: flex; align-items: center; justify-content: center; min-height: 80px; border-radius: 12px; cursor: pointer; font-size: 13px; color: #888; }
+        .add-card:hover { border-color: #185FA5; color: #185FA5; }
+
+        .status-pill { font-size: 10px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+        .pill-draft { background: #f0f1f3; color: #888; }
+        .pill-listed { background: #E6F1FB; color: #185FA5; }
+        .pill-waiting { background: #FAEEDA; color: #854F0B; }
+        .pill-done { background: #EAF3DE; color: #3B6D11; }
+
+        .output-pill { font-size: 10px; padding: 3px 8px; border-radius: 4px; text-decoration: none; display: inline-block; margin-right: 4px; margin-top: 4px; }
 
         /* Detail page */
-        .back-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #666; cursor: pointer; margin-bottom: 16px; padding: 6px 0; }
-        .back-btn:hover { color: #0052d9; }
-        .steps-nav { display: flex; gap: 0; margin-bottom: 20px; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-        .step-nav { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: 500; color: #666; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s; }
-        .step-nav.active { color: #0052d9; border-bottom-color: #0052d9; background: #f0f5ff; }
-        .step-nav.done { color: #2e7d32; }
-        .step-panel { display: none; }
-        .step-panel.active { display: block; }
+        .back-btn { font-size: 12px; color: #185FA5; cursor: pointer; margin-bottom: 14px; display: inline-block; }
+        .client-header { display: flex; align-items: center; gap: 12px; }
+        .client-avatar { width: 36px; height: 36px; border-radius: 8px; background: #E6F1FB; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 13px; color: #185FA5; }
 
-        .rendered-content { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 24px; font-size: 14px; line-height: 1.9; max-height: 700px; overflow-y: auto; }
-        .rendered-content h1,.rendered-content h2,.rendered-content h3 { color: #0052d9; margin-top: 20px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; }
-        .rendered-content h1 { font-size: 17px; } .rendered-content h2 { font-size: 15px; } .rendered-content h3 { font-size: 14px; border-bottom: none; color: #1a1a1a; }
-        .rendered-content p { margin-bottom: 8px; } .rendered-content ul,.rendered-content ol { padding-left: 20px; margin-bottom: 10px; }
-        .rendered-content li { margin-bottom: 6px; } .rendered-content strong { color: #0052d9; }
-        .rendered-content em { color: #666; font-style: normal; font-size: 13px; }
-        .rendered-content blockquote { border-left: 3px solid #0052d9; padding: 6px 14px; margin: 10px 0; background: #f8faff; border-radius: 0 6px 6px 0; color: #555; font-size: 13px; }
-        .rendered-content table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
-        .rendered-content th,.rendered-content td { border: 1px solid #eee; padding: 6px 10px; text-align: left; }
+        .timeline { display: flex; align-items: flex-start; position: relative; padding: 0 8px; }
+        .timeline-line { position: absolute; top: 12px; left: 32px; right: 32px; height: 2px; background: #e8e8e8; z-index: 0; }
+        .timeline-progress { position: absolute; top: 12px; left: 32px; height: 2px; background: #185FA5; z-index: 1; transition: width 0.3s; }
+        .timeline-node { flex: 1; text-align: center; z-index: 2; }
+        .timeline-dot { width: 24px; height: 24px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; font-weight: 500; }
+        .timeline-label { font-size: 10px; color: #999; margin-top: 4px; }
+        .timeline-outputs { margin-top: 4px; }
+
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .action-card { background: #fff; border-radius: 12px; border: 0.5px solid rgba(0,0,0,0.06); padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.15s; }
+        .action-card:hover { border-color: #185FA5; }
+        .action-icon { width: 36px; height: 36px; border-radius: 8px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .action-card .title { font-size: 13px; font-weight: 500; }
+        .action-card .desc { font-size: 11px; color: #888; margin-top: 3px; }
+
+        .output-list { background: #fff; border-radius: 12px; border: 0.5px solid rgba(0,0,0,0.06); }
+        .output-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 0.5px solid #f5f5f5; }
+        .output-item:last-child { border-bottom: none; }
+        .output-item-icon { width: 28px; height: 28px; border-radius: 6px; background: #E6F1FB; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+        .output-item-info p { margin: 0; }
+        .output-item-info .name { font-size: 13px; font-weight: 500; }
+        .output-item-info .time { font-size: 10px; color: #999; margin-top: 2px; }
+        .output-item-link { font-size: 11px; color: #185FA5; text-decoration: none; }
+
+        .rendered-content { background: #fafbfc; border: 0.5px solid #eee; border-radius: 10px; padding: 20px; font-size: 13px; line-height: 1.9; max-height: 600px; overflow-y: auto; }
+        .rendered-content h1,.rendered-content h2,.rendered-content h3 { color: #185FA5; margin-top: 18px; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 0.5px solid #f0f0f0; }
+        .rendered-content h1 { font-size: 16px; } .rendered-content h2 { font-size: 14px; } .rendered-content h3 { font-size: 13px; border-bottom: none; color: #333; }
+        .rendered-content p { margin-bottom: 6px; } .rendered-content ul,.rendered-content ol { padding-left: 18px; margin-bottom: 8px; }
+        .rendered-content li { margin-bottom: 5px; } .rendered-content strong { color: #185FA5; }
+        .rendered-content em { color: #666; font-style: normal; font-size: 12px; }
+        .rendered-content blockquote { border-left: 2px solid #185FA5; padding: 5px 12px; margin: 8px 0; background: #f8faff; border-radius: 0 6px 6px 0; color: #555; font-size: 12px; }
+        .rendered-content table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+        .rendered-content th,.rendered-content td { border: 0.5px solid #eee; padding: 5px 8px; text-align: left; }
         .rendered-content th { background: #f8f9fa; font-weight: 500; }
 
-        .loading { display: none; text-align: center; padding: 40px; }
+        .loading { display: none; text-align: center; padding: 32px; }
         .loading.visible { display: block; }
-        .loading .spinner { width: 28px; height: 28px; border: 3px solid #e0e0e0; border-top-color: #0052d9; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
+        .loading .spinner { width: 24px; height: 24px; border: 2.5px solid #e0e0e0; border-top-color: #185FA5; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
-        .status-badge.matched { background: #e8f5e9; color: #2e7d32; }
-        .status-badge.unmatched { background: #f5f5f5; color: #999; }
-
-        .upload-area { border: 2px dashed #d0d5dd; border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 14px; }
-        .upload-area:hover { border-color: #0052d9; background: #f8faff; }
-        .upload-area p { color: #666; font-size: 13px; }
-        .upload-area .hint { color: #999; font-size: 12px; margin-top: 4px; }
-        .upload-area .file-name { color: #0052d9; font-weight: 500; margin-top: 6px; font-size: 13px; }
-        .or-divider { text-align: center; color: #999; font-size: 12px; margin: 8px 0; position: relative; }
-        .or-divider::before,.or-divider::after { content:''; position:absolute; top:50%; width:40%; height:1px; background:#e8e8e8; }
+        .upload-area { border: 1.5px dashed #d0d5dd; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.15s; margin-bottom: 12px; }
+        .upload-area:hover { border-color: #185FA5; background: #f8faff; }
+        .upload-area p { color: #666; font-size: 12px; }
+        .upload-area .hint { color: #aaa; font-size: 11px; margin-top: 3px; }
+        .upload-area .file-name { color: #185FA5; font-weight: 500; margin-top: 5px; font-size: 12px; }
+        .or-divider { text-align: center; color: #bbb; font-size: 11px; margin: 6px 0; position: relative; }
+        .or-divider::before,.or-divider::after { content:''; position:absolute; top:50%; width:40%; height:0.5px; background:#e8e8e8; }
         .or-divider::before { left:0; } .or-divider::after { right:0; }
 
         .export-group { position: relative; display: inline-block; }
-        .export-dropdown { display: none; position: absolute; top: 100%; left: 0; margin-top: 4px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; min-width: 160px; overflow: hidden; }
+        .export-dropdown { display: none; position: absolute; top: 100%; left: 0; margin-top: 4px; background: #fff; border: 0.5px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 100; min-width: 140px; overflow: hidden; }
         .export-dropdown.visible { display: block; }
-        .export-dropdown .export-item { padding: 10px 16px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background 0.1s; }
+        .export-dropdown .export-item { padding: 9px 14px; cursor: pointer; font-size: 12px; transition: background 0.1s; }
         .export-dropdown .export-item:hover { background: #f5f7fa; }
 
         .page { display: none; } .page.active { display: block; }
-        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
-        .empty-state p { font-size: 14px; margin-bottom: 16px; }
+        .empty-state { text-align: center; padding: 50px 20px; color: #aaa; }
+        .empty-state p { font-size: 13px; margin-bottom: 14px; }
+
+        .step-panel { display: none; }
     </style>
 </head>
 <body>
 <div class="container">
-    <header>
-        <h1>服务商助手</h1>
-        <p>多客户管理 · 智能提问清单 · 需求结构化转化</p>
-    </header>
 
     <!-- PAGE: Client List -->
     <div id="page-list" class="page active">
-        <div class="card" style="padding:16px 24px;display:flex;justify-content:space-between;align-items:center">
-            <h3 style="margin:0;font-size:15px">我的客户</h3>
-            <button class="btn btn-primary btn-sm" onclick="createClient()">+ 新建客户</button>
+        <div class="app-header">
+            <div>
+                <h1>服务商助手</h1>
+                <p>智能需求调研 · 多客户管理</p>
+            </div>
+            <button class="btn btn-primary" onclick="createClient()">+ 新建客户</button>
         </div>
         <div id="list-inprogress"></div>
         <div id="list-done"></div>
@@ -119,84 +141,57 @@
 
     <!-- PAGE: Client Detail -->
     <div id="page-detail" class="page">
-        <div class="back-btn" onclick="goBack()">← 返回客户列表</div>
-        <div class="card" style="padding:14px 20px;margin-bottom:14px">
+        <span class="back-btn" onclick="goBack()">← 返回客户列表</span>
+
+        <!-- Client header -->
+        <div class="card" style="margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;align-items:center">
-                <div>
-                    <span id="detail-name" style="font-size:16px;font-weight:600;cursor:pointer" onclick="editClientName()" title="点击修改名称"></span>
-                    <span id="detail-industry" style="font-size:12px;color:#888;margin-left:8px"></span>
+                <div class="client-header">
+                    <div class="client-avatar" id="detail-avatar"></div>
+                    <div>
+                        <p style="font-weight:500;font-size:14px;margin:0;cursor:pointer" id="detail-name" onclick="editClientName()"></p>
+                        <p style="font-size:11px;color:#999;margin:2px 0 0" id="detail-industry"></p>
+                    </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
-                    <span id="detail-status" style="font-size:11px;padding:2px 8px;border-radius:4px"></span>
-                    <span onclick="deleteCurrentClient()" style="cursor:pointer;font-size:13px;color:#999;padding:4px" title="删除客户">&times;</span>
+                    <span class="status-pill" id="detail-status"></span>
+                    <span onclick="deleteCurrentClient()" style="cursor:pointer;font-size:14px;color:#ccc;padding:4px" title="删除">&times;</span>
                 </div>
             </div>
         </div>
 
-        <!-- 进度时间轴 -->
-        <div class="card" style="padding:20px 24px" id="progress-timeline">
-            <div style="display:flex;align-items:flex-start;position:relative">
-                <!-- 连接线 -->
-                <div style="position:absolute;top:14px;left:40px;right:40px;height:2px;background:#e0e0e0;z-index:0"></div>
-                <div id="progress-line" style="position:absolute;top:14px;left:40px;height:2px;background:#0052d9;z-index:1;transition:width 0.3s"></div>
-
-                <!-- 节点1: 录入信息 -->
-                <div style="flex:1;text-align:center;position:relative;z-index:2">
-                    <div id="node-0" class="progress-node" style="width:28px;height:28px;border-radius:50%;background:#e0e0e0;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500">1</div>
-                    <div style="font-size:11px;color:#666;margin-top:6px">录入信息</div>
-                    <div id="node-0-outputs" style="margin-top:6px"></div>
-                </div>
-
-                <!-- 节点2: 生成清单 -->
-                <div style="flex:1;text-align:center;position:relative;z-index:2">
-                    <div id="node-1" class="progress-node" style="width:28px;height:28px;border-radius:50%;background:#e0e0e0;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500">2</div>
-                    <div style="font-size:11px;color:#666;margin-top:6px">调研准备</div>
-                    <div id="node-1-outputs" style="margin-top:6px"></div>
-                </div>
-
-                <!-- 节点3: 客户沟通 -->
-                <div style="flex:1;text-align:center;position:relative;z-index:2">
-                    <div id="node-2" class="progress-node" style="width:28px;height:28px;border-radius:50%;background:#e0e0e0;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500">3</div>
-                    <div style="font-size:11px;color:#666;margin-top:6px">客户沟通</div>
-                    <div id="node-2-outputs" style="margin-top:6px"></div>
-                </div>
-
-                <!-- 节点4: 需求报告 -->
-                <div style="flex:1;text-align:center;position:relative;z-index:2">
-                    <div id="node-3" class="progress-node" style="width:28px;height:28px;border-radius:50%;background:#e0e0e0;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500">4</div>
-                    <div style="font-size:11px;color:#666;margin-top:6px">需求报告</div>
-                    <div id="node-3-outputs" style="margin-top:6px"></div>
-                </div>
-
-                <!-- 节点5: Demo交付 -->
-                <div style="flex:1;text-align:center;position:relative;z-index:2">
-                    <div id="node-4" class="progress-node" style="width:28px;height:28px;border-radius:50%;background:#e0e0e0;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:500">5</div>
-                    <div style="font-size:11px;color:#666;margin-top:6px">Demo交付</div>
-                    <div id="node-4-outputs" style="margin-top:6px"></div>
-                </div>
+        <!-- Timeline -->
+        <div class="card" style="padding:14px 20px;margin-bottom:10px">
+            <div class="timeline">
+                <div class="timeline-line"></div>
+                <div class="timeline-progress" id="progress-line"></div>
+                <div class="timeline-node"><div class="timeline-dot" id="node-0">1</div><p class="timeline-label">录入</p><div class="timeline-outputs" id="node-0-outputs"></div></div>
+                <div class="timeline-node"><div class="timeline-dot" id="node-1">2</div><p class="timeline-label">调研准备</p><div class="timeline-outputs" id="node-1-outputs"></div></div>
+                <div class="timeline-node"><div class="timeline-dot" id="node-2">3</div><p class="timeline-label">沟通</p><div class="timeline-outputs" id="node-2-outputs"></div></div>
+                <div class="timeline-node"><div class="timeline-dot" id="node-3">4</div><p class="timeline-label">报告</p><div class="timeline-outputs" id="node-3-outputs"></div></div>
+                <div class="timeline-node"><div class="timeline-dot" id="node-4">5</div><p class="timeline-label">Demo</p><div class="timeline-outputs" id="node-4-outputs"></div></div>
             </div>
         </div>
 
-        <!-- 客户档案卡 -->
-        <div class="card" id="profile-card" style="padding:18px 22px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                <h3 style="margin:0;font-size:14px;color:#666">客户档案</h3>
+        <!-- Profile card (editable) -->
+        <div class="card" id="profile-card" style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <p class="section-label" style="margin:0">客户档案</p>
                 <button class="btn btn-secondary btn-sm" onclick="toggleProfile()">编辑</button>
             </div>
             <div id="profile-view">
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px">
-                    <div><span style="color:#999">行业：</span><span id="pv-industry">-</span></div>
-                    <div><span style="color:#999">业务：</span><span id="pv-business">-</span></div>
-                    <div><span style="color:#999">痛点：</span><span id="pv-pain">-</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:#666">
+                    <div><span style="color:#aaa">业务：</span><span id="pv-business">-</span></div>
+                    <div><span style="color:#aaa">痛点：</span><span id="pv-pain">-</span></div>
                 </div>
             </div>
             <div id="profile-edit" style="display:none">
                 <label>客户行业</label>
-                <input type="text" id="s1-industry" placeholder="如：制造业、汽车金融、服装外贸...">
-                <label>客户业务描述</label>
-                <textarea id="s1-business" placeholder="客户的业务是怎么运转的？"></textarea>
-                <label>希望解决什么痛点</label>
-                <textarea id="s1-pain" placeholder="客户目前最头疼的问题"></textarea>
+                <input type="text" id="s1-industry">
+                <label>业务描述</label>
+                <textarea id="s1-business" style="min-height:60px"></textarea>
+                <label>痛点</label>
+                <textarea id="s1-pain" style="min-height:60px"></textarea>
                 <div class="actions">
                     <button class="btn btn-primary btn-sm" onclick="saveProfile()">保存</button>
                     <button class="btn btn-secondary btn-sm" onclick="toggleProfile()">取消</button>
@@ -204,41 +199,40 @@
             </div>
         </div>
 
-        <!-- 可用操作区 -->
-        <div id="actions-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-            <div class="card" style="padding:18px;cursor:pointer;text-align:center;border:1.5px solid #eee;transition:all 0.2s" onclick="showPanel('step1')" id="action-step1">
-                <div style="font-size:24px;margin-bottom:6px">📋</div>
-                <div style="font-size:14px;font-weight:600">调研准备</div>
-                <div style="font-size:12px;color:#888;margin-top:4px">生成提问清单 + 分析缺失信息</div>
+        <!-- Action cards (平级) -->
+        <p class="section-label">操作</p>
+        <div class="action-grid" id="actions-grid" style="margin-bottom:14px">
+            <div class="action-card" onclick="showPanel('step1')">
+                <div class="action-icon" style="background:#E6F1FB">📋</div>
+                <p class="title">调研准备</p>
+                <p class="desc">生成提问清单 + 分析缺失信息</p>
                 <div id="action-step1-status" style="margin-top:8px"></div>
             </div>
-            <div class="card" style="padding:18px;cursor:pointer;text-align:center;border:1.5px solid #eee;transition:all 0.2s" onclick="showPanel('step2')" id="action-step2">
-                <div style="font-size:24px;margin-bottom:6px">📊</div>
-                <div style="font-size:14px;font-weight:600">需求交付</div>
-                <div style="font-size:12px;color:#888;margin-top:4px">上传沟通记录 → 报告 + Demo</div>
+            <div class="action-card" onclick="showPanel('step2')">
+                <div class="action-icon" style="background:#FAEEDA">📊</div>
+                <p class="title">需求交付</p>
+                <p class="desc">上传沟通记录 → 报告 + Demo</p>
                 <div id="action-step2-status" style="margin-top:8px"></div>
             </div>
         </div>
 
-        <!-- 产出物区域 -->
-        <div class="card" id="outputs-card" style="display:none">
-            <h3 style="font-size:14px;color:#666">产出物</h3>
-            <div id="outputs-list"></div>
+        <!-- Outputs -->
+        <div id="outputs-card" style="display:none">
+            <p class="section-label">产出物</p>
+            <div class="output-list" id="outputs-list"></div>
         </div>
 
-        <!-- Step1 面板 -->
-        <div id="step1" class="step-panel" style="display:none">
+        <!-- Step1 Panel -->
+        <div id="step1" class="step-panel">
             <div class="card">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                     <h3 style="margin:0">调研准备</h3>
-                    <span style="font-size:12px;color:#0052d9;cursor:pointer" onclick="hidePanel()">← 返回</span>
+                    <span style="font-size:12px;color:#185FA5;cursor:pointer" onclick="hidePanel()">← 返回</span>
                 </div>
-                <p style="font-size:13px;color:#666;margin-bottom:16px">基于客户信息+知识库，生成提问清单和分析材料</p>
-                <div class="actions">
-                    <button class="btn btn-primary" onclick="generateStep1()">生成调研准备材料</button>
-                </div>
+                <p style="font-size:12px;color:#888;margin-bottom:14px">基于客户信息 + 知识库，生成提问清单和分析材料</p>
+                <div class="actions"><button class="btn btn-primary" onclick="generateStep1()">生成调研准备材料</button></div>
             </div>
-            <div id="s1-loading" class="loading"><div class="spinner"></div><p>正在匹配知识库...</p></div>
+            <div id="s1-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在匹配知识库...</p></div>
             <div id="s1-result" style="display:none">
                 <div class="card">
                     <h3>调研准备材料</h3>
@@ -258,12 +252,12 @@
             </div>
         </div>
 
-        <!-- Step2 面板 -->
-        <div id="step2" class="step-panel" style="display:none">
+        <!-- Step2 Panel -->
+        <div id="step2" class="step-panel">
             <div class="card">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                     <h3 style="margin:0">需求交付</h3>
-                    <span style="font-size:12px;color:#0052d9;cursor:pointer" onclick="hidePanel()">← 返回</span>
+                    <span style="font-size:12px;color:#185FA5;cursor:pointer" onclick="hidePanel()">← 返回</span>
                 </div>
                 <div class="upload-area" onclick="document.getElementById('file-input').click()">
                     <p>点击上传或拖拽文件</p>
@@ -272,12 +266,10 @@
                 </div>
                 <input type="file" id="file-input" accept=".txt,.docx" style="display:none" onchange="handleFileUpload(event)">
                 <div class="or-divider">或直接粘贴</div>
-                <textarea id="s2-transcript" style="min-height:180px" placeholder="粘贴会议转写或沟通记录..."></textarea>
-                <div class="actions">
-                    <button class="btn btn-primary" onclick="generateStep2()">生成需求报告 + Demo</button>
-                </div>
+                <textarea id="s2-transcript" style="min-height:160px" placeholder="粘贴会议转写或沟通记录..."></textarea>
+                <div class="actions"><button class="btn btn-primary" onclick="generateStep2()">生成需求报告 + Demo</button></div>
             </div>
-            <div id="s2-loading" class="loading"><div class="spinner"></div><p>正在分析...</p></div>
+            <div id="s2-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在分析...</p></div>
             <div id="s2-result" style="display:none">
                 <div class="card">
                     <h3>需求分析报告</h3>
@@ -355,35 +347,46 @@ function renderClientList() {
 
     function renderCard(c) {
         const label = statusLabels[c.status] || '';
-        const statusCls = c.status === 'done' ? 'status-done' : c.status === 'waiting' ? 'status-waiting' : c.status === 'listed' ? 'status-listed' : 'status-draft';
+        const pillCls = c.status === 'done' ? 'pill-done' : c.status === 'waiting' ? 'pill-waiting' : c.status === 'listed' ? 'pill-listed' : 'pill-draft';
+        // Progress dots
+        let level = 0;
+        if (c.industry) level = 1;
+        if (c.step1_result) level = 2;
+        if (c.transcript) level = 3;
+        if (c.step2_report) level = 4;
+        if (c.demo_url) level = 5;
+        let dots = '';
+        for (let i = 0; i < 5; i++) {
+            const color = i < level ? (c.status === 'done' ? '#3B6D11' : '#185FA5') : (i === level ? '#B5D4F4' : '#e0e0e0');
+            dots += `<div class="dot" style="background:${color}"></div>`;
+        }
+        // Output pills
         let outputs = '';
-        if (c.step1_doc_url) outputs += `<a href="${c.step1_doc_url}" target="_blank" onclick="event.stopPropagation()" style="font-size:12px;color:#0052d9;background:#eef4ff;padding:3px 10px;border-radius:4px;text-decoration:none;margin-right:6px">提问清单</a>`;
-        if (c.report_doc_url) outputs += `<a href="${c.report_doc_url}" target="_blank" onclick="event.stopPropagation()" style="font-size:12px;color:#0052d9;background:#eef4ff;padding:3px 10px;border-radius:4px;text-decoration:none;margin-right:6px">调研报告</a>`;
-        if (c.demo_url) outputs += `<a href="${c.demo_url}" target="_blank" onclick="event.stopPropagation()" style="font-size:12px;color:#2e7d32;background:#e8f5e9;padding:3px 10px;border-radius:4px;text-decoration:none">Demo表格</a>`;
-        const outputsHtml = outputs ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px">${outputs}</div>` : '';
-        return `<div class="client-card" onclick="openClient('${c.id}')" style="display:flex;flex-direction:column">
+        if (c.step1_doc_url) outputs += `<a href="${c.step1_doc_url}" target="_blank" onclick="event.stopPropagation()" class="output-pill" style="background:#E6F1FB;color:#185FA5">提问清单</a>`;
+        if (c.report_doc_url) outputs += `<a href="${c.report_doc_url}" target="_blank" onclick="event.stopPropagation()" class="output-pill" style="background:#E6F1FB;color:#185FA5">调研报告</a>`;
+        if (c.demo_url) outputs += `<a href="${c.demo_url}" target="_blank" onclick="event.stopPropagation()" class="output-pill" style="background:#EAF3DE;color:#3B6D11">Demo表格</a>`;
+        const outputsHtml = outputs ? `<div style="margin-top:8px">${outputs}</div>` : '';
+        return `<div class="client-card" onclick="openClient('${c.id}')">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
                 <div><div class="name">${c.name || '未命名'}</div><div class="meta">${c.industry || ''} · ${new Date(c.created_at).toLocaleDateString()}</div></div>
-                <div style="display:flex;align-items:center;gap:6px">
-                    <span class="status ${statusCls}" style="position:static">${label}</span>
-                    <span onclick="event.stopPropagation();deleteClient('${c.id}')" style="cursor:pointer;font-size:18px;color:#ccc;padding:2px 6px;border-radius:4px" title="删除客户">&times;</span>
-                </div>
+                <span class="status-pill ${pillCls}">${label}</span>
             </div>
             ${outputsHtml}
+            <div class="progress-dots">${dots}<span style="font-size:10px;color:#999;margin-left:6px">${level}/5</span></div>
         </div>`;
     }
 
     let html1 = '';
     if (inProgress.length) {
-        html1 = `<div style="margin-top:16px"><div style="font-size:13px;font-weight:500;color:#666;margin-bottom:10px;padding-left:4px">进行中 (${inProgress.length})</div><div class="client-grid">${inProgress.map(renderCard).join('')}<div class="add-card" onclick="createClient()">+ 新建客户</div></div></div>`;
+        html1 = `<p class="section-label">进行中 (${inProgress.length})</p><div class="client-grid">${inProgress.map(renderCard).join('')}<div class="add-card" onclick="createClient()">+ 新建客户</div></div>`;
     } else {
-        html1 = `<div style="margin-top:16px"><div class="client-grid"><div class="add-card" onclick="createClient()">+ 新建客户</div></div></div>`;
+        html1 = `<div class="client-grid"><div class="add-card" onclick="createClient()">+ 新建客户</div></div>`;
     }
     document.getElementById('list-inprogress').innerHTML = html1;
 
     let html2 = '';
     if (done.length) {
-        html2 = `<div style="margin-top:24px"><div style="font-size:13px;font-weight:500;color:#666;margin-bottom:10px;padding-left:4px">已完成 (${done.length})</div><div class="client-grid">${done.map(renderCard).join('')}</div></div>`;
+        html2 = `<p class="section-label" style="margin-top:1.5rem">已完成 (${done.length})</p><div class="client-grid">${done.map(renderCard).join('')}</div>`;
     }
     document.getElementById('list-done').innerHTML = html2;
 }
@@ -434,11 +437,12 @@ function openClient(id) {
     if (!c) return;
     showPage('detail');
     document.getElementById('detail-name').textContent = c.name;
-    document.getElementById('detail-industry').textContent = c.industry || '';
-    const statusMap = { draft: ['待填写','status-draft'], listed: ['已生成清单','status-listed'], waiting: ['待上传转写','status-waiting'], done: ['已完成','status-done'] };
+    document.getElementById('detail-industry').textContent = c.industry ? c.industry + (c.business_desc ? ' · ' + c.business_desc.substring(0,15) : '') : '';
+    document.getElementById('detail-avatar').textContent = (c.name || '?')[0];
+    const statusMap = { draft: ['待填写','pill-draft'], listed: ['已生成清单','pill-listed'], waiting: ['待上传转写','pill-waiting'], done: ['已完成','pill-done'] };
     const [label, cls] = statusMap[c.status] || ['',''];
     const el = document.getElementById('detail-status');
-    el.textContent = label; el.className = cls;
+    el.textContent = label; el.className = 'status-pill ' + cls;
 
     // Profile view
     document.getElementById('pv-industry').textContent = c.industry || '-';
@@ -578,9 +582,9 @@ function updateTimeline(c) {
     // 更新节点颜色
     for (let i = 0; i < 5; i++) {
         const node = document.getElementById('node-' + i);
-        if (i < level) { node.style.background = '#0052d9'; }
-        else if (i === level) { node.style.background = '#64b5f6'; }
-        else { node.style.background = '#e0e0e0'; }
+        if (i < level) { node.style.background = '#185FA5'; }
+        else if (i === level) { node.style.background = '#B5D4F4'; node.style.color = '#185FA5'; }
+        else { node.style.background = '#e8e8e8'; node.style.color = '#999'; }
     }
 
     // 更新进度线宽度
