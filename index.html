@@ -205,7 +205,7 @@
         </div>
 
         <!-- 可用操作区 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div id="actions-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
             <div class="card" style="padding:18px;cursor:pointer;text-align:center;border:1.5px solid #eee;transition:all 0.2s" onclick="showPanel('step1')" id="action-step1">
                 <div style="font-size:24px;margin-bottom:6px">📋</div>
                 <div style="font-size:14px;font-weight:600">调研准备</div>
@@ -470,15 +470,17 @@ function showPanel(panel) {
     document.getElementById('step1').style.display = 'none';
     document.getElementById('step2').style.display = 'none';
     document.getElementById(panel).style.display = 'block';
-    // Hide action cards when panel is open
-    document.querySelector('[onclick="showPanel(\'step1\')"]').closest('div[style*="grid"]').style.display = 'none';
+    document.getElementById('actions-grid').style.display = 'none';
+    document.getElementById('outputs-card').style.display = 'none';
 }
 
 function hidePanel() {
     document.getElementById('step1').style.display = 'none';
     document.getElementById('step2').style.display = 'none';
-    // Show action cards
-    document.querySelector('[onclick="showPanel(\'step1\')"]').closest('div[style*="grid"]').style.display = 'grid';
+    document.getElementById('actions-grid').style.display = 'grid';
+    // Refresh outputs
+    const c = getClient(currentClientId);
+    if (c) renderOutputs(c);
 }
 
 function toggleProfile() {
