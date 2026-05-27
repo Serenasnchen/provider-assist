@@ -123,10 +123,13 @@
         <div class="card" style="padding:14px 20px;margin-bottom:14px">
             <div style="display:flex;justify-content:space-between;align-items:center">
                 <div>
-                    <span id="detail-name" style="font-size:16px;font-weight:600"></span>
+                    <span id="detail-name" style="font-size:16px;font-weight:600;cursor:pointer" onclick="editClientName()" title="点击修改名称"></span>
                     <span id="detail-industry" style="font-size:12px;color:#888;margin-left:8px"></span>
                 </div>
-                <span id="detail-status" style="font-size:11px;padding:2px 8px;border-radius:4px"></span>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <span id="detail-status" style="font-size:11px;padding:2px 8px;border-radius:4px"></span>
+                    <span onclick="deleteCurrentClient()" style="cursor:pointer;font-size:13px;color:#999;padding:4px" title="删除客户">&times;</span>
+                </div>
             </div>
         </div>
 
@@ -198,7 +201,6 @@
                 <div class="card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
                         <h3 style="margin:0">调研准备材料</h3>
-                        <div id="s1-badges"></div>
                     </div>
                     <div id="s1-content" class="rendered-content"></div>
                     <div class="actions">
@@ -396,6 +398,23 @@ function openClient(id) {
 
 function goBack() { showPage('list'); renderClientList(); currentClientId = null; }
 
+function editClientName() {
+    const c = getClient(currentClientId);
+    if (!c) return;
+    const newName = prompt('修改客户名称', c.name);
+    if (newName && newName !== c.name) {
+        updateClient(currentClientId, { name: newName });
+        document.getElementById('detail-name').textContent = newName;
+    }
+}
+
+function deleteCurrentClient() {
+    if (!confirm('确定删除这个客户吗？')) return;
+    const clients = getClients().filter(c => c.id !== currentClientId);
+    saveClients(clients);
+    goBack();
+}
+
 function switchStep(step) {
     document.querySelectorAll('.step-nav').forEach(n => n.classList.remove('active'));
     document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
@@ -481,6 +500,7 @@ async function generateStep1() {
     updateClient(currentClientId, { industry, business_desc: business, pain_points: pain });
 
     document.getElementById('s1-loading').classList.add('visible');
+    document.querySelector('#s1-loading p').textContent = '正在匹配知识库...';
     document.getElementById('s1-result').style.display = 'none';
 
     try {
@@ -492,9 +512,9 @@ async function generateStep1() {
         if (matchData.error) { alert(matchData.error); return; }
 
         const ctx = matchData.context_used || {};
-        document.getElementById('s1-badges').innerHTML = renderBadges(ctx, 'template_matched');
 
-        // Step2: 前端直接调DeepSeek（无超时限制）
+        // 前端直接调DeepSeek（无超时限制）
+        document.querySelector('#s1-loading p').textContent = '正在生成调研准备材料...';
         const result = await callDeepSeek(matchData.system_prompt, matchData.user_prompt);
 
         document.getElementById('s1-content').innerHTML = renderWithTags(result);
@@ -540,6 +560,7 @@ async function generateStep2() {
 
     updateClient(currentClientId, { transcript });
     document.getElementById('s2-loading').classList.add('visible');
+    document.querySelector('#s2-loading p').textContent = '正在匹配知识库...';
     document.getElementById('s2-result').style.display = 'none';
 
     try {
@@ -584,7 +605,9 @@ async function generateStep2() {
         // 2. 客户一致性检测上下文
         const step1Info = c ? `\n## Step1录入的客户信息（用于一致性检查）\n行业：${c.industry||'未填'}\n业务描述：${c.business_desc||'未填'}\n痛点：${c.pain_points||'未填'}\n如果沟通记录中的客户行业/业务与上述信息明显不一致，请在报告开头用⚠️提醒。\n` : '';
 
-        // 3. 生成需求报告
+        // 3. 并行调用DeepSeek生成三个产出物
+        document.querySelector('#s2-loading p').textContent = '正在并行生成报告 + Demo + 待确认事项...';
+
         const reportPrompt = `你是专业的企业微信智能表格售前方案顾问。根据沟通记录+知识库，生成详细需求洞察报告。
 
 ## 输出结构（直接输出，不要开场白/总结语）
@@ -604,11 +627,6 @@ async function generateStep2() {
 
 原则：1.字段设计必须参考知识库中同行业的真实案例 2.痛点引用原话 3.方案要细致到字段名级别`;
 
-        const reportUserPrompt = step1Info + kbContext + '## 客户沟通记录\n\n' + transcript + '\n\n请生成报告（不含待确认事项）。';
-        const report = await callDeepSeek(reportPrompt, reportUserPrompt);
-        document.getElementById('s2-report').innerHTML = renderMarkdown(report);
-
-        // 4. 单独生成待确认事项
         const todoPrompt = `分析沟通记录，找出客户没讲清楚的地方，输出待确认事项清单。直接输出，不要开场白。
 每条格式：
 ❓ **事项名称**：具体问题
@@ -616,17 +634,28 @@ async function generateStep2() {
 - 建议怎么问：xxx
 
 重点检测：流程是否完整、数据接入方式、权限设计、自动化需求、外部系统对接、历史数据迁移、预算时间。`;
-        const todoResult = await callDeepSeek(todoPrompt, '## 沟通记录\n\n' + transcript.substring(0, 3000) + '\n\n请列出待确认事项。');
 
-        // 5. 生成Demo schema
         const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求+知识库字段经验池设计Demo。
 重要：参考知识库中的表结构和字段来设计，不要凭空编。每表8-12字段，2-3条示例数据。
 直接输出JSON，不要markdown代码块。
 格式：{"doc_name":"名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
 类型：FIELD_TYPE_TEXT/NUMBER/SINGLE_SELECT/DATE_TIME/CURRENCY/PERCENTAGE/PROGRESS/PHONE_NUMBER/EMAIL/CHECKBOX`;
-        const schemaUserPrompt = kbContext + '## 沟通记录\n\n' + transcript.substring(0, 2000) + '\n\n设计智能表格Demo。';
-        const schemaText = await callDeepSeek(schemaPrompt, schemaUserPrompt);
 
+        const reportUserPrompt = step1Info + kbContext + '## 客户沟通记录\n\n' + transcript + '\n\n请生成报告（不含待确认事项）。';
+        const todoUserPrompt = '## 沟通记录\n\n' + transcript.substring(0, 3000) + '\n\n请列出待确认事项。';
+        const schemaUserPrompt = kbContext + '## 沟通记录\n\n' + transcript.substring(0, 2000) + '\n\n设计智能表格Demo。';
+
+        // 并行执行3个调用
+        const [report, todoResult, schemaText] = await Promise.all([
+            callDeepSeek(reportPrompt, reportUserPrompt),
+            callDeepSeek(todoPrompt, todoUserPrompt),
+            callDeepSeek(schemaPrompt, schemaUserPrompt)
+        ]);
+
+        // 渲染报告
+        document.getElementById('s2-report').innerHTML = renderMarkdown(report);
+
+        // 解析并渲染schema
         let schema = null;
         try { schema = JSON.parse(schemaText); } catch {
             const m = schemaText.match(/```(?:json)?\s*([\s\S]*?)```/);
