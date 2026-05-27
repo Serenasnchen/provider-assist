@@ -52,6 +52,7 @@ def extract(mcp_resp):
 
 def format_for_wecom_doc(title, raw_content):
     """将原始文本格式化为企微文档友好的Markdown"""
+    import re
     lines = []
     # 文档标题
     lines.append(f"# {title}")
@@ -59,24 +60,28 @@ def format_for_wecom_doc(title, raw_content):
     lines.append("---")
     lines.append("")
 
-    # 处理原始内容：确保格式整洁
+    question_num = 0  # 自动给问题编号
+
+    # 处理原始内容
     for line in raw_content.split("\n"):
         stripped = line.strip()
         # 标准化标题级别
-        if stripped.startswith("## "):
+        if stripped.startswith("## ") or stripped.startswith("### "):
             lines.append("")
             lines.append(stripped)
             lines.append("")
-        elif stripped.startswith("### "):
-            lines.append("")
-            lines.append(stripped)
-            lines.append("")
+            question_num = 0  # 每个新section重置编号
         elif stripped.startswith("> "):
             lines.append(stripped)
         elif stripped.startswith("- ") or stripped.startswith("* "):
             lines.append(stripped)
-        elif stripped and stripped[0].isdigit() and ". " in stripped[:4]:
+        elif stripped and stripped[0].isdigit() and ". " in stripped[:5]:
+            # 已经有编号的问题，保留
             lines.append(stripped)
+        elif re.match(r'^[\[【]', stripped):
+            # 以维度标签开头但没有编号的问题行，自动加编号
+            question_num += 1
+            lines.append(f"{question_num}. {stripped}")
         elif stripped == "---":
             lines.append("")
             lines.append("---")
