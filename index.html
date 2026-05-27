@@ -207,10 +207,11 @@
                             <div id="s1-export" class="export-dropdown">
                                 <div class="export-item" onclick="exportWord('s1-content','提问清单')"><span class="icon">W</span> Word 文档</div>
                                 <div class="export-item" onclick="exportPDF('s1-content','提问清单')"><span class="icon">P</span> PDF 文档</div>
-                                <div class="export-item" onclick="copyForWecom('s1-content')"><span class="icon">企</span> 复制为企微文档</div>
+                                <div class="export-item" onclick="exportWecomDoc('s1-content','提问清单')"><span class="icon">企</span> 企业微信文档</div>
                             </div>
                         </div>
                     </div>
+                    <div id="s1-wecom-result" style="margin-top:12px;display:none"></div>
                 </div>
             </div>
         </div>
@@ -266,7 +267,7 @@
                             <div id="s2-export" class="export-dropdown">
                                 <div class="export-item" onclick="exportWord('s2-report','需求分析报告')"><span class="icon">W</span> Word 文档</div>
                                 <div class="export-item" onclick="exportPDF('s2-report','需求分析报告')"><span class="icon">P</span> PDF 文档</div>
-                                <div class="export-item" onclick="copyForWecom('s2-report')"><span class="icon">企</span> 复制为企微文档</div>
+                                <div class="export-item" onclick="exportWecomDoc('s2-report','需求分析报告')"><span class="icon">企</span> 企业微信文档</div>
                             </div>
                         </div>
                     </div>
@@ -283,7 +284,7 @@
                             <div id="s2-schema-export" class="export-dropdown">
                                 <div class="export-item" onclick="exportWord('s2-schema','字段设计方案')"><span class="icon">W</span> Word 文档</div>
                                 <div class="export-item" onclick="exportPDF('s2-schema','字段设计方案')"><span class="icon">P</span> PDF 文档</div>
-                                <div class="export-item" onclick="copyForWecom('s2-schema')"><span class="icon">企</span> 复制为企微文档</div>
+                                <div class="export-item" onclick="exportWecomDoc('s2-schema','字段设计方案')"><span class="icon">企</span> 企业微信文档</div>
                             </div>
                         </div>
                     </div>
@@ -528,7 +529,7 @@
         }
 
         function copyForWecom(elementId) {
-            // Copy as rich text for WeChat Work docs
+            // Legacy: copy as rich text
             const el = document.getElementById(elementId);
             const selection = window.getSelection();
             const range = document.createRange();
@@ -537,8 +538,51 @@
             selection.addRange(range);
             document.execCommand('copy');
             selection.removeAllRanges();
-            showToast('已复制富文本，可直接粘贴到企微文档');
+            showToast('已复制富文本');
             closeAllExports();
+        }
+
+        // 导出为企微文档（真实API创建）
+        async function exportWecomDoc(elementId, title) {
+            closeAllExports();
+            const el = document.getElementById(elementId);
+            const text = el.innerText;
+            if (!text) { showToast('没有内容可导出'); return; }
+
+            showToast('正在创建企微文档...');
+
+            try {
+                const resp = await fetch('/api/export_doc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: title, content: text })
+                });
+                const data = await resp.json();
+
+                if (data.success && data.url) {
+                    // 显示成功结果和链接
+                    const resultDiv = el.closest('.card').querySelector('[id$="-wecom-result"]') ||
+                                      el.closest('.card').querySelector('.actions');
+                    const linkHtml = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;margin-top:12px;font-size:14px">' +
+                        '<strong>企微文档已创建</strong><br>' +
+                        '<a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;text-decoration:underline;display:inline-block;margin-top:4px">点击打开企微文档 →</a></div>';
+
+                    // 找到对应的result div或在actions后插入
+                    let targetDiv = document.getElementById(elementId.replace('-content','-wecom-result').replace('-report','-wecom-result'));
+                    if (!targetDiv) {
+                        targetDiv = document.createElement('div');
+                        targetDiv.style.marginTop = '12px';
+                        el.closest('.card').appendChild(targetDiv);
+                    }
+                    targetDiv.innerHTML = linkHtml;
+                    targetDiv.style.display = 'block';
+                    showToast('企微文档创建成功');
+                } else {
+                    showToast('创建失败: ' + (data.error || ''));
+                }
+            } catch (e) {
+                showToast('请求失败: ' + e.message);
+            }
         }
 
         function toggleExport(id) {
