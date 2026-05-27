@@ -60,10 +60,10 @@ def markdown_to_doc_content(markdown_text):
 
 def create_wecom_doc(title, content):
     """创建企微文档并写入内容"""
-    # 1. 创建文档 (doc_type=1 为普通文档)
-    r = extract(call_mcp("create_doc", {"doc_type": 1, "doc_name": title}))
+    # 1. 创建文档 (doc_type=3 为企微文档)
+    r = extract(call_mcp("create_doc", {"doc_type": 3, "doc_name": title}))
     if not r:
-        return {"success": False, "error": "创建文档失败"}
+        return {"success": False, "error": "创建文档失败: 无响应"}
 
     if isinstance(r, dict) and r.get("errcode", 0) != 0:
         return {"success": False, "error": f"创建文档失败: {r.get('errmsg', '')}"}
@@ -74,11 +74,12 @@ def create_wecom_doc(title, content):
     if not docid:
         return {"success": False, "error": "未获取到文档ID", "detail": str(r)}
 
-    # 2. 写入内容
+    # 2. 用 edit_doc_content 写入 Markdown 内容
     try:
-        write_result = call_mcp("insert_content_to_doc", {
+        write_result = call_mcp("edit_doc_content", {
             "docid": docid,
-            "content": content
+            "content": content,
+            "content_type": 1
         })
     except Exception as e:
         # 即使写入失败，文档已创建，返回链接
