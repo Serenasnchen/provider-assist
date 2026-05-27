@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>服务商助手 - 智能需求调研工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -12,191 +14,151 @@
             color: #1a1a1a;
             line-height: 1.6;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        header {
-            text-align: center;
-            padding: 30px 0 20px;
-        }
-        header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1a1a1a;
-        }
-        header p {
-            color: #666;
-            font-size: 14px;
-            margin-top: 6px;
-        }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; padding: 30px 0 20px; }
+        header h1 { font-size: 24px; font-weight: 600; }
+        header p { color: #666; font-size: 14px; margin-top: 6px; }
 
-        /* Tabs */
         .tabs {
-            display: flex;
-            gap: 0;
-            margin-bottom: 24px;
-            background: #fff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: flex; margin-bottom: 24px; background: #fff;
+            border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
         .tab {
-            flex: 1;
-            padding: 14px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: #666;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
+            flex: 1; padding: 14px; text-align: center; cursor: pointer;
+            font-size: 14px; font-weight: 500; color: #666;
+            border-bottom: 2px solid transparent; transition: all 0.2s;
         }
-        .tab.active {
-            color: #0052d9;
-            border-bottom-color: #0052d9;
-            background: #f0f5ff;
-        }
-        .tab:hover:not(.active) {
-            background: #fafafa;
-        }
+        .tab.active { color: #0052d9; border-bottom-color: #0052d9; background: #f0f5ff; }
+        .tab:hover:not(.active) { background: #fafafa; }
 
-        /* Cards */
         .card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            background: #fff; border-radius: 12px; padding: 24px;
+            margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
-        .card h3 {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: #1a1a1a;
-        }
-        .card label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 6px;
-        }
+        .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .card label { display: block; font-size: 13px; font-weight: 500; color: #333; margin-bottom: 6px; }
         .card input, .card textarea, .card select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 14px;
-            transition: border-color 0.2s;
+            width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0;
+            border-radius: 8px; font-size: 14px; margin-bottom: 14px; transition: border-color 0.2s;
         }
-        .card input:focus, .card textarea:focus {
-            outline: none;
-            border-color: #0052d9;
-        }
-        .card textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-        .card textarea.large {
-            min-height: 250px;
-        }
+        .card input:focus, .card textarea:focus { outline: none; border-color: #0052d9; }
+        .card textarea { min-height: 120px; resize: vertical; }
+        .card textarea.large { min-height: 250px; }
 
-        /* Buttons */
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 20px; border: none; border-radius: 8px;
+            font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;
         }
-        .btn-primary {
-            background: #0052d9;
-            color: #fff;
-        }
-        .btn-primary:hover {
-            background: #003eb3;
-        }
-        .btn-primary:disabled {
-            background: #a0c4ff;
-            cursor: not-allowed;
-        }
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
+        .btn-primary { background: #0052d9; color: #fff; }
+        .btn-primary:hover { background: #003eb3; }
+        .btn-primary:disabled { background: #a0c4ff; cursor: not-allowed; }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-icon { padding: 8px 14px; font-size: 13px; }
 
-        /* Results */
-        .result-section {
-            display: none;
-        }
-        .result-section.visible {
-            display: block;
-        }
-        .result-content {
-            background: #fafbfc;
-            border: 1px solid #e8e8e8;
-            border-radius: 8px;
-            padding: 20px;
-            font-size: 14px;
-            line-height: 1.8;
-            white-space: pre-wrap;
-            max-height: 600px;
-            overflow-y: auto;
-        }
+        .result-section { display: none; }
+        .result-section.visible { display: block; }
 
-        /* Loading */
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 40px;
+        /* Markdown rendered content */
+        .rendered-content {
+            background: #fff; border: 1px solid #eee; border-radius: 10px;
+            padding: 28px; font-size: 14px; line-height: 1.9;
+            max-height: 700px; overflow-y: auto;
         }
-        .loading.visible {
-            display: block;
+        .rendered-content h1, .rendered-content h2, .rendered-content h3 {
+            color: #0052d9; margin-top: 24px; margin-bottom: 12px;
+            padding-bottom: 8px; border-bottom: 1px solid #f0f0f0;
         }
+        .rendered-content h1 { font-size: 18px; }
+        .rendered-content h2 { font-size: 16px; }
+        .rendered-content h3 { font-size: 15px; border-bottom: none; color: #1a1a1a; }
+        .rendered-content h4 { font-size: 14px; color: #333; margin-top: 16px; margin-bottom: 8px; }
+        .rendered-content p { margin-bottom: 10px; }
+        .rendered-content ul, .rendered-content ol { padding-left: 20px; margin-bottom: 12px; }
+        .rendered-content li { margin-bottom: 8px; }
+        .rendered-content li > ul, .rendered-content li > ol { margin-top: 6px; margin-bottom: 0; }
+        .rendered-content strong { color: #0052d9; font-weight: 600; }
+        .rendered-content em { color: #666; font-style: normal; font-size: 13px; }
+        .rendered-content blockquote {
+            border-left: 3px solid #0052d9; padding: 8px 16px; margin: 12px 0;
+            background: #f8faff; border-radius: 0 6px 6px 0; color: #555;
+        }
+        .rendered-content code {
+            background: #f5f5f5; padding: 2px 6px; border-radius: 4px;
+            font-family: monospace; font-size: 13px;
+        }
+        .rendered-content hr {
+            border: none; border-top: 1px solid #eee; margin: 20px 0;
+        }
+        .rendered-content table {
+            width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px;
+        }
+        .rendered-content th, .rendered-content td {
+            border: 1px solid #eee; padding: 8px 12px; text-align: left;
+        }
+        .rendered-content th { background: #f8f9fa; font-weight: 500; }
+
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.visible { display: block; }
         .loading .spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid #e0e0e0;
-            border-top-color: #0052d9;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 12px;
+            width: 32px; height: 32px; border: 3px solid #e0e0e0;
+            border-top-color: #0052d9; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 12px;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Status badge */
         .status-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-right: 6px;
+            display: inline-block; padding: 3px 8px; border-radius: 4px;
+            font-size: 12px; margin-right: 6px;
         }
         .status-badge.matched { background: #e8f5e9; color: #2e7d32; }
         .status-badge.unmatched { background: #f5f5f5; color: #999; }
 
-        /* Sections visibility */
         .step-panel { display: none; }
         .step-panel.active { display: block; }
+        .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
 
-        .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 16px;
+        /* Export dropdown */
+        .export-group { position: relative; display: inline-block; }
+        .export-dropdown {
+            display: none; position: absolute; top: 100%; left: 0; margin-top: 4px;
+            background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; min-width: 160px;
+            overflow: hidden;
         }
+        .export-dropdown.visible { display: block; }
+        .export-dropdown .export-item {
+            padding: 10px 16px; cursor: pointer; font-size: 13px;
+            display: flex; align-items: center; gap: 8px; transition: background 0.1s;
+        }
+        .export-dropdown .export-item:hover { background: #f5f7fa; }
+        .export-dropdown .export-item .icon { font-size: 16px; }
+
+        /* File upload */
+        .upload-area {
+            border: 2px dashed #d0d5dd; border-radius: 10px; padding: 30px;
+            text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 14px;
+        }
+        .upload-area:hover { border-color: #0052d9; background: #f8faff; }
+        .upload-area.dragover { border-color: #0052d9; background: #eef4ff; }
+        .upload-area p { color: #666; font-size: 14px; }
+        .upload-area .hint { color: #999; font-size: 12px; margin-top: 6px; }
+        .upload-area .file-name {
+            color: #0052d9; font-weight: 500; margin-top: 8px; font-size: 14px;
+        }
+
+        /* Tab separator */
+        .or-divider {
+            text-align: center; color: #999; font-size: 13px; margin: 10px 0;
+            position: relative;
+        }
+        .or-divider::before, .or-divider::after {
+            content: ''; position: absolute; top: 50%; width: 40%;
+            height: 1px; background: #e8e8e8;
+        }
+        .or-divider::before { left: 0; }
+        .or-divider::after { right: 0; }
     </style>
 </head>
 <body>
@@ -211,19 +173,16 @@
             <div class="tab" onclick="switchTab('step2')">Step 2: 需求结构化转化</div>
         </div>
 
-        <!-- Step 1: 智能提问清单 -->
+        <!-- Step 1 -->
         <div id="step1-panel" class="step-panel active">
             <div class="card">
                 <h3>客户基本信息</h3>
-                <label>客户行业 *</label>
+                <label>客户行业</label>
                 <input type="text" id="s1-industry" placeholder="如：制造业、餐饮、服装外贸、装修...">
-
-                <label>客户描述/痛点</label>
-                <textarea id="s1-pain" placeholder="客户是怎么描述他们的问题的？比如：&#10;- 我们现在用Excel管订单，经常出错&#10;- 生产进度没办法实时追踪&#10;- 老板想看数据报表但没有..."></textarea>
-
+                <label>客户描述 / 痛点</label>
+                <textarea id="s1-pain" placeholder="客户是怎么描述他们的问题的？比如：&#10;我们现在用Excel管订单，经常出错&#10;生产进度没办法实时追踪&#10;老板想看数据报表但没有"></textarea>
                 <label>需求方向（可选）</label>
                 <input type="text" id="s1-direction" placeholder="如：订单管理、CRM、生产进度追踪...">
-
                 <div class="actions">
                     <button class="btn btn-primary" onclick="generateQuestionList()">生成提问清单</button>
                 </div>
@@ -236,25 +195,45 @@
 
             <div id="s1-result" class="result-section">
                 <div class="card">
-                    <h3>智能提问清单</h3>
-                    <div id="s1-context-info"></div>
-                    <div id="s1-content" class="result-content"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                        <h3 style="margin-bottom:0">提问清单</h3>
+                        <div id="s1-context-info" style="display:flex;gap:4px"></div>
+                    </div>
+                    <div id="s1-content" class="rendered-content"></div>
                     <div class="actions">
-                        <button class="btn btn-secondary" onclick="copyResult('s1-content')">复制清单</button>
+                        <button class="btn btn-secondary btn-icon" onclick="copyRendered('s1-content')">复制文本</button>
+                        <div class="export-group">
+                            <button class="btn btn-secondary btn-icon" onclick="toggleExport('s1-export')">导出</button>
+                            <div id="s1-export" class="export-dropdown">
+                                <div class="export-item" onclick="exportWord('s1-content','提问清单')"><span class="icon">W</span> Word 文档</div>
+                                <div class="export-item" onclick="exportPDF('s1-content','提问清单')"><span class="icon">P</span> PDF 文档</div>
+                                <div class="export-item" onclick="copyForWecom('s1-content')"><span class="icon">企</span> 复制为企微文档</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Step 2: 需求结构化转化 -->
+        <!-- Step 2 -->
         <div id="step2-panel" class="step-panel">
             <div class="card">
                 <h3>沟通记录输入</h3>
-                <label>客户行业 *</label>
+                <label>客户行业</label>
                 <input type="text" id="s2-industry" placeholder="如：制造业、餐饮、服装外贸...">
 
-                <label>会议转写 / 沟通记录 *</label>
-                <textarea id="s2-transcript" class="large" placeholder="粘贴腾讯会议的文字转写内容，或服务商与客户的沟通记录...&#10;&#10;支持任意格式的文本，AI 会自动提取需求信息。"></textarea>
+                <label>上传文档</label>
+                <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+                    <p>点击上传或拖拽文件到此处</p>
+                    <p class="hint">支持 .txt / .doc / .docx / .pdf 格式</p>
+                    <p class="file-name" id="upload-filename"></p>
+                </div>
+                <input type="file" id="file-input" accept=".txt,.doc,.docx,.pdf" style="display:none" onchange="handleFileUpload(event)">
+
+                <div class="or-divider">或直接粘贴文本</div>
+
+                <label>会议转写 / 沟通记录</label>
+                <textarea id="s2-transcript" class="large" placeholder="粘贴腾讯会议的文字转写、沟通记录或任何形式的文本..."></textarea>
 
                 <label>输出类型</label>
                 <select id="s2-output-type">
@@ -275,19 +254,37 @@
 
             <div id="s2-result" class="result-section">
                 <div class="card">
-                    <h3>需求分析报告</h3>
-                    <div id="s2-context-info"></div>
-                    <div id="s2-report" class="result-content"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                        <h3 style="margin-bottom:0">需求分析报告</h3>
+                        <div id="s2-context-info" style="display:flex;gap:4px"></div>
+                    </div>
+                    <div id="s2-report" class="rendered-content"></div>
                     <div class="actions">
-                        <button class="btn btn-secondary" onclick="copyResult('s2-report')">复制报告</button>
+                        <button class="btn btn-secondary btn-icon" onclick="copyRendered('s2-report')">复制文本</button>
+                        <div class="export-group">
+                            <button class="btn btn-secondary btn-icon" onclick="toggleExport('s2-export')">导出</button>
+                            <div id="s2-export" class="export-dropdown">
+                                <div class="export-item" onclick="exportWord('s2-report','需求分析报告')"><span class="icon">W</span> Word 文档</div>
+                                <div class="export-item" onclick="exportPDF('s2-report','需求分析报告')"><span class="icon">P</span> PDF 文档</div>
+                                <div class="export-item" onclick="copyForWecom('s2-report')"><span class="icon">企</span> 复制为企微文档</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div id="s2-schema-card" class="card">
                     <h3>字段设计方案</h3>
-                    <div id="s2-schema" class="result-content"></div>
+                    <div id="s2-schema" class="rendered-content"></div>
                     <div class="actions">
-                        <button class="btn btn-secondary" onclick="copyResult('s2-schema')">复制方案</button>
+                        <button class="btn btn-secondary btn-icon" onclick="copyRendered('s2-schema')">复制文本</button>
+                        <div class="export-group">
+                            <button class="btn btn-secondary btn-icon" onclick="toggleExport('s2-schema-export')">导出</button>
+                            <div id="s2-schema-export" class="export-dropdown">
+                                <div class="export-item" onclick="exportWord('s2-schema','字段设计方案')"><span class="icon">W</span> Word 文档</div>
+                                <div class="export-item" onclick="exportPDF('s2-schema','字段设计方案')"><span class="icon">P</span> PDF 文档</div>
+                                <div class="export-item" onclick="copyForWecom('s2-schema')"><span class="icon">企</span> 复制为企微文档</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -295,10 +292,20 @@
     </div>
 
     <script>
+        // Configure marked
+        marked.setOptions({ breaks: true, gfm: true });
+
+        function renderMarkdown(text) {
+            // Clean AI artifacts: remove leading "好的..." intro paragraphs
+            text = text.replace(/^(好的|作为|我已经|根据您|以下是).*?(\n---|\n##|\n###)/s, '$2');
+            // Remove isolated --- at start
+            text = text.replace(/^\s*---\s*\n/, '');
+            return marked.parse(text);
+        }
+
         function switchTab(step) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-
             if (step === 'step1') {
                 document.querySelectorAll('.tab')[0].classList.add('active');
                 document.getElementById('step1-panel').classList.add('active');
@@ -308,15 +315,12 @@
             }
         }
 
+        // === Step 1 ===
         async function generateQuestionList() {
             const industry = document.getElementById('s1-industry').value.trim();
             const pain = document.getElementById('s1-pain').value.trim();
             const direction = document.getElementById('s1-direction').value.trim();
-
-            if (!industry) {
-                alert('请填写客户行业');
-                return;
-            }
+            if (!industry) { alert('请填写客户行业'); return; }
 
             document.getElementById('s1-loading').classList.add('visible');
             document.getElementById('s1-result').classList.remove('visible');
@@ -325,29 +329,14 @@
                 const resp = await fetch('/api/question_list', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        industry: industry,
-                        pain_points: pain,
-                        direction: direction,
-                        description: `${pain} ${direction}`.trim()
-                    })
+                    body: JSON.stringify({ industry, pain_points: pain, direction, description: `${pain} ${direction}`.trim() })
                 });
                 const data = await resp.json();
+                if (data.error) { alert(data.error); return; }
 
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                    return;
-                }
-
-                // 显示知识库匹配状态
                 const ctx = data.context_used || {};
-                let badges = '';
-                badges += `<span class="status-badge ${ctx.industry_matched ? 'matched' : 'unmatched'}">${ctx.industry_matched ? '行业知识已匹配' : '行业未匹配'}</span>`;
-                badges += `<span class="status-badge ${ctx.cases_matched ? 'matched' : 'unmatched'}">${ctx.cases_matched ? '案例已匹配' : '无匹配案例'}</span>`;
-                badges += `<span class="status-badge ${ctx.template_matched ? 'matched' : 'unmatched'}">${ctx.template_matched ? '字段模板已匹配' : '无匹配模板'}</span>`;
-                document.getElementById('s1-context-info').innerHTML = `<p style="margin-bottom:12px">${badges}</p>`;
-
-                document.getElementById('s1-content').textContent = data.question_list || '生成失败';
+                document.getElementById('s1-context-info').innerHTML = renderBadges(ctx, 'template_matched');
+                document.getElementById('s1-content').innerHTML = renderMarkdown(data.question_list || '');
                 document.getElementById('s1-result').classList.add('visible');
             } catch (e) {
                 alert('请求失败: ' + e.message);
@@ -356,15 +345,49 @@
             }
         }
 
+        // === Step 2 ===
+        let uploadedText = '';
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('upload-filename').textContent = file.name;
+
+            if (file.name.endsWith('.txt')) {
+                const reader = new FileReader();
+                reader.onload = (e) => { uploadedText = e.target.result; };
+                reader.readAsText(file);
+            } else {
+                // For doc/docx/pdf, we read as text (basic) or show notice
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedText = e.target.result;
+                };
+                reader.readAsText(file);
+                // Note: full docx/pdf parsing would need server-side processing
+            }
+        }
+
+        // Drag and drop
+        const uploadArea = document.getElementById('upload-area');
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+            uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault(); uploadArea.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    document.getElementById('file-input').files = e.dataTransfer.files;
+                    handleFileUpload({ target: { files: [file] } });
+                }
+            });
+        }
+
         async function analyzeTranscript() {
             const industry = document.getElementById('s2-industry').value.trim();
-            const transcript = document.getElementById('s2-transcript').value.trim();
+            const transcript = uploadedText || document.getElementById('s2-transcript').value.trim();
             const outputType = document.getElementById('s2-output-type').value;
-
-            if (!transcript) {
-                alert('请粘贴沟通记录');
-                return;
-            }
+            if (!transcript) { alert('请粘贴沟通记录或上传文档'); return; }
 
             document.getElementById('s2-loading').classList.add('visible');
             document.getElementById('s2-result').classList.remove('visible');
@@ -373,40 +396,23 @@
                 const resp = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        industry: industry,
-                        transcript: transcript,
-                        output_type: outputType
-                    })
+                    body: JSON.stringify({ industry, transcript, output_type: outputType })
                 });
                 const data = await resp.json();
+                if (data.error) { alert(data.error); return; }
 
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                    return;
-                }
-
-                // 匹配状态
                 const ctx = data.context_used || {};
-                let badges = '';
-                badges += `<span class="status-badge ${ctx.industry_matched ? 'matched' : 'unmatched'}">${ctx.industry_matched ? '行业知识已匹配' : '行业未匹配'}</span>`;
-                badges += `<span class="status-badge ${ctx.cases_matched ? 'matched' : 'unmatched'}">${ctx.cases_matched ? '案例已匹配' : '无匹配案例'}</span>`;
-                badges += `<span class="status-badge ${ctx.templates_matched ? 'matched' : 'unmatched'}">${ctx.templates_matched ? '字段模板已匹配' : '无匹配模板'}</span>`;
-                document.getElementById('s2-context-info').innerHTML = `<p style="margin-bottom:12px">${badges}</p>`;
+                document.getElementById('s2-context-info').innerHTML = renderBadges(ctx, 'templates_matched');
 
-                // 显示报告
                 if (data.report) {
-                    document.getElementById('s2-report').textContent = data.report;
+                    document.getElementById('s2-report').innerHTML = renderMarkdown(data.report);
                 }
-
-                // 显示字段设计
                 if (data.schema) {
-                    document.getElementById('s2-schema').textContent = data.schema;
+                    document.getElementById('s2-schema').innerHTML = renderMarkdown(data.schema);
                     document.getElementById('s2-schema-card').style.display = 'block';
                 } else {
                     document.getElementById('s2-schema-card').style.display = 'none';
                 }
-
                 document.getElementById('s2-result').classList.add('visible');
             } catch (e) {
                 alert('请求失败: ' + e.message);
@@ -415,12 +421,99 @@
             }
         }
 
-        function copyResult(elementId) {
-            const text = document.getElementById(elementId).textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                alert('已复制到剪贴板');
-            });
+        // === Helpers ===
+        function renderBadges(ctx, templateKey) {
+            return `<span class="status-badge ${ctx.industry_matched ? 'matched' : 'unmatched'}">${ctx.industry_matched ? '行业' : '行业未匹配'}</span>` +
+                   `<span class="status-badge ${ctx.cases_matched ? 'matched' : 'unmatched'}">${ctx.cases_matched ? '案例' : '无案例'}</span>` +
+                   `<span class="status-badge ${ctx[templateKey] ? 'matched' : 'unmatched'}">${ctx[templateKey] ? '模板' : '无模板'}</span>`;
+        }
+
+        function copyRendered(elementId) {
+            const el = document.getElementById(elementId);
+            const text = el.innerText;
+            navigator.clipboard.writeText(text).then(() => showToast('已复制'));
+        }
+
+        function copyForWecom(elementId) {
+            // Copy as rich text for WeChat Work docs
+            const el = document.getElementById(elementId);
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            document.execCommand('copy');
+            selection.removeAllRanges();
+            showToast('已复制富文本，可直接粘贴到企微文档');
+            closeAllExports();
+        }
+
+        function toggleExport(id) {
+            closeAllExports();
+            document.getElementById(id).classList.toggle('visible');
+        }
+
+        function closeAllExports() {
+            document.querySelectorAll('.export-dropdown').forEach(d => d.classList.remove('visible'));
+        }
+
+        // Close export menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.export-group')) closeAllExports();
+        });
+
+        // === Export Functions ===
+        function exportWord(elementId, title) {
+            const content = document.getElementById(elementId).innerHTML;
+            const html = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+                <head><meta charset="utf-8"><title>${title}</title>
+                <style>body{font-family:"Microsoft YaHei",sans-serif;font-size:12pt;line-height:1.8}
+                h1{font-size:18pt;color:#0052d9}h2{font-size:15pt;color:#0052d9}h3{font-size:13pt}
+                strong{color:#0052d9}em{color:#666}li{margin-bottom:4pt}
+                blockquote{border-left:3px solid #0052d9;padding-left:12px;color:#555}</style>
+                </head><body>${content}</body></html>`;
+            const blob = new Blob([html], { type: 'application/msword' });
+            downloadBlob(blob, `${title}.doc`);
+            closeAllExports();
+        }
+
+        function exportPDF(elementId, title) {
+            const el = document.getElementById(elementId);
+            const opt = {
+                margin: [15, 15, 15, 15],
+                filename: `${title}.pdf`,
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(el).save();
+            closeAllExports();
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.textContent = msg;
+            toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:6px;font-size:14px;z-index:9999;animation:fadeInOut 2s ease-in-out';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
         }
     </script>
+    <style>
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
 </body>
 </html>
