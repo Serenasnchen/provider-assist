@@ -840,12 +840,12 @@ function updateTimeline(c) {
     document.getElementById('node-4-outputs').innerHTML = n4;
 }
 
-// === DeepSeek API (通过后端代理，Key不暴露) ===
+// === DeepSeek API (前端直调，无超时限制) ===
 async function callDeepSeek(systemPrompt, userPrompt) {
-    const resp = await fetch('/api/chat', {
+    const resp = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], max_tokens: 4500, temperature: 0.7 })
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-63d4e005ecb646b08538368c5172ed82' },
+        body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], max_tokens: 4500, temperature: 0.7 })
     });
     if (!resp.ok) {
         const errText = await resp.text().catch(() => '');
