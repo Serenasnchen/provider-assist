@@ -464,9 +464,12 @@ function openClient(id) {
     el.textContent = label; el.className = 'status-pill ' + cls;
 
     // Profile view
-    document.getElementById('pv-industry').textContent = c.industry || '-';
-    document.getElementById('pv-business').textContent = (c.business_desc || '-').substring(0, 40);
-    document.getElementById('pv-pain').textContent = (c.pain_points || '-').substring(0, 40);
+    const pvInd = document.getElementById('pv-industry');
+    const pvBiz = document.getElementById('pv-business');
+    const pvPain = document.getElementById('pv-pain');
+    if (pvInd) pvInd.textContent = c.industry || '-';
+    if (pvBiz) pvBiz.textContent = (c.business_desc || '-').substring(0, 40);
+    if (pvPain) pvPain.textContent = (c.pain_points || '-').substring(0, 40);
     document.getElementById('profile-edit').style.display = 'none';
     document.getElementById('profile-view').style.display = 'block';
 
