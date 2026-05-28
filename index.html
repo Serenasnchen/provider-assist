@@ -210,16 +210,16 @@
             </div>
             <div id="profile-view">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:#666">
-                    <div><span style="color:#aaa">业务：</span><span id="pv-business">-</span></div>
+                    <div><span style="color:#aaa">业务概述：</span><span id="pv-business">-</span></div>
                     <div><span style="color:#aaa">痛点：</span><span id="pv-pain">-</span></div>
                 </div>
             </div>
             <div id="profile-edit" style="display:none">
                 <label>客户行业</label>
                 <input type="text" id="s1-industry">
-                <label>业务描述</label>
+                <label>本次定制开发业务概述</label>
                 <textarea id="s1-business" style="min-height:60px"></textarea>
-                <label>痛点</label>
+                <label>本次定制开发需要智能表格解决的痛点</label>
                 <textarea id="s1-pain" style="min-height:60px"></textarea>
                 <div class="actions">
                     <button class="btn btn-primary btn-sm" onclick="saveProfile()">保存</button>
@@ -695,7 +695,7 @@ function renderOutputs(c) {
             </div>
             <div style="padding-left:25px;font-size:12px;line-height:1.8;color:#555">`;
         if (c.industry) html += `<div><span style="color:#999">行业：</span>${c.industry}</div>`;
-        if (c.business_desc) html += `<div><span style="color:#999">业务：</span>${c.business_desc}</div>`;
+        if (c.business_desc) html += `<div><span style="color:#999">业务概述：</span>${c.business_desc}</div>`;
         if (c.pain_points) html += `<div><span style="color:#999">痛点：</span>${c.pain_points}</div>`;
         html += `</div></div>`;
     }
