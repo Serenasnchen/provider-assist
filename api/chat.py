@@ -41,8 +41,16 @@ class handler(BaseHTTPRequestHandler):
         )
 
         try:
-            with urllib.request.urlopen(req, timeout=90) as resp:
-                result = json.loads(resp.read().decode("utf-8"))
+            with urllib.request.urlopen(req, timeout=55) as resp:
+                # 分块读取避免IncompleteRead
+                chunks = []
+                while True:
+                    chunk = resp.read(8192)
+                    if not chunk:
+                        break
+                    chunks.append(chunk)
+                body = b"".join(chunks).decode("utf-8")
+                result = json.loads(body)
                 self._respond(200, result)
         except urllib.error.HTTPError as e:
             err_body = e.read().decode("utf-8") if e.fp else ""

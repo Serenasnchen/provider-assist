@@ -664,6 +664,9 @@ function saveProfile() {
     toggleProfile();
     updateTimeline(getClient(currentClientId));
     showToast('已保存');
+    // 上报到后台
+    const cc = getClient(currentClientId);
+    reportToAdmin('report_client', { client_name: cc.name, industry, business_desc: business, pain_points: pain, status: '已完善档案' });
 }
 
 function renderOutputs(c) {

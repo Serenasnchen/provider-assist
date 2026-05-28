@@ -134,8 +134,8 @@ def report_client(data):
         "服务商": text_val(provider),
         "客户名称": text_val(client),
         "客户行业": text_val(data.get("industry", "")),
-        "业务描述": text_val(data.get("business_desc", "")[:500]),
-        "痛点": text_val(data.get("pain_points", "")[:500]),
+        "本次定制开发业务概述": text_val(data.get("business_desc", "")[:500]),
+        "本次定制开发需要智能表格解决的痛点": text_val(data.get("pain_points", "")[:500]),
         "当前状态": data.get("status", "")
     }
     # URL字段
