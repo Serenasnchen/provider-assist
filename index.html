@@ -217,9 +217,9 @@
         </div>
 
         <!-- Outputs -->
-        <div id="outputs-card" style="display:none">
-            <p class="section-label">产出物</p>
-            <div class="output-list" id="outputs-list"></div>
+        <div id="outputs-card" style="display:none;margin-top:14px">
+            <p class="section-label">交付清单</p>
+            <div id="outputs-list"></div>
         </div>
 
         <!-- Step1 Panel -->
@@ -548,27 +548,89 @@ function saveProfile() {
 }
 
 function renderOutputs(c) {
-    const items = [];
-    if (c.step1_doc_url) items.push({ icon: '📋', name: '调研准备材料', url: c.step1_doc_url, time: '' });
-    if (c.report_doc_url) items.push({ icon: '📄', name: '需求分析报告', url: c.report_doc_url, time: '' });
-    if (c.demo_url) items.push({ icon: '📊', name: '智能表格 Demo', url: c.demo_url, time: '' });
-
     const card = document.getElementById('outputs-card');
-    if (!items.length) { card.style.display = 'none'; return; }
+    const list = document.getElementById('outputs-list');
+
+    // 检查是否有任何产出物
+    const hasAny = c.step1_result || c.step2_report || c.step2_todo || c.step2_schema || c.transcript || c.step1_doc_url || c.report_doc_url || c.demo_url;
+    if (!hasAny) { card.style.display = 'none'; return; }
     card.style.display = 'block';
-    document.getElementById('outputs-list').innerHTML = items.map(it =>
-        `<a href="${it.url}" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f5f5f5;text-decoration:none;color:#1a1a1a">
-            <span style="font-size:18px">${it.icon}</span>
-            <span style="font-size:13px;font-weight:500">${it.name}</span>
-            <span style="margin-left:auto;font-size:11px;color:#0052d9">打开 →</span>
-        </a>`
-    ).join('');
+
+    let html = '';
+
+    // 服务商上传材料
+    if (c.transcript) {
+        html += renderOutputItem('📎', '会议转写记录', c.transcript.length + '字', 'transcript', c.transcript);
+    }
+
+    // AI生成的交付物
+    if (c.step1_result) {
+        html += renderOutputItem('📋', '调研准备材料', '', 'step1', c.step1_result, c.step1_doc_url);
+    }
+    if (c.step2_report) {
+        html += renderOutputItem('📄', '需求分析报告', '', 'report', c.step2_report, c.report_doc_url);
+    }
+    if (c.step2_todo) {
+        html += renderOutputItem('❓', '待确认事项', '', 'todo', c.step2_todo);
+    }
+    if (c.step2_schema) {
+        const sheetCount = c.step2_schema.sheets ? c.step2_schema.sheets.length + '个子表' : '';
+        html += renderOutputItem('📊', '智能表格 Demo', sheetCount, 'schema', null, c.demo_url);
+    }
+
+    list.innerHTML = '<div class="output-list">' + html + '</div>';
 
     // Update action card statuses
     document.getElementById('action-step1-status').innerHTML = c.step1_result ?
-        '<span style="font-size:11px;color:#2e7d32;background:#e8f5e9;padding:2px 8px;border-radius:4px">已完成</span>' : '';
+        '<span class="status-pill pill-done">已完成</span>' : '';
     document.getElementById('action-step2-status').innerHTML = c.step2_report ?
-        '<span style="font-size:11px;color:#2e7d32;background:#e8f5e9;padding:2px 8px;border-radius:4px">已完成</span>' : '';
+        '<span class="status-pill pill-done">已完成</span>' : '';
+}
+
+function renderOutputItem(icon, name, meta, key, content, docUrl) {
+    const id = 'output-' + key + '-' + Date.now();
+    let html = `<div style="border-bottom:0.5px solid #f5f5f5;padding:10px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleOutput('${id}')">
+            <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:15px">${icon}</span>
+                <div>
+                    <p style="font-size:13px;font-weight:500;margin:0">${name}</p>
+                    ${meta ? '<p style="font-size:10px;color:#999;margin:2px 0 0">' + meta + '</p>' : ''}
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">`;
+
+    if (docUrl) {
+        html += `<a href="${docUrl}" target="_blank" onclick="event.stopPropagation()" style="font-size:10px;color:#185FA5;background:#E6F1FB;padding:3px 8px;border-radius:4px;text-decoration:none">企微文档</a>`;
+    }
+    html += `<span style="font-size:11px;color:#999" id="${id}-arrow">展开</span>`;
+    html += `</div></div>`;
+
+    if (content) {
+        // 截取前500字预览，点击展开全部
+        const preview = content.length > 300 ? content.substring(0, 300) + '...' : content;
+        html += `<div id="${id}" style="display:none;margin-top:8px;padding:10px 12px;background:#fafbfc;border-radius:8px;font-size:12px;line-height:1.7;max-height:300px;overflow-y:auto;white-space:pre-wrap;color:#444">${escapeHtml(preview)}</div>`;
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function toggleOutput(id) {
+    const el = document.getElementById(id);
+    const arrow = document.getElementById(id + '-arrow');
+    if (!el) return;
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+        if (arrow) arrow.textContent = '收起';
+    } else {
+        el.style.display = 'none';
+        if (arrow) arrow.textContent = '展开';
+    }
+}
+
+function escapeHtml(text) {
+    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function updateTimeline(c) {
