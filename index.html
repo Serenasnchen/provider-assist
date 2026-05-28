@@ -375,13 +375,21 @@ function editProviderName() {
 }
 
 // 上报到平台管理表（异步，不阻塞主流程）
-function reportToAdmin(action, data) {
+async function reportToAdmin(action, data) {
     const providerName = localStorage.getItem(PROVIDER_KEY) || '未知';
-    fetch('/api/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, provider_name: providerName, ...data })
-    }).catch(() => {}); // 静默失败，不影响主流程
+    try {
+        const resp = await fetch('/api/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, provider_name: providerName, ...data })
+        });
+        const result = await resp.json();
+        // 保存record_id到客户数据（用于后续更新同一行）
+        if (result.record_id && currentClientId) {
+            updateClient(currentClientId, { admin_record_id: result.record_id });
+        }
+        return result;
+    } catch(e) { return null; }
 }
 
 // === Storage ===
@@ -541,6 +549,8 @@ function confirmCreateClient() {
     saveClients(clients);
     renderClientList();
     openClient(newClient.id);
+    // 创建时上报到后台（新增一行，拿到record_id）
+    reportToAdmin('report_client', { client_name: name, industry: industry, status: '新建', business_desc: '', pain_points: '' });
 }
 
 function openClient(id) {
@@ -660,6 +670,9 @@ function saveProfile() {
     toggleProfile();
     updateTimeline(getClient(currentClientId));
     showToast('已保存');
+    // 更新后台同一行
+    const cc = getClient(currentClientId);
+    reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry, business_desc: business, pain_points: pain, status: '已完善档案' });
 }
 
 function renderOutputs(c) {
@@ -878,9 +891,9 @@ async function generateStep1() {
         updateClient(currentClientId, { step1_result: result, status: 'waiting' });
         updateTimeline(getClient(currentClientId));
         document.getElementById('detail-industry').textContent = industry;
-        // 上报到平台
+        // 上报到平台（更新同一行）
         const cc = getClient(currentClientId);
-        reportToAdmin('report_client', { client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成清单' });
+        reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成清单', step1_doc_url: cc.step1_doc_url || '' });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s1-loading').classList.remove('visible'); }
 }
@@ -1045,7 +1058,7 @@ async function generateStep2() {
         updateTimeline(getClient(currentClientId));
         // 上报到平台：客户状态+沟通记录
         const cc2 = getClient(currentClientId);
-        reportToAdmin('report_client', { client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已完成', report_doc_url: cc2.report_doc_url || '', demo_url: cc2.demo_url || '' });
+        reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已完成', report_doc_url: cc2.report_doc_url || '', demo_url: cc2.demo_url || '' });
         if (transcript) {
             const uploadData = { client_name: cc2.name, industry: cc2.industry, transcript: transcript };
             // 如果有原始上传的文件base64，一并传过去

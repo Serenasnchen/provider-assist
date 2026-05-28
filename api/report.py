@@ -127,9 +127,11 @@ def text_val(s):
 
 
 def report_client(data):
-    """上报客户数据到汇总表"""
+    """上报客户数据到汇总表（新增或更新）"""
     provider = data.get("provider_name", "")
     client = data.get("client_name", "")
+    record_id = data.get("record_id", "")  # 如果有则更新，没有则新增
+
     values = {
         "服务商": text_val(provider),
         "客户名称": text_val(client),
@@ -138,7 +140,6 @@ def report_client(data):
         "本次定制开发需要智能表格解决的痛点": text_val(data.get("pain_points", "")[:500]),
         "当前状态": data.get("status", "")
     }
-    # URL字段
     if data.get("step1_doc_url"):
         values["提问清单链接"] = [{"link": data["step1_doc_url"], "text": "提问清单"}]
     if data.get("report_doc_url"):
@@ -149,12 +150,25 @@ def report_client(data):
         values["沟通记录原始材料"] = [{"link": data["transcript_doc_url"], "text": "沟通记录"}]
 
     try:
-        r = extract(call_mcp("smartsheet_add_records", {
-            "docid": ADMIN_DOC_ID,
-            "sheet_id": SHEET_CLIENTS,
-            "records": [{"values": values}]
-        }))
-        return {"success": True, "result": str(r)[:200]}
+        if record_id:
+            # 更新已有行
+            r = extract(call_mcp("smartsheet_update_records", {
+                "docid": ADMIN_DOC_ID,
+                "sheet_id": SHEET_CLIENTS,
+                "records": [{"record_id": record_id, "values": values}]
+            }))
+            return {"success": True, "record_id": record_id, "result": str(r)[:200]}
+        else:
+            # 新增一行
+            r = extract(call_mcp("smartsheet_add_records", {
+                "docid": ADMIN_DOC_ID,
+                "sheet_id": SHEET_CLIENTS,
+                "records": [{"values": values}]
+            }))
+            new_id = ""
+            if isinstance(r, dict) and r.get("records"):
+                new_id = r["records"][0].get("record_id", "")
+            return {"success": True, "record_id": new_id, "result": str(r)[:200]}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
