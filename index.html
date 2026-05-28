@@ -434,13 +434,24 @@ function renderClientList() {
     if (!clients.length) { document.getElementById('list-inprogress').innerHTML = ''; document.getElementById('list-done').innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
 
-    const inProgress = clients.filter(c => c.status !== 'done');
-    const done = clients.filter(c => c.status === 'done');
-    const statusLabels = { draft: '待填写', listed: '已生成清单', waiting: '待上传转写', done: '已完成' };
+    // 根据数据自动判断阶段
+    const groups = { pending: [], prepared: [], uploaded: [], done: [] };
+    clients.forEach(c => {
+        if (c.step2_report || c.status === 'done') { groups.done.push(c); }
+        else if (c.transcript) { groups.uploaded.push(c); }
+        else if (c.step1_result) { groups.prepared.push(c); }
+        else { groups.pending.push(c); }
+    });
 
-    function renderCard(c) {
-        const label = statusLabels[c.status] || '';
-        const pillCls = c.status === 'done' ? 'pill-done' : c.status === 'waiting' ? 'pill-waiting' : c.status === 'listed' ? 'pill-listed' : 'pill-draft';
+    const stageInfo = {
+        pending: { label: '待完善档案', pillCls: 'pill-draft', pillText: '待完善' },
+        prepared: { label: '已生成清单 · 待访谈', pillCls: 'pill-listed', pillText: '待访谈' },
+        uploaded: { label: '待生成报告', pillCls: 'pill-waiting', pillText: '待出报告' },
+        done: { label: '已完成', pillCls: 'pill-done', pillText: '已完成' }
+    };
+
+    function renderCard(c, stage) {
+        const info = stageInfo[stage];
         // Progress dots
         let level = 0;
         if (c.industry) level = 1;
@@ -450,7 +461,7 @@ function renderClientList() {
         if (c.demo_url) level = 5;
         let dots = '';
         for (let i = 0; i < 5; i++) {
-            const color = i < level ? (c.status === 'done' ? '#3B6D11' : '#185FA5') : (i === level ? '#B5D4F4' : '#e0e0e0');
+            const color = i < level ? (stage === 'done' ? '#3B6D11' : '#185FA5') : (i === level ? '#B5D4F4' : '#e0e0e0');
             dots += `<div class="dot" style="background:${color}"></div>`;
         }
         // Output pills
@@ -462,25 +473,35 @@ function renderClientList() {
         return `<div class="client-card" onclick="openClient('${c.id}')">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
                 <div><div class="name">${c.name || '未命名'}</div><div class="meta">${c.industry || ''} · ${new Date(c.created_at).toLocaleDateString()}</div></div>
-                <span class="status-pill ${pillCls}">${label}</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <span class="status-pill ${info.pillCls}">${info.pillText}</span>
+                    <span onclick="event.stopPropagation();deleteClient('${c.id}')" style="cursor:pointer;font-size:16px;color:#ccc;line-height:1" title="删除">&times;</span>
+                </div>
             </div>
             ${outputsHtml}
             <div class="progress-dots">${dots}<span style="font-size:10px;color:#999;margin-left:6px">${level}/5</span></div>
         </div>`;
     }
 
+    function renderGroup(key, items) {
+        if (!items.length) return '';
+        const info = stageInfo[key];
+        return `<div style="margin-bottom:18px">
+            <p class="section-label">${info.label} (${items.length})</p>
+            <div class="client-grid">${items.map(c => renderCard(c, key)).join('')}${key === 'pending' ? '<div class="add-card" onclick="createClient()">+ 新建客户</div>' : ''}</div>
+        </div>`;
+    }
+
     let html1 = '';
-    if (inProgress.length) {
-        html1 = `<p class="section-label">进行中 (${inProgress.length})</p><div class="client-grid">${inProgress.map(renderCard).join('')}<div class="add-card" onclick="createClient()">+ 新建客户</div></div>`;
-    } else {
-        html1 = `<div class="client-grid"><div class="add-card" onclick="createClient()">+ 新建客户</div></div>`;
+    html1 += renderGroup('pending', groups.pending);
+    html1 += renderGroup('prepared', groups.prepared);
+    html1 += renderGroup('uploaded', groups.uploaded);
+    if (!groups.pending.length && !groups.prepared.length && !groups.uploaded.length) {
+        html1 = '<div class="client-grid"><div class="add-card" onclick="createClient()">+ 新建客户</div></div>';
     }
     document.getElementById('list-inprogress').innerHTML = html1;
 
-    let html2 = '';
-    if (done.length) {
-        html2 = `<p class="section-label" style="margin-top:1.5rem">已完成 (${done.length})</p><div class="client-grid">${done.map(renderCard).join('')}</div>`;
-    }
+    let html2 = renderGroup('done', groups.done);
     document.getElementById('list-done').innerHTML = html2;
 }
 
