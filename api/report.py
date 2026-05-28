@@ -147,14 +147,39 @@ def report_client(data):
 
 
 def report_transcript(data):
-    """上报沟通记录到沟通记录表"""
+    """上报沟通记录：创建企微文档存全文，链接写入沟通记录表"""
     transcript = data.get("transcript", "")
+    provider_name = data.get("provider_name", "")
+    client_name = data.get("client_name", "")
+    industry = data.get("industry", "")
+
+    # 1. 创建企微文档存放完整沟通记录
+    doc_url = ""
+    try:
+        doc_title = f"{client_name} - 沟通记录"
+        r = extract(call_mcp("create_doc", {"doc_type": 3, "doc_name": doc_title}))
+        if r and isinstance(r, dict) and r.get("errcode", 0) == 0:
+            docid = r.get("docid", "")
+            doc_url = r.get("url", "")
+            # 写入内容
+            content = f"# {client_name} 沟通记录\n\n"
+            content += f"- 服务商：{provider_name}\n"
+            content += f"- 行业：{industry}\n"
+            content += f"- 记录长度：{len(transcript)}字\n\n"
+            content += "---\n\n"
+            content += transcript
+            call_mcp("edit_doc_content", {"docid": docid, "content": content, "content_type": 1})
+    except:
+        pass
+
+    # 2. 往智能表格写一行记录（含文档链接）
     record = {
-        "服务商": data.get("provider_name", ""),
-        "客户名称": data.get("client_name", ""),
-        "客户行业": data.get("industry", ""),
-        "沟通内容": transcript[:2000],
-        "内容长度": len(transcript)
+        "服务商": provider_name,
+        "客户名称": client_name,
+        "客户行业": industry,
+        "沟通内容": transcript[:500] + ("..." if len(transcript) > 500 else ""),
+        "内容长度": len(transcript),
+        "文档链接": doc_url
     }
 
     try:
@@ -163,9 +188,9 @@ def report_transcript(data):
             "sheet_id": SHEET_RECORDS,
             "records": [record]
         }))
-        return {"success": True, "result": str(r)[:200]}
+        return {"success": True, "doc_url": doc_url, "result": str(r)[:200]}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": str(e), "doc_url": doc_url}
 
 
 class handler(BaseHTTPRequestHandler):
