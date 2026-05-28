@@ -643,7 +643,7 @@ function renderOutputItem(icon, name, meta, key, content, docUrl) {
     html += `</div></div>`;
 
     if (content) {
-        const renderedPreview = marked.parse(content.substring(0, 500));
+        const renderedPreview = renderWithTags(content.substring(0, 500));
         const hasMore = content.length > 500;
         html += `<div id="${id}" style="display:none;margin-top:8px;padding:12px 14px;background:#fafbfc;border-radius:8px;font-size:12px;line-height:1.8;color:#444" data-full-content="${escapeAttr(content)}">
             <div class="rendered-content" style="max-height:none;padding:0;border:none;background:transparent">${renderedPreview}</div>
@@ -679,7 +679,7 @@ function expandFull(el) {
     if (!container) return;
     const full = container.getAttribute('data-full-content');
     if (full) {
-        container.innerHTML = '<div class="rendered-content" style="max-height:none;padding:0;border:none;background:transparent">' + marked.parse(full) + '</div>';
+        container.innerHTML = '<div class="rendered-content" style="max-height:none;padding:0;border:none;background:transparent">' + renderWithTags(full) + '</div>';
     }
 }
 
