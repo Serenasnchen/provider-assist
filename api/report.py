@@ -123,24 +123,29 @@ def create_admin_table():
 
 def report_client(data):
     """上报客户数据到汇总表"""
-    record = {
+    values = {
         "服务商": data.get("provider_name", ""),
         "客户名称": data.get("client_name", ""),
         "客户行业": data.get("industry", ""),
         "业务描述": data.get("business_desc", "")[:500],
         "痛点": data.get("pain_points", "")[:500],
-        "当前状态": data.get("status", ""),
-        "提问清单链接": data.get("step1_doc_url", ""),
-        "需求报告链接": data.get("report_doc_url", ""),
-        "Demo链接": data.get("demo_url", ""),
-        "沟通记录原始材料": data.get("transcript_doc_url", "")
+        "当前状态": data.get("status", "")
     }
+    # URL字段需要特殊格式
+    if data.get("step1_doc_url"):
+        values["提问清单链接"] = [{"link": data["step1_doc_url"], "text": "提问清单"}]
+    if data.get("report_doc_url"):
+        values["需求报告链接"] = [{"link": data["report_doc_url"], "text": "需求报告"}]
+    if data.get("demo_url"):
+        values["Demo链接"] = [{"link": data["demo_url"], "text": "Demo"}]
+    if data.get("transcript_doc_url"):
+        values["沟通记录原始材料"] = [{"link": data["transcript_doc_url"], "text": "沟通记录"}]
 
     try:
         r = extract(call_mcp("smartsheet_add_records", {
             "docid": ADMIN_DOC_ID,
             "sheet_id": SHEET_CLIENTS,
-            "records": [record]
+            "records": [{"values": values}]
         }))
         return {"success": True, "result": str(r)[:200]}
     except Exception as e:
@@ -190,20 +195,21 @@ def report_transcript(data):
             pass
 
     # 写入沟通记录sheet
-    record = {
+    values = {
         "服务商": provider_name,
         "客户名称": client_name,
         "客户行业": industry,
         "沟通内容": transcript[:500] + ("..." if len(transcript) > 500 else ""),
-        "内容长度": len(transcript) or len(file_base64),
-        "文档链接": doc_url
+        "内容长度": len(transcript) or len(file_base64)
     }
+    if doc_url:
+        values["文档链接"] = [{"link": doc_url, "text": "查看文档"}]
 
     try:
         r = extract(call_mcp("smartsheet_add_records", {
             "docid": ADMIN_DOC_ID,
             "sheet_id": SHEET_RECORDS,
-            "records": [record]
+            "records": [{"values": values}]
         }))
         return {"success": True, "doc_url": doc_url}
     except Exception as e:

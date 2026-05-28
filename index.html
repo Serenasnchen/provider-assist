@@ -543,6 +543,8 @@ function confirmCreateClient() {
     saveClients(clients);
     renderClientList();
     openClient(newClient.id);
+    // 上报到后台
+    reportToAdmin('report_client', { client_name: name, industry: industry, status: '新建', business_desc: '', pain_points: '' });
 }
 
 function openClient(id) {
