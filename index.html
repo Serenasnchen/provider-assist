@@ -643,9 +643,7 @@ function renderOutputItem(icon, name, meta, key, content, docUrl) {
     html += `</div></div>`;
 
     if (content) {
-        // 截取前500字预览，点击展开全部
-        const preview = content.length > 300 ? content.substring(0, 300) + '...' : content;
-        html += `<div id="${id}" style="display:none;margin-top:8px;padding:10px 12px;background:#fafbfc;border-radius:8px;font-size:12px;line-height:1.7;max-height:300px;overflow-y:auto;white-space:pre-wrap;color:#444">${escapeHtml(preview)}</div>`;
+        html += `<div id="${id}" style="display:none;margin-top:8px;padding:10px 12px;background:#fafbfc;border-radius:8px;font-size:12px;line-height:1.7;overflow-y:auto;white-space:pre-wrap;color:#444" data-full="${escapeAttr(content)}">${escapeHtml(content.substring(0, 300))}${content.length > 300 ? '<span style="color:#185FA5;cursor:pointer" onclick="expandFull(this)">... 展开全部</span>' : ''}</div>`;
     }
 
     html += '</div>';
@@ -667,6 +665,17 @@ function toggleOutput(id) {
 
 function escapeHtml(text) {
     return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeAttr(text) {
+    return text.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function expandFull(el) {
+    const container = el.parentElement;
+    const full = container.getAttribute('data-full');
+    if (full) {
+        container.innerHTML = escapeHtml(full);
+        container.style.maxHeight = '500px';
+    }
 }
 
 function updateTimeline(c) {
