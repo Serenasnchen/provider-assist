@@ -571,11 +571,25 @@ function renderOutputs(c) {
     const list = document.getElementById('outputs-list');
 
     // 检查是否有任何产出物
-    const hasAny = c.step1_result || c.step2_report || c.step2_todo || c.step2_schema || c.transcript || c.step1_doc_url || c.report_doc_url || c.demo_url;
+    const hasAny = c.industry || c.business_desc || c.pain_points || c.step1_result || c.step2_report || c.step2_todo || c.step2_schema || c.transcript || c.step1_doc_url || c.report_doc_url || c.demo_url;
     if (!hasAny) { card.style.display = 'none'; return; }
     card.style.display = 'block';
 
     let html = '';
+
+    // 客户背景信息
+    if (c.industry || c.business_desc || c.pain_points) {
+        html += `<div style="border-bottom:0.5px solid #f0f0f0;padding:12px 0">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <span style="font-size:15px">📌</span>
+                <p style="font-size:13px;font-weight:500;margin:0">客户背景</p>
+            </div>
+            <div style="padding-left:25px;font-size:12px;line-height:1.8;color:#555">`;
+        if (c.industry) html += `<div><span style="color:#999">行业：</span>${c.industry}</div>`;
+        if (c.business_desc) html += `<div><span style="color:#999">业务：</span>${c.business_desc}</div>`;
+        if (c.pain_points) html += `<div><span style="color:#999">痛点：</span>${c.pain_points}</div>`;
+        html += `</div></div>`;
+    }
 
     // 服务商上传材料
     if (c.transcript) {
