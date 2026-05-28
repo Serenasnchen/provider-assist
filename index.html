@@ -379,21 +379,18 @@ function editProviderName() {
 async function reportToAdmin(action, data) {
     const providerName = localStorage.getItem(PROVIDER_KEY) || '未知';
     try {
-        const payload = { action, provider_name: providerName, ...data };
-        console.log('[reportToAdmin] 请求:', action, JSON.stringify(payload, null, 2));
         const resp = await fetch('/api/report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ action, provider_name: providerName, ...data })
         });
         const result = await resp.json();
-        console.log('[reportToAdmin] 响应:', JSON.stringify(result, null, 2));
         // 保存record_id到客户数据（用于后续更新同一行）
         if (result.record_id && currentClientId) {
             updateClient(currentClientId, { admin_record_id: result.record_id });
         }
         return result;
-    } catch(e) { console.error('[reportToAdmin] 异常:', e); return null; }
+    } catch(e) { return null; }
 }
 
 // === Storage ===
