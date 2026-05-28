@@ -131,6 +131,30 @@
             </div>
             <button class="btn btn-primary" onclick="createClient()">+ 新建客户</button>
         </div>
+
+        <!-- 服务商身份条 -->
+        <div id="provider-bar" class="card" style="padding:12px 18px;margin-bottom:14px;display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:30px;height:30px;border-radius:6px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:12px;color:#185FA5;font-weight:500" id="provider-avatar"></div>
+                    <div>
+                        <p style="font-size:13px;font-weight:500;margin:0" id="provider-display-name"></p>
+                        <p style="font-size:11px;color:#999;margin:0">服务商</p>
+                    </div>
+                </div>
+                <span style="font-size:11px;color:#185FA5;cursor:pointer" onclick="editProviderName()">修改</span>
+            </div>
+        </div>
+
+        <!-- 首次注册 -->
+        <div id="provider-setup" class="card" style="padding:20px;margin-bottom:14px;display:none">
+            <h3 style="font-size:14px;margin-bottom:4px">欢迎使用服务商助手</h3>
+            <p style="font-size:12px;color:#888;margin-bottom:14px">请先填写您的信息，方便我们进行服务商管理</p>
+            <label style="font-size:12px;font-weight:500;display:block;margin-bottom:4px">服务商名称</label>
+            <input type="text" id="setup-provider-name" placeholder="您的姓名或公司名称" style="width:100%;padding:9px 12px;border:0.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:12px">
+            <button class="btn btn-primary btn-sm" onclick="saveProviderSetup()">确认</button>
+        </div>
+
         <div id="list-inprogress"></div>
         <div id="list-done"></div>
         <div id="empty-state" class="empty-state" style="display:none">
@@ -315,12 +339,38 @@ let demoSchema = null;
 
 // 服务商身份
 function getProviderName() {
-    let name = localStorage.getItem(PROVIDER_KEY);
-    if (!name) {
-        name = prompt('首次使用，请输入您的服务商名称（用于平台管理）');
-        if (name) localStorage.setItem(PROVIDER_KEY, name);
+    return localStorage.getItem(PROVIDER_KEY) || '';
+}
+
+function initProviderUI() {
+    const name = getProviderName();
+    if (name) {
+        // 已注册，显示身份条
+        document.getElementById('provider-bar').style.display = 'block';
+        document.getElementById('provider-setup').style.display = 'none';
+        document.getElementById('provider-display-name').textContent = name;
+        document.getElementById('provider-avatar').textContent = name[0];
+    } else {
+        // 未注册，显示注册框
+        document.getElementById('provider-bar').style.display = 'none';
+        document.getElementById('provider-setup').style.display = 'block';
     }
-    return name || '未知服务商';
+}
+
+function saveProviderSetup() {
+    const name = document.getElementById('setup-provider-name').value.trim();
+    if (!name) { alert('请输入您的名称'); return; }
+    localStorage.setItem(PROVIDER_KEY, name);
+    initProviderUI();
+}
+
+function editProviderName() {
+    const current = getProviderName();
+    const newName = prompt('修改服务商名称', current);
+    if (newName && newName.trim()) {
+        localStorage.setItem(PROVIDER_KEY, newName.trim());
+        initProviderUI();
+    }
 }
 
 // 上报到平台管理表（异步，不阻塞主流程）
@@ -1068,7 +1118,7 @@ async function exportWecomDoc(elId, title) {
 function showToast(msg) { const t=document.createElement('div'); t.textContent=msg; t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:6px;font-size:13px;z-index:9999'; document.body.appendChild(t); setTimeout(()=>t.remove(),2000); }
 
 // Init
-getProviderName();
+initProviderUI();
 renderClientList();
 
 // 数据导出/导入
