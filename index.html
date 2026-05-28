@@ -137,6 +137,11 @@
             <p>还没有客户项目</p>
             <button class="btn btn-primary" onclick="createClient()">+ 新建第一个客户</button>
         </div>
+        <div style="margin-top:2rem;text-align:center;padding:10px 0;border-top:0.5px solid #eee">
+            <button class="btn btn-secondary btn-sm" onclick="exportAllData()" style="font-size:11px">导出备份</button>
+            <button class="btn btn-secondary btn-sm" onclick="importData()" style="font-size:11px">导入备份</button>
+            <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+        </div>
     </div>
 
     <!-- PAGE: Client Detail -->
@@ -308,14 +313,28 @@ let currentClientId = null;
 let demoSchema = null;
 
 // === Storage ===
-function getClients() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+function getClients() {
+    let data = localStorage.getItem(STORAGE_KEY);
+    // 如果localStorage为空，尝试从sessionStorage恢复
+    if (!data || data === '[]') {
+        const backup = sessionStorage.getItem(STORAGE_KEY + '_backup');
+        if (backup && backup !== '[]') {
+            localStorage.setItem(STORAGE_KEY, backup);
+            data = backup;
+            console.log('[provider-assist] 从sessionStorage恢复数据');
+        }
+    }
+    return JSON.parse(data || '[]');
+}
 function saveClients(clients) {
     try {
         const data = JSON.stringify(clients);
-        if (data.length > 4 * 1024 * 1024) { // 4MB warning
+        if (data.length > 4 * 1024 * 1024) {
             showToast('存储空间即将用满，建议导出并删除已完成客户');
         }
         localStorage.setItem(STORAGE_KEY, data);
+        // 同时备份到sessionStorage
+        sessionStorage.setItem(STORAGE_KEY + '_backup', data);
     } catch (e) {
         if (e.name === 'QuotaExceededError') {
             showToast('存储空间已满，请删除部分已完成客户');
@@ -976,6 +995,41 @@ function showToast(msg) { const t=document.createElement('div'); t.textContent=m
 
 // Init
 renderClientList();
+
+// 数据导出/导入
+function exportAllData() {
+    const data = localStorage.getItem(STORAGE_KEY) || '[]';
+    const blob = new Blob([data], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'provider-assist-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('已导出备份文件');
+}
+function importData() { document.getElementById('import-file').click(); }
+function handleImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const clients = JSON.parse(e.target.result);
+            if (Array.isArray(clients)) {
+                saveClients(clients);
+                renderClientList();
+                showToast('已导入 ' + clients.length + ' 个客户');
+            } else { showToast('文件格式不正确'); }
+        } catch { showToast('文件解析失败'); }
+    };
+    reader.readAsText(file);
+}
+
+// 页面加载时检查storage状态
+(function checkStorage() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    console.log('[provider-assist] localStorage状态:', data ? data.length + '字节, ' + JSON.parse(data).length + '个客户' : '空');
+})();
 </script>
 </body>
 </html>
