@@ -162,6 +162,17 @@ def report_client(data):
     if is_valid_wecom_url(transcript_url):
         values["沟通记录原始材料"] = [{"link": transcript_url, "text": "沟通记录"}]
 
+    # 调试信息：记录收到的URL值
+    debug_info = {
+        "received_step1_url": step1_url,
+        "received_report_url": report_url,
+        "received_demo_url": demo_url,
+        "received_transcript_url": transcript_url,
+        "url_fields_in_values": [k for k in values if k in ("提问清单链接", "需求报告链接", "Demo链接", "沟通记录原始材料")],
+        "has_record_id": bool(record_id),
+        "record_id": record_id,
+    }
+
     try:
         if record_id:
             r = extract(call_mcp("smartsheet_update_records", {
@@ -169,7 +180,7 @@ def report_client(data):
                 "sheet_id": SHEET_CLIENTS,
                 "records": [{"record_id": record_id, "values": values}]
             }))
-            return {"success": True, "record_id": record_id, "result": str(r)[:200]}
+            return {"success": True, "record_id": record_id, "result": str(r)[:500], "debug": debug_info}
         else:
             r = extract(call_mcp("smartsheet_add_records", {
                 "docid": ADMIN_DOC_ID,
@@ -179,9 +190,9 @@ def report_client(data):
             new_id = ""
             if isinstance(r, dict) and r.get("records"):
                 new_id = r["records"][0].get("record_id", "")
-            return {"success": True, "record_id": new_id, "result": str(r)[:200]}
+            return {"success": True, "record_id": new_id, "result": str(r)[:500], "debug": debug_info}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": str(e), "debug": debug_info}
 
 
 def report_transcript(data):
