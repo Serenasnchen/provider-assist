@@ -132,7 +132,8 @@ def report_client(data):
         "当前状态": data.get("status", ""),
         "提问清单链接": data.get("step1_doc_url", ""),
         "需求报告链接": data.get("report_doc_url", ""),
-        "Demo链接": data.get("demo_url", "")
+        "Demo链接": data.get("demo_url", ""),
+        "沟通记录原始材料": data.get("transcript_doc_url", "")
     }
 
     try:
@@ -147,38 +148,54 @@ def report_client(data):
 
 
 def report_transcript(data):
-    """上报沟通记录：创建企微文档存全文，链接写入沟通记录表"""
+    """上报沟通记录：
+    - 粘贴文字 → 创建企微文档存全文
+    - 上传Word → 直接上传到企微文件系统
+    两种情况都把链接写入沟通记录表 + 客户汇总表
+    """
     transcript = data.get("transcript", "")
+    file_base64 = data.get("file_base64", "")  # 如果服务商上传了文件
+    file_name = data.get("file_name", "")
     provider_name = data.get("provider_name", "")
     client_name = data.get("client_name", "")
     industry = data.get("industry", "")
 
-    # 1. 创建企微文档存放完整沟通记录
     doc_url = ""
-    try:
-        doc_title = f"{client_name} - 沟通记录"
-        r = extract(call_mcp("create_doc", {"doc_type": 3, "doc_name": doc_title}))
-        if r and isinstance(r, dict) and r.get("errcode", 0) == 0:
-            docid = r.get("docid", "")
-            doc_url = r.get("url", "")
-            # 写入内容
-            content = f"# {client_name} 沟通记录\n\n"
-            content += f"- 服务商：{provider_name}\n"
-            content += f"- 行业：{industry}\n"
-            content += f"- 记录长度：{len(transcript)}字\n\n"
-            content += "---\n\n"
-            content += transcript
-            call_mcp("edit_doc_content", {"docid": docid, "content": content, "content_type": 1})
-    except:
-        pass
 
-    # 2. 往智能表格写一行记录（含文档链接）
+    if file_base64 and file_name:
+        # 服务商直接上传了Word文件 → 上传到企微
+        try:
+            r = extract(call_mcp("upload_doc_file", {
+                "file_name": file_name,
+                "file_base64_content": file_base64
+            }))
+            if r and isinstance(r, dict):
+                doc_url = r.get("url", "") or r.get("file_url", "")
+        except:
+            pass
+    elif transcript:
+        # 服务商粘贴文字 → 创建企微文档（相当于Word）
+        try:
+            doc_title = f"{client_name} - 沟通记录"
+            r = extract(call_mcp("create_doc", {"doc_type": 3, "doc_name": doc_title}))
+            if r and isinstance(r, dict) and r.get("errcode", 0) == 0:
+                docid = r.get("docid", "")
+                doc_url = r.get("url", "")
+                content = f"# {client_name} 沟通记录\n\n"
+                content += f"- 服务商：{provider_name}\n"
+                content += f"- 行业：{industry}\n\n---\n\n"
+                content += transcript
+                call_mcp("edit_doc_content", {"docid": docid, "content": content, "content_type": 1})
+        except:
+            pass
+
+    # 写入沟通记录sheet
     record = {
         "服务商": provider_name,
         "客户名称": client_name,
         "客户行业": industry,
         "沟通内容": transcript[:500] + ("..." if len(transcript) > 500 else ""),
-        "内容长度": len(transcript),
+        "内容长度": len(transcript) or len(file_base64),
         "文档链接": doc_url
     }
 
@@ -188,7 +205,7 @@ def report_transcript(data):
             "sheet_id": SHEET_RECORDS,
             "records": [record]
         }))
-        return {"success": True, "doc_url": doc_url, "result": str(r)[:200]}
+        return {"success": True, "doc_url": doc_url}
     except Exception as e:
         return {"success": False, "error": str(e), "doc_url": doc_url}
 

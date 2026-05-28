@@ -817,6 +817,7 @@ async function generateStep1() {
 async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
+    window._lastUploadedFile = null; // reset
     document.getElementById('upload-filename').textContent = file.name + ' (解析中...)';
     if (file.name.endsWith('.txt')) {
         const reader = new FileReader();
@@ -826,6 +827,8 @@ async function handleFileUpload(event) {
         const reader = new FileReader();
         reader.onload = async (e) => {
             const b64 = btoa(String.fromCharCode(...new Uint8Array(e.target.result)));
+            // 保存原始文件base64供上报用
+            window._lastUploadedFile = { name: file.name, base64: b64 };
             try {
                 const resp = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, file_data: b64 }) });
                 const data = await resp.json();
@@ -971,7 +974,12 @@ async function generateStep2() {
         // 上报到平台：客户状态+沟通记录
         const cc2 = getClient(currentClientId);
         reportToAdmin('report_client', { client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已完成', report_doc_url: cc2.report_doc_url || '', demo_url: cc2.demo_url || '' });
-        if (transcript) { reportToAdmin('report_transcript', { client_name: cc2.name, industry: cc2.industry, transcript: transcript }); }
+        if (transcript) {
+            const uploadData = { client_name: cc2.name, industry: cc2.industry, transcript: transcript };
+            // 如果有原始上传的文件base64，一并传过去
+            if (window._lastUploadedFile) { uploadData.file_base64 = window._lastUploadedFile.base64; uploadData.file_name = window._lastUploadedFile.name; }
+            reportToAdmin('report_transcript', uploadData);
+        }
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s2-loading').classList.remove('visible'); }
 }
