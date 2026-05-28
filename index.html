@@ -643,7 +643,12 @@ function renderOutputItem(icon, name, meta, key, content, docUrl) {
     html += `</div></div>`;
 
     if (content) {
-        html += `<div id="${id}" style="display:none;margin-top:8px;padding:10px 12px;background:#fafbfc;border-radius:8px;font-size:12px;line-height:1.7;overflow-y:auto;white-space:pre-wrap;color:#444" data-full="${escapeAttr(content)}">${escapeHtml(content.substring(0, 300))}${content.length > 300 ? '<span style="color:#185FA5;cursor:pointer" onclick="expandFull(this)">... 展开全部</span>' : ''}</div>`;
+        const renderedPreview = marked.parse(content.substring(0, 500));
+        const hasMore = content.length > 500;
+        html += `<div id="${id}" style="display:none;margin-top:8px;padding:12px 14px;background:#fafbfc;border-radius:8px;font-size:12px;line-height:1.8;color:#444" data-full-content="${escapeAttr(content)}">
+            <div class="rendered-content" style="max-height:none;padding:0;border:none;background:transparent">${renderedPreview}</div>
+            ${hasMore ? '<div style="margin-top:8px;text-align:center"><span style="font-size:11px;color:#185FA5;cursor:pointer" onclick="expandFull(this)">展开全部内容</span></div>' : ''}
+        </div>`;
     }
 
     html += '</div>';
@@ -670,11 +675,11 @@ function escapeAttr(text) {
     return text.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 function expandFull(el) {
-    const container = el.parentElement;
-    const full = container.getAttribute('data-full');
+    const container = el.closest('[data-full-content]');
+    if (!container) return;
+    const full = container.getAttribute('data-full-content');
     if (full) {
-        container.innerHTML = escapeHtml(full);
-        container.style.maxHeight = '500px';
+        container.innerHTML = '<div class="rendered-content" style="max-height:none;padding:0;border:none;background:transparent">' + marked.parse(full) + '</div>';
     }
 }
 
