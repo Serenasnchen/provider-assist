@@ -126,14 +126,14 @@
     <div id="page-list" class="page active">
         <div class="app-header">
             <div>
-                <h1>服务商助手</h1>
-                <p>智能需求调研 · 多客户管理</p>
+                <h1>服务商需求调研助手</h1>
+                <p>智能提问清单 · 需求结构化 · 多客户管理</p>
             </div>
             <button class="btn btn-primary" onclick="createClient()">+ 新建客户</button>
         </div>
 
         <!-- 服务商身份条 -->
-        <div id="provider-bar" class="card" style="padding:12px 18px;margin-bottom:14px;display:none">
+        <div id="provider-bar" class="card" style="padding:12px 18px;margin-bottom:14px">
             <div style="display:flex;align-items:center;justify-content:space-between">
                 <div style="display:flex;align-items:center;gap:10px">
                     <div style="width:30px;height:30px;border-radius:6px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:12px;color:#185FA5;font-weight:500" id="provider-avatar"></div>
@@ -147,12 +147,12 @@
         </div>
 
         <!-- 首次注册 -->
-        <div id="provider-setup" class="card" style="padding:20px;margin-bottom:14px;display:none">
-            <h3 style="font-size:14px;margin-bottom:4px">欢迎使用服务商助手</h3>
-            <p style="font-size:12px;color:#888;margin-bottom:14px">请先填写您的信息，方便我们进行服务商管理</p>
+        <div id="provider-setup" class="card" style="padding:20px;margin-bottom:14px">
+            <h3 style="font-size:14px;margin-bottom:4px">欢迎使用服务商需求调研助手</h3>
+            <p style="font-size:12px;color:#888;margin-bottom:14px">请先填写您的信息，方便平台进行服务商管理</p>
             <label style="font-size:12px;font-weight:500;display:block;margin-bottom:4px">服务商名称</label>
             <input type="text" id="setup-provider-name" placeholder="您的姓名或公司名称" style="width:100%;padding:9px 12px;border:0.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:12px">
-            <button class="btn btn-primary btn-sm" onclick="saveProviderSetup()">确认</button>
+            <button class="btn btn-primary btn-sm" onclick="saveProviderSetup()">确认并开始使用</button>
         </div>
 
         <div id="list-inprogress"></div>
@@ -344,16 +344,16 @@ function getProviderName() {
 
 function initProviderUI() {
     const name = getProviderName();
+    const bar = document.getElementById('provider-bar');
+    const setup = document.getElementById('provider-setup');
     if (name) {
-        // 已注册，显示身份条
-        document.getElementById('provider-bar').style.display = 'block';
-        document.getElementById('provider-setup').style.display = 'none';
+        bar.style.display = 'block';
+        setup.style.display = 'none';
         document.getElementById('provider-display-name').textContent = name;
         document.getElementById('provider-avatar').textContent = name[0];
     } else {
-        // 未注册，显示注册框
-        document.getElementById('provider-bar').style.display = 'none';
-        document.getElementById('provider-setup').style.display = 'block';
+        bar.style.display = 'none';
+        setup.style.display = 'block';
     }
 }
 
@@ -362,6 +362,9 @@ function saveProviderSetup() {
     if (!name) { alert('请输入您的名称'); return; }
     localStorage.setItem(PROVIDER_KEY, name);
     initProviderUI();
+    showToast('注册成功');
+    // 上报到后台：服务商注册
+    reportToAdmin('report_client', { client_name: '(服务商注册)', industry: '', status: '已注册', business_desc: '', pain_points: '' });
 }
 
 function editProviderName() {
