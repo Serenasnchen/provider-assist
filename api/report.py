@@ -130,7 +130,7 @@ def report_client(data):
     """上报客户数据到汇总表（新增或更新）"""
     provider = data.get("provider_name", "")
     client = data.get("client_name", "")
-    record_id = data.get("record_id", "")  # 如果有则更新，没有则新增
+    record_id = data.get("record_id", "")
 
     values = {
         "服务商": text_val(provider),
@@ -138,20 +138,27 @@ def report_client(data):
         "客户行业": text_val(data.get("industry", "")),
         "本次定制开发业务概述": text_val(data.get("business_desc", "")[:500]),
         "本次定制开发需要智能表格解决的痛点": text_val(data.get("pain_points", "")[:500]),
-        "当前状态": data.get("status", "")
     }
-    if data.get("step1_doc_url"):
-        values["提问清单链接"] = [{"link": data["step1_doc_url"], "text": "提问清单"}]
-    if data.get("report_doc_url"):
-        values["需求报告链接"] = [{"link": data["report_doc_url"], "text": "需求报告"}]
-    if data.get("demo_url"):
-        values["Demo链接"] = [{"link": data["demo_url"], "text": "Demo"}]
-    if data.get("transcript_doc_url"):
-        values["沟通记录原始材料"] = [{"link": data["transcript_doc_url"], "text": "沟通记录"}]
+    # 当前状态: SINGLE_SELECT格式
+    status = data.get("status", "")
+    if status:
+        values["当前状态"] = [{"text": status}]
+    # URL字段：只在有真实链接时才传
+    step1_url = data.get("step1_doc_url", "")
+    if step1_url and step1_url.startswith("http"):
+        values["提问清单链接"] = [{"link": step1_url, "text": "提问清单"}]
+    report_url = data.get("report_doc_url", "")
+    if report_url and report_url.startswith("http"):
+        values["需求报告链接"] = [{"link": report_url, "text": "需求报告"}]
+    demo_url = data.get("demo_url", "")
+    if demo_url and demo_url.startswith("http"):
+        values["Demo链接"] = [{"link": demo_url, "text": "Demo"}]
+    transcript_url = data.get("transcript_doc_url", "")
+    if transcript_url and transcript_url.startswith("http"):
+        values["沟通记录原始材料"] = [{"link": transcript_url, "text": "沟通记录"}]
 
     try:
         if record_id:
-            # 更新已有行
             r = extract(call_mcp("smartsheet_update_records", {
                 "docid": ADMIN_DOC_ID,
                 "sheet_id": SHEET_CLIENTS,
@@ -159,7 +166,6 @@ def report_client(data):
             }))
             return {"success": True, "record_id": record_id, "result": str(r)[:200]}
         else:
-            # 新增一行
             r = extract(call_mcp("smartsheet_add_records", {
                 "docid": ADMIN_DOC_ID,
                 "sheet_id": SHEET_CLIENTS,

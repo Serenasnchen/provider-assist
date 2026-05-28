@@ -1106,6 +1106,9 @@ async function createSmartsheet() {
             div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;font-size:14px"><strong>智能表格创建成功</strong><br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;margin-top:4px;display:inline-block">打开企微智能表格 →</a></div>';
             // 保存Demo链接到客户数据
             updateClient(currentClientId, { demo_url: data.url });
+            // 更新后台
+            const cc = getClient(currentClientId);
+            if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已完成', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url }); }
         } else { div.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:12px;font-size:13px;color:#c62828">失败：'+(data.error||'')+'</div>'; }
         div.style.display = 'block';
     } catch (e) { alert(e.message); }
@@ -1153,6 +1156,11 @@ async function exportWecomDoc(elId, title) {
             showToast('企微文档已创建');
             if (elId === 's1-content') { updateClient(currentClientId, { step1_doc_url: data.url }); }
             else if (elId === 's2-report') { updateClient(currentClientId, { report_doc_url: data.url }); }
+            // 同步更新后台表格的链接
+            const cc = getClient(currentClientId);
+            if (cc && cc.admin_record_id) {
+                reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: cc.step2_report ? '已完成' : '已生成清单', step1_doc_url: cc.step1_doc_url || '', report_doc_url: cc.report_doc_url || '', demo_url: cc.demo_url || '' });
+            }
             const div = document.createElement('div');
             div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + data.url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
             document.getElementById(elId).closest('.card').appendChild(div);
