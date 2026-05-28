@@ -179,27 +179,41 @@ presale-knowledge-base/
     "scene": "样板/版房工序进度跟踪",
     "client": "开平联旺",
     "service_provider": "闪鱼未来（上海）数字科技有限公司",
+    "source": "服务商真实交付案例",
     "date": "2026-05"
   },
-  "demand_summary": "需要将8工序样板制作流程数字化...",
-  "pain_points": ["任务时间手动填报易出错", "..."],
+  "demand_summary": "服装样板/版房生产工厂，需要将客户下单→业务开单→跟单分派→纸样制版→裁版→裁片外发加工→车版→洗水→验收整条8工序样板制作流程数字化，在一张超宽工序表内实现逐工序流转+时间自动核算+状态智能判定+倒计时管控+任务排序+周期归档。",
+  "pain_points": [
+    "样品洗水、裁片外发工序无独立流程节点，流程漏缺不便管控",
+    "任务时间手动填报易出错，工序起止时间衔接混乱",
+    "任务状态无统一判定，未操作任务状态模糊",
+    "任务杂乱无排序，员工无法优先处理紧急工作",
+    "流程可跨阶段操作，易出现工序越级完成、流程错乱"
+  ],
   "solution": {
-    "architecture": "1张超宽表 + 仪表盘",
+    "architecture": "1张超宽表（样板进度表）+ 仪表盘，坚持单表多视图（服务商已明确：分表会让数据无法同步）",
     "tables": [
       {
         "table_name": "样板进度表",
-        "field_groups": ["产品信息", "01业务流程", "..."],
-        "fields": ["编号", "下单日期", "客户", "..."]
+        "field_groups": ["产品信息", "01业务流程", "02跟单流程", "03纸样流程", "04裁版流程"],
+        "fields": ["编号", "下单日期", "客户", "整体进度", "牌子", "款号", "图片（上限9张）", "品名", "产品种类", "布料名称", "颜色", "里布"]
       }
     ],
-    "automation_rules": ["上一工序完成→自动触发下一工序开始期+通知"]
+    "automation_rules": [
+      "6~7条岗位级自动化（本流程完成后通知下个岗位）",
+      "倒计时差异化提醒（到期前+已超期分级）",
+      "上一工序实际完成期触发下一工序开始期自动赋值"
+    ]
   },
-  "communication_record": "服务商与客户实际沟通内容...",
-  "communication_highlights": ["确认了8道工序的具体流转顺序", "..."]
+  "communication_record": "客户2025/10/25需求沟通要点：\n1.客户提出分表想法（各部门视图作为单独工作表）\n2.服务商劝退：分表会让人员操作复杂、数据无法同步\n3.最终确认：单表多视图方案，视图内按人员分组\n4.进度总表保留所有人可见，岗位视图只看本人任务\n5.客户确认这个方案\"可以减少干扰\"",
+  "communication_highlights": []
 }
 ```
 
-**关键设计**：`communication_highlights` 记录服务商在真实调研中确认的关键信息点，AI 据此学习"应该问什么"和"问到什么深度"。
+**关键设计**：
+- `pain_points` 记录客户原始痛点，AI 据此学习该行业客户常见的问题模式
+- `solution.automation_rules` 记录自动化配置经验，帮助 AI 在提问时覆盖自动化需求维度
+- `communication_record` 记录服务商与客户的真实沟通要点，AI 据此学习"应该问什么"和"问到什么深度"
 
 #### L3 字段经验池 (`field_templates/*.json`)
 
@@ -208,21 +222,37 @@ presale-knowledge-base/
   "meta": {
     "industry": "服装生产",
     "scene": "样板/版房工序进度跟踪",
+    "source": "开平联旺真实交付",
     "total_tables": 1,
     "total_fields": 75,
-    "design_principle": "必须用单表多视图",
-    "applicable_when": "客户提到：样板、版房、制版、工序跟踪"
+    "design_principle": "必须用单表多视图（服务商实测：分表会让数据无法同步），每工序段5字段标准结构",
+    "applicable_when": "客户提到：样板、版房、制版、车版、洗水、工序跟踪、进度管理、服装生产"
   },
   "tables": [
     {
       "table_name": "样板进度表",
-      "description": "全流程进度、时间、耗时、状态跟踪",
+      "description": "服装样板从下单、产品信息登记到验收全流程进度、时间、耗时、状态跟踪及年度/季度/月度统计",
+      "users": "业务员、跟单员、纸样员、裁版员、裁片外发加工员、车版员、洗水员、验收员、管理人员",
+      "design_note": "单一超宽表，不拆分子表。每岗位建独立视图+视图内按人员分组。进度总表保留所有人可见全局视图。",
       "field_groups": [
         {
           "group_name": "产品信息",
           "fields": [
-            {"title": "编号", "type": "TEXT", "logic": "YYMMDD-XXX格式自动生成"},
-            {"title": "整体进度", "type": "SINGLE_SELECT", "options": ["进行中", "已完成", "已作废"]}
+            {"title": "编号", "type": "TEXT", "logic": "YYMMDD-XXX格式自动生成，如260305-001"},
+            {"title": "下单日期", "type": "DATE_TIME"},
+            {"title": "客户", "type": "TEXT"},
+            {"title": "整体进度", "type": "SINGLE_SELECT", "options": ["进行中", "已完成", "已作废"]},
+            {"title": "牌子", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "01业务流程",
+          "fields": [
+            {"title": "01业务员", "type": "TEXT"},
+            {"title": "01业务工作", "type": "SINGLE_SELECT", "options": ["未完成", "已完成", "✅如期", "⚠️逾期"]},
+            {"title": "01业务倒计时", "type": "TEXT", "logic": "公式：约定周期-已用天数"},
+            {"title": "01业务开单期", "type": "DATE_TIME"},
+            {"title": "01客交版期", "type": "DATE_TIME"}
           ]
         }
       ]
@@ -231,7 +261,11 @@ presale-knowledge-base/
 }
 ```
 
-**关键设计**：`applicable_when` 让匹配算法知道何时使用此模板；每个字段包含 `type` 和 `logic`，AI 据此生成准确的字段设计。
+**关键设计**：
+- `applicable_when` 列出触发该模板的关键词，让匹配算法知道何时使用此模板
+- `design_note` 记录真实交付中总结的设计原则（如"单表多视图"），避免 AI 凭空设计
+- 每个字段包含 `type`（字段类型）和 `logic`（计算逻辑），AI 据此生成准确的字段设计
+- `field_groups` 按业务流程分组，每组 5 个标准字段（负责人、状态、倒计时、开始期、完成期）
 
 #### L4 需求池 (`pool/demand_pool.json`)
 
