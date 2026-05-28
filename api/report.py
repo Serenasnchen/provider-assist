@@ -121,20 +121,24 @@ def create_admin_table():
     }
 
 
+def text_val(s):
+    """TEXT字段需要数组格式"""
+    return [{"type": "text", "text": str(s)}] if s else [{"type": "text", "text": ""}]
+
+
 def report_client(data):
     """上报客户数据到汇总表"""
     provider = data.get("provider_name", "")
     client = data.get("client_name", "")
     values = {
-        "文本": f"{provider} - {client}",  # 第一列标识
-        "服务商": provider,
-        "客户名称": client,
-        "客户行业": data.get("industry", ""),
-        "业务描述": data.get("business_desc", "")[:500],
-        "痛点": data.get("pain_points", "")[:500],
+        "服务商": text_val(provider),
+        "客户名称": text_val(client),
+        "客户行业": text_val(data.get("industry", "")),
+        "业务描述": text_val(data.get("business_desc", "")[:500]),
+        "痛点": text_val(data.get("pain_points", "")[:500]),
         "当前状态": data.get("status", "")
     }
-    # URL字段需要特殊格式
+    # URL字段
     if data.get("step1_doc_url"):
         values["提问清单链接"] = [{"link": data["step1_doc_url"], "text": "提问清单"}]
     if data.get("report_doc_url"):
@@ -199,10 +203,10 @@ def report_transcript(data):
 
     # 写入沟通记录sheet
     values = {
-        "服务商": provider_name,
-        "客户名称": client_name,
-        "客户行业": industry,
-        "沟通内容": transcript[:500] + ("..." if len(transcript) > 500 else ""),
+        "服务商": text_val(provider_name),
+        "客户名称": text_val(client_name),
+        "客户行业": text_val(industry),
+        "沟通内容": text_val(transcript[:500] + ("..." if len(transcript) > 500 else "")),
         "内容长度": len(transcript) or len(file_base64)
     }
     if doc_url:
