@@ -984,7 +984,14 @@ async function createSmartsheet() {
 
 // === Helpers ===
 function renderMarkdown(text) { text = text.replace(/^(好的|作为|我已经|根据您|以下是).*?(\n---|\n##|\n###)/s, '$2'); return marked.parse(text); }
-function renderWithTags(text) { let html = renderMarkdown(text); html = html.replace(/[\[【]([^\]】]+)[\]】]/g, '<span style="display:inline-block;background:#eef4ff;color:#0052d9;font-size:11px;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:500">$1</span>'); return html; }
+function renderWithTags(text) {
+    // 修正问题编号：只对带[维度]标签的行重新编号（解决AI编号到9后变0的bug）
+    let qNum = 0;
+    text = text.replace(/^\d+\.\s*[\[【]/gm, (match) => { qNum++; return qNum + '. ['; });
+    let html = renderMarkdown(text);
+    html = html.replace(/[\[【]([^\]】]+)[\]】]/g, '<span style="display:inline-block;background:#eef4ff;color:#185FA5;font-size:11px;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:500">$1</span>');
+    return html;
+}
 function renderBadges(ctx, tplKey) { return `<span class="status-badge ${ctx.industry_matched?'matched':'unmatched'}">${ctx.industry_matched?'行业':'无行业'}</span><span class="status-badge ${ctx.cases_matched?'matched':'unmatched'}">${ctx.cases_matched?'案例':'无案例'}</span><span class="status-badge ${ctx[tplKey]?'matched':'unmatched'}">${ctx[tplKey]?'模板':'无模板'}</span>`; }
 
 function copyRendered(id) { navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => showToast('已复制')); }
