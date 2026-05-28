@@ -123,9 +123,12 @@ def create_admin_table():
 
 def report_client(data):
     """上报客户数据到汇总表"""
+    provider = data.get("provider_name", "")
+    client = data.get("client_name", "")
     values = {
-        "服务商": data.get("provider_name", ""),
-        "客户名称": data.get("client_name", ""),
+        "文本": f"{provider} - {client}",  # 第一列标识
+        "服务商": provider,
+        "客户名称": client,
         "客户行业": data.get("industry", ""),
         "业务描述": data.get("business_desc", "")[:500],
         "痛点": data.get("pain_points", "")[:500],
