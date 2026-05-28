@@ -309,8 +309,29 @@
 marked.setOptions({ breaks: true, gfm: true });
 
 const STORAGE_KEY = 'provider-assist-clients';
+const PROVIDER_KEY = 'provider-assist-name';
 let currentClientId = null;
 let demoSchema = null;
+
+// 服务商身份
+function getProviderName() {
+    let name = localStorage.getItem(PROVIDER_KEY);
+    if (!name) {
+        name = prompt('首次使用，请输入您的服务商名称（用于平台管理）');
+        if (name) localStorage.setItem(PROVIDER_KEY, name);
+    }
+    return name || '未知服务商';
+}
+
+// 上报到平台管理表（异步，不阻塞主流程）
+function reportToAdmin(action, data) {
+    const providerName = localStorage.getItem(PROVIDER_KEY) || '未知';
+    fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, provider_name: providerName, ...data })
+    }).catch(() => {}); // 静默失败，不影响主流程
+}
 
 // === Storage ===
 function getClients() {
@@ -785,6 +806,9 @@ async function generateStep1() {
         updateClient(currentClientId, { step1_result: result, status: 'waiting' });
         updateTimeline(getClient(currentClientId));
         document.getElementById('detail-industry').textContent = industry;
+        // 上报到平台
+        const cc = getClient(currentClientId);
+        reportToAdmin('report_client', { client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成清单' });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s1-loading').classList.remove('visible'); }
 }
@@ -944,6 +968,10 @@ async function generateStep2() {
         document.getElementById('s2-result').style.display = 'block';
         updateClient(currentClientId, { step2_report: report || '', step2_todo: todoResult || '', step2_schema: demoSchema, status: 'done' });
         updateTimeline(getClient(currentClientId));
+        // 上报到平台：客户状态+沟通记录
+        const cc2 = getClient(currentClientId);
+        reportToAdmin('report_client', { client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已完成', report_doc_url: cc2.report_doc_url || '', demo_url: cc2.demo_url || '' });
+        if (transcript) { reportToAdmin('report_transcript', { client_name: cc2.name, industry: cc2.industry, transcript: transcript }); }
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s2-loading').classList.remove('visible'); }
 }
@@ -1032,6 +1060,7 @@ async function exportWecomDoc(elId, title) {
 function showToast(msg) { const t=document.createElement('div'); t.textContent=msg; t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:6px;font-size:13px;z-index:9999'; document.body.appendChild(t); setTimeout(()=>t.remove(),2000); }
 
 // Init
+getProviderName();
 renderClientList();
 
 // 数据导出/导入
