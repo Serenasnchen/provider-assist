@@ -288,10 +288,11 @@
                     <h3 style="margin:0">需求交付</h3>
                     <span style="font-size:12px;color:#185FA5;cursor:pointer" onclick="hidePanel()">← 返回</span>
                 </div>
-                <div class="upload-area" onclick="document.getElementById('file-input').click()">
+                <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
                     <p>点击上传或拖拽文件</p>
                     <p class="hint">支持 .txt / .docx</p>
                     <p class="file-name" id="upload-filename"></p>
+                    <span id="upload-clear" style="display:none;font-size:11px;color:#e53935;cursor:pointer;margin-top:4px" onclick="event.stopPropagation();clearUpload()">✕ 移除文件，重新上传</span>
                 </div>
                 <input type="file" id="file-input" accept=".txt,.docx" style="display:none" onchange="handleFileUpload(event)">
                 <div class="or-divider">或直接粘贴</div>
@@ -899,27 +900,35 @@ async function generateStep1() {
 }
 
 // === Step 2 ===
+function clearUpload() {
+    document.getElementById('upload-filename').textContent = '';
+    document.getElementById('upload-clear').style.display = 'none';
+    document.getElementById('s2-transcript').value = '';
+    document.getElementById('file-input').value = '';
+    window._lastUploadedFile = null;
+}
+
 async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     window._lastUploadedFile = null; // reset
     document.getElementById('upload-filename').textContent = file.name + ' (解析中...)';
+    document.getElementById('upload-clear').style.display = 'none';
     if (file.name.endsWith('.txt')) {
         const reader = new FileReader();
-        reader.onload = (e) => { document.getElementById('s2-transcript').value = e.target.result; document.getElementById('upload-filename').textContent = file.name + ` (${e.target.result.length}字)`; };
+        reader.onload = (e) => { document.getElementById('s2-transcript').value = e.target.result; document.getElementById('upload-filename').textContent = file.name + ` (${e.target.result.length}字)`; document.getElementById('upload-clear').style.display = 'inline'; };
         reader.readAsText(file);
     } else {
         const reader = new FileReader();
         reader.onload = async (e) => {
             const b64 = btoa(String.fromCharCode(...new Uint8Array(e.target.result)));
-            // 保存原始文件base64供上报用
             window._lastUploadedFile = { name: file.name, base64: b64 };
             try {
                 const resp = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, file_data: b64 }) });
                 const data = await resp.json();
-                if (data.text) { document.getElementById('s2-transcript').value = data.text; document.getElementById('upload-filename').textContent = file.name + ` (${data.char_count}字)`; }
-                else { document.getElementById('upload-filename').textContent = file.name + ' (解析失败)'; }
-            } catch (err) { document.getElementById('upload-filename').textContent = file.name + ' (上传失败)'; }
+                if (data.text) { document.getElementById('s2-transcript').value = data.text; document.getElementById('upload-filename').textContent = file.name + ` (${data.char_count}字)`; document.getElementById('upload-clear').style.display = 'inline'; }
+                else { document.getElementById('upload-filename').textContent = file.name + ' (解析失败)'; document.getElementById('upload-clear').style.display = 'inline'; }
+            } catch (err) { document.getElementById('upload-filename').textContent = file.name + ' (上传失败)'; document.getElementById('upload-clear').style.display = 'inline'; }
         };
         reader.readAsArrayBuffer(file);
     }
