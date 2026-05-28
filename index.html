@@ -550,8 +550,8 @@ function confirmCreateClient() {
     saveClients(clients);
     renderClientList();
     openClient(newClient.id);
-    // 创建时上报到后台（新增一行，拿到record_id）
-    reportToAdmin('report_client', { client_name: name, industry: industry, status: '新建', business_desc: '', pain_points: '' });
+    // 创建时上报到后台（新增一行，拿到record_id保存）
+    (async () => { await reportToAdmin('report_client', { client_name: name, industry: industry, status: '新建', business_desc: '', pain_points: '' }); })();
 }
 
 function openClient(id) {

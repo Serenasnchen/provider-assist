@@ -121,6 +121,11 @@ def create_admin_table():
     }
 
 
+def is_valid_wecom_url(url):
+    """只有真实的企微文档URL才能写入URL字段"""
+    return url and "doc.weixin.qq.com" in url
+
+
 def text_val(s):
     """TEXT字段需要数组格式"""
     return [{"type": "text", "text": str(s)}] if s else [{"type": "text", "text": ""}]
@@ -143,18 +148,18 @@ def report_client(data):
     status = data.get("status", "")
     if status:
         values["当前状态"] = [{"text": status}]
-    # URL字段：只在有真实链接时才传
+    # URL字段：只有真实企微URL才传
     step1_url = data.get("step1_doc_url", "")
-    if step1_url and step1_url.startswith("http"):
+    if is_valid_wecom_url(step1_url):
         values["提问清单链接"] = [{"link": step1_url, "text": "提问清单"}]
     report_url = data.get("report_doc_url", "")
-    if report_url and report_url.startswith("http"):
+    if is_valid_wecom_url(report_url):
         values["需求报告链接"] = [{"link": report_url, "text": "需求报告"}]
     demo_url = data.get("demo_url", "")
-    if demo_url and demo_url.startswith("http"):
+    if is_valid_wecom_url(demo_url):
         values["Demo链接"] = [{"link": demo_url, "text": "Demo"}]
     transcript_url = data.get("transcript_doc_url", "")
-    if transcript_url and transcript_url.startswith("http"):
+    if is_valid_wecom_url(transcript_url):
         values["沟通记录原始材料"] = [{"link": transcript_url, "text": "沟通记录"}]
 
     try:
