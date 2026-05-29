@@ -1286,19 +1286,19 @@ async function generateDemo() {
     try {
         const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求+知识库字段经验池设计Demo。
 
-## 核心原则（必须严格遵守）
-1. 子表名称、字段名称必须优先从知识库字段经验池中选取，禁止凭空编造
-2. 如果知识库有对应行业的字段模板，直接复用其中的表名和字段名，只根据客户实际需求增减
-3. 字段类型必须与知识库中的类型保持一致（如知识库用TEXT就用TEXT，用SINGLE_SELECT就用SINGLE_SELECT）
-4. 每表控制在8-15个字段，2-3条示例数据
-5. 只有当知识库完全没有相关字段时，才可以自行设计
+## 设计原则
+1. 知识库字段经验池是参考而非约束——它代表同行业服务商的真实交付经验，能大幅提高设计准确性
+2. 当知识库有相关行业/场景的模板时，以它为基础进行设计，根据客户实际需求增减字段
+3. 当客户有知识库未覆盖的需求时，发挥你的专业判断力自行设计
+4. 最终产出应该是知识库经验 + 客户个性化需求的结合体
+5. 每表控制在8-15个字段，2-3条示例数据
 
 ## 输出格式
 直接输出JSON，不要markdown代码块。
 {"doc_name":"名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
 类型：FIELD_TYPE_TEXT/NUMBER/SINGLE_SELECT/DATE_TIME/CURRENCY/PERCENTAGE/PROGRESS/PHONE_NUMBER/EMAIL/CHECKBOX/URL/SELECT`;
 
-        const schemaUserPrompt = kbContext + '\n## 需求分析报告\n\n' + c.step2_report.substring(0, 2500) + '\n\n## 沟通记录\n\n' + transcript.substring(0, 1500) + '\n\n请严格参考上面「字段经验池」中的表名和字段名来设计智能表格Demo。字段经验池中已有的字段必须直接复用，不要重新编造名称。';
+        const schemaUserPrompt = kbContext + '\n## 需求分析报告\n\n' + c.step2_report.substring(0, 2500) + '\n\n## 沟通记录\n\n' + transcript.substring(0, 1500) + '\n\n请结合上面「字段经验池」和客户的实际需求，设计智能表格Demo。知识库是参考基础，客户特有的需求用你的专业判断来补充。';
 
         const schemaText = await callDeepSeek(schemaPrompt, schemaUserPrompt);
 
