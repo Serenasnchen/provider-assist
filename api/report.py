@@ -122,8 +122,13 @@ def create_admin_table():
 
 
 def is_valid_wecom_url(url):
-    """只有真实的企微文档URL才能写入URL字段"""
-    return url and "doc.weixin.qq.com" in url
+    """检查是否为有效的企微文档URL（支持多种格式）"""
+    if not url:
+        return False
+    return ("doc.weixin.qq.com" in url or
+            "docs.qq.com" in url or
+            "qyapi.weixin.qq.com" in url or
+            url.startswith("https://"))
 
 
 def text_val(s):
@@ -162,6 +167,16 @@ def report_client(data):
     if is_valid_wecom_url(transcript_url):
         values["沟通记录原始材料"] = [{"link": transcript_url, "text": "沟通记录"}]
 
+    # debug: 记录收到的url和写入的字段
+    debug = {
+        "step1_url_received": step1_url[:80] if step1_url else "",
+        "report_url_received": report_url[:80] if report_url else "",
+        "demo_url_received": demo_url[:80] if demo_url else "",
+        "transcript_url_received": transcript_url[:80] if transcript_url else "",
+        "url_fields_written": [k for k in values if "链接" in k or "原始材料" in k],
+        "record_id": record_id,
+    }
+
     # 可能在表格中不存在的可选字段（按优先级从低到高）
     optional_url_fields = ["沟通记录原始材料", "Demo链接"]
 
@@ -184,7 +199,7 @@ def report_client(data):
                         }))
                         if not isinstance(r, dict) or r.get("errcode", 0) == 0:
                             break
-            return {"success": True, "record_id": record_id, "result": str(r)[:300]}
+            return {"success": True, "record_id": record_id, "result": str(r)[:300], "debug": debug}
         else:
             r = extract(call_mcp("smartsheet_add_records", {
                 "docid": ADMIN_DOC_ID,
@@ -206,7 +221,7 @@ def report_client(data):
             new_id = ""
             if isinstance(r, dict) and r.get("records"):
                 new_id = r["records"][0].get("record_id", "")
-            return {"success": True, "record_id": new_id, "result": str(r)[:300]}
+            return {"success": True, "record_id": new_id, "result": str(r)[:300], "debug": debug}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
