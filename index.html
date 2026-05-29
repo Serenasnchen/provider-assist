@@ -1235,7 +1235,8 @@ async function generateReport() {
 
         document.getElementById('s2-report-section').style.display = 'block';
         // 保存报告和知识库上下文（供后续生成Demo用）
-        updateClient(currentClientId, { step2_report: report || '', step2_todo: todoResult || '', _kb_context: kbContext });
+        // 保存报告，同时清除旧的Demo数据（报告变了，旧Demo无效）
+        updateClient(currentClientId, { step2_report: report || '', step2_todo: todoResult || '', _kb_context: kbContext, step2_schema: null, demo_url: '' });
         updateTimeline(getClient(currentClientId));
 
         // 自动创建需求报告企微文档
@@ -1266,7 +1267,7 @@ async function generateReport() {
         }
         // 上报到平台
         const cc2 = getClient(currentClientId);
-        reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已生成需求报告', step1_doc_url: cc2.step1_doc_url || '', report_doc_url: reportDocUrl, demo_url: cc2.demo_url || '', transcript_doc_url: transcriptDocUrl });
+        reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已生成需求报告', step1_doc_url: cc2.step1_doc_url || '', report_doc_url: reportDocUrl, demo_url: '', transcript_doc_url: transcriptDocUrl });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s2-loading').classList.remove('visible'); }
 }
