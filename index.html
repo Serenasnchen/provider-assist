@@ -378,7 +378,8 @@ function editProviderName() {
 }
 
 // 上报到平台管理表（异步，不阻塞主流程）
-async function reportToAdmin(action, data) {
+// targetClientId: 可选，指定要保存 record_id 的客户ID（用于自动同步场景）
+async function reportToAdmin(action, data, targetClientId) {
     const providerName = localStorage.getItem(PROVIDER_KEY) || '未知';
     try {
         const payload = { action, provider_name: providerName, ...data };
@@ -391,8 +392,9 @@ async function reportToAdmin(action, data) {
         const result = await resp.json();
         console.log('[reportToAdmin] 返回:', JSON.stringify(result));
         // 保存record_id到客户数据（用于后续更新同一行）
-        if (result.record_id && currentClientId) {
-            updateClient(currentClientId, { admin_record_id: result.record_id });
+        const cid = targetClientId || currentClientId;
+        if (result.record_id && cid) {
+            updateClient(cid, { admin_record_id: result.record_id });
         }
         return result;
     } catch(e) { console.error('[reportToAdmin] 错误:', e); return null; }
@@ -1328,6 +1330,66 @@ function handleImport(event) {
 (function checkStorage() {
     const data = localStorage.getItem(STORAGE_KEY);
     console.log('[provider-assist] localStorage状态:', data ? data.length + '字节, ' + JSON.parse(data).length + '个客户' : '空');
+})();
+
+// === 自动回补：页面加载时检测未同步的客户数据并自动写入后台 ===
+(async function autoSyncToAdmin() {
+    const providerName = localStorage.getItem(PROVIDER_KEY);
+    if (!providerName) return; // 未注册服务商，跳过
+    const clients = getClients();
+    if (!clients.length) return;
+
+    let syncCount = 0;
+    for (const c of clients) {
+        // 判断当前真实状态
+        let status = '新建';
+        if (c.demo_url) status = '已生成表格Demo';
+        else if (c.step2_report) status = '已生成需求报告';
+        else if (c.transcript) status = '已上传沟通记录';
+        else if (c.step1_result) status = c.step1_doc_url ? '已生成清单链接' : '已生成清单';
+        else if (c.industry && (c.business_desc || c.pain_points)) status = '已完善档案';
+
+        // 判断是否需要同步：
+        // 1. 没有 admin_record_id（后台从没成功写入过）
+        // 2. 有链接但后台可能没更新过（通过 last_synced_status 标记判断）
+        const needsSync = !c.admin_record_id || (c._last_synced_status !== status) || 
+            (c.step1_doc_url && !c._synced_step1_url) ||
+            (c.report_doc_url && !c._synced_report_url) ||
+            (c.demo_url && !c._synced_demo_url);
+
+        if (!needsSync) continue;
+
+        try {
+            const result = await reportToAdmin('report_client', {
+                record_id: c.admin_record_id || '',
+                client_name: c.name,
+                industry: c.industry || '',
+                business_desc: c.business_desc || '',
+                pain_points: c.pain_points || '',
+                status: status,
+                step1_doc_url: c.step1_doc_url || '',
+                report_doc_url: c.report_doc_url || '',
+                demo_url: c.demo_url || '',
+                transcript_doc_url: c.transcript_doc_url || ''
+            }, c.id);
+
+            if (result && result.success !== false) {
+                // 标记已同步状态，避免下次重复
+                updateClient(c.id, {
+                    _last_synced_status: status,
+                    _synced_step1_url: c.step1_doc_url || '',
+                    _synced_report_url: c.report_doc_url || '',
+                    _synced_demo_url: c.demo_url || ''
+                });
+                syncCount++;
+            }
+        } catch(e) {
+            console.warn('[autoSync] 同步失败:', c.name, e);
+        }
+    }
+    if (syncCount > 0) {
+        console.log('[autoSync] 自动同步完成，更新了', syncCount, '个客户');
+    }
 })();
 </script>
 </body>
