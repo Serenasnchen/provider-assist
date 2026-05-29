@@ -162,6 +162,9 @@ def report_client(data):
     if is_valid_wecom_url(transcript_url):
         values["沟通记录原始材料"] = [{"link": transcript_url, "text": "沟通记录"}]
 
+    # 可能在表格中不存在的可选字段（按优先级从低到高）
+    optional_url_fields = ["沟通记录原始材料", "Demo链接"]
+
     try:
         if record_id:
             r = extract(call_mcp("smartsheet_update_records", {
@@ -169,17 +172,41 @@ def report_client(data):
                 "sheet_id": SHEET_CLIENTS,
                 "records": [{"record_id": record_id, "values": values}]
             }))
-            return {"success": True, "record_id": record_id, "result": str(r)[:200]}
+            # 如果失败，逐个去掉可选字段重试
+            if isinstance(r, dict) and r.get("errcode", 0) != 0:
+                for field in optional_url_fields:
+                    if field in values:
+                        values.pop(field)
+                        r = extract(call_mcp("smartsheet_update_records", {
+                            "docid": ADMIN_DOC_ID,
+                            "sheet_id": SHEET_CLIENTS,
+                            "records": [{"record_id": record_id, "values": values}]
+                        }))
+                        if not isinstance(r, dict) or r.get("errcode", 0) == 0:
+                            break
+            return {"success": True, "record_id": record_id, "result": str(r)[:300]}
         else:
             r = extract(call_mcp("smartsheet_add_records", {
                 "docid": ADMIN_DOC_ID,
                 "sheet_id": SHEET_CLIENTS,
                 "records": [{"values": values}]
             }))
+            # 如果失败，逐个去掉可选字段重试
+            if isinstance(r, dict) and r.get("errcode", 0) != 0:
+                for field in optional_url_fields:
+                    if field in values:
+                        values.pop(field)
+                        r = extract(call_mcp("smartsheet_add_records", {
+                            "docid": ADMIN_DOC_ID,
+                            "sheet_id": SHEET_CLIENTS,
+                            "records": [{"values": values}]
+                        }))
+                        if not isinstance(r, dict) or r.get("errcode", 0) == 0:
+                            break
             new_id = ""
             if isinstance(r, dict) and r.get("records"):
                 new_id = r["records"][0].get("record_id", "")
-            return {"success": True, "record_id": new_id, "result": str(r)[:200]}
+            return {"success": True, "record_id": new_id, "result": str(r)[:300]}
     except Exception as e:
         return {"success": False, "error": str(e)}
 

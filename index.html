@@ -892,9 +892,25 @@ async function generateStep1() {
         updateClient(currentClientId, { step1_result: result, status: 'waiting' });
         updateTimeline(getClient(currentClientId));
         document.getElementById('detail-industry').textContent = industry;
-        // 上报到平台（更新同一行）
+        // 自动创建企微文档并获取链接
+        let step1DocUrl = '';
+        try {
+            const cc0 = getClient(currentClientId);
+            const docTitle = (cc0.name || '') + ' - 调研准备材料';
+            const docResp = await fetch('/api/export_doc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: docTitle, content: result }) });
+            const docData = await docResp.json();
+            if (docData.success && docData.url) {
+                step1DocUrl = docData.url;
+                updateClient(currentClientId, { step1_doc_url: step1DocUrl });
+                // 显示链接
+                const linkDiv = document.createElement('div');
+                linkDiv.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + docData.url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
+                document.getElementById('s1-content').closest('.card').appendChild(linkDiv);
+            }
+        } catch(e) { console.warn('自动创建企微文档失败:', e); }
+        // 上报到平台（更新同一行，带上链接）
         const cc = getClient(currentClientId);
-        reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成清单', step1_doc_url: cc.step1_doc_url || '' });
+        reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成清单', step1_doc_url: step1DocUrl });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s1-loading').classList.remove('visible'); }
 }
@@ -1065,15 +1081,35 @@ async function generateStep2() {
         document.getElementById('s2-result').style.display = 'block';
         updateClient(currentClientId, { step2_report: report || '', step2_todo: todoResult || '', step2_schema: demoSchema, status: 'done' });
         updateTimeline(getClient(currentClientId));
-        // 上报到平台：客户状态+沟通记录
-        const cc2 = getClient(currentClientId);
-        reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已完成', report_doc_url: cc2.report_doc_url || '', demo_url: cc2.demo_url || '' });
+        // 自动创建需求报告企微文档
+        let reportDocUrl = '';
+        let transcriptDocUrl = '';
+        try {
+            const cc2a = getClient(currentClientId);
+            const rptTitle = (cc2a.name || '') + ' - 需求分析报告';
+            const rptResp = await fetch('/api/export_doc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: rptTitle, content: report }) });
+            const rptData = await rptResp.json();
+            if (rptData.success && rptData.url) {
+                reportDocUrl = rptData.url;
+                updateClient(currentClientId, { report_doc_url: reportDocUrl });
+            }
+        } catch(e) { console.warn('自动创建报告文档失败:', e); }
+        // 上传沟通记录并获取链接
         if (transcript) {
-            const uploadData = { client_name: cc2.name, industry: cc2.industry, transcript: transcript };
-            // 如果有原始上传的文件base64，一并传过去
+            const cc2b = getClient(currentClientId);
+            const uploadData = { client_name: cc2b.name, industry: cc2b.industry, transcript: transcript };
             if (window._lastUploadedFile) { uploadData.file_base64 = window._lastUploadedFile.base64; uploadData.file_name = window._lastUploadedFile.name; }
-            reportToAdmin('report_transcript', uploadData);
+            try {
+                const transResult = await reportToAdmin('report_transcript', uploadData);
+                if (transResult && transResult.doc_url) {
+                    transcriptDocUrl = transResult.doc_url;
+                    updateClient(currentClientId, { transcript_doc_url: transcriptDocUrl });
+                }
+            } catch(e) { console.warn('上传沟通记录失败:', e); }
         }
+        // 上报到平台：状态+所有链接
+        const cc2 = getClient(currentClientId);
+        reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已完成', step1_doc_url: cc2.step1_doc_url || '', report_doc_url: reportDocUrl, demo_url: cc2.demo_url || '', transcript_doc_url: transcriptDocUrl });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s2-loading').classList.remove('visible'); }
 }
@@ -1108,7 +1144,7 @@ async function createSmartsheet() {
             updateClient(currentClientId, { demo_url: data.url });
             // 更新后台
             const cc = getClient(currentClientId);
-            if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已完成', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url }); }
+            if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已完成', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
         } else { div.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:12px;font-size:13px;color:#c62828">失败：'+(data.error||'')+'</div>'; }
         div.style.display = 'block';
     } catch (e) { alert(e.message); }
@@ -1159,7 +1195,7 @@ async function exportWecomDoc(elId, title) {
             // 同步更新后台表格的链接
             const cc = getClient(currentClientId);
             if (cc && cc.admin_record_id) {
-                reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: cc.step2_report ? '已完成' : '已生成清单', step1_doc_url: cc.step1_doc_url || '', report_doc_url: cc.report_doc_url || '', demo_url: cc.demo_url || '' });
+                reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: cc.step2_report ? '已完成' : '已生成清单', step1_doc_url: cc.step1_doc_url || '', report_doc_url: cc.report_doc_url || '', demo_url: cc.demo_url || '', transcript_doc_url: cc.transcript_doc_url || '' });
             }
             const div = document.createElement('div');
             div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + data.url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
