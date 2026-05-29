@@ -289,15 +289,17 @@
                     <span style="font-size:12px;color:#185FA5;cursor:pointer" onclick="hidePanel()">← 返回</span>
                 </div>
                 <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
-                    <p>点击上传或拖拽文件</p>
-                    <p class="hint">支持 .txt / .docx</p>
-                    <p class="file-name" id="upload-filename"></p>
-                    <span id="upload-clear" style="display:none;font-size:11px;color:#e53935;cursor:pointer;margin-top:4px" onclick="event.stopPropagation();clearUpload()">✕ 移除文件，重新上传</span>
+                    <p>点击上传沟通记录文件（支持多个）</p>
+                    <p class="hint">支持 .txt / .docx，可多次上传</p>
                 </div>
-                <input type="file" id="file-input" accept=".txt,.docx" style="display:none" onchange="handleFileUpload(event)">
-                <div class="or-divider">或直接粘贴</div>
-                <textarea id="s2-transcript" style="min-height:160px" placeholder="粘贴会议转写或沟通记录..."></textarea>
-                <div class="actions"><button class="btn btn-primary" onclick="generateStep2()">生成需求报告 + Demo</button></div>
+                <input type="file" id="file-input" accept=".txt,.docx" multiple style="display:none" onchange="handleFileUpload(event)">
+                <div id="uploaded-files-list" style="margin-top:8px"></div>
+                <div class="or-divider">或直接粘贴补充</div>
+                <textarea id="s2-transcript" style="min-height:120px" placeholder="粘贴补充的会议转写或沟通记录（可选）..."></textarea>
+                <div class="actions" style="gap:8px;display:flex;flex-wrap:wrap">
+                    <button class="btn btn-secondary" onclick="saveTranscripts()">保存沟通记录</button>
+                    <button class="btn btn-primary" onclick="generateStep2()">生成需求报告 + Demo</button>
+                </div>
             </div>
             <div id="s2-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在分析...</p></div>
             <div id="s2-result" style="display:none">
@@ -603,7 +605,9 @@ function openClient(id) {
     }
 
     // Restore Step2
-    document.getElementById('s2-transcript').value = c.transcript || '';
+    document.getElementById('s2-transcript').value = '';
+    _uploadedFiles = c.uploaded_files || [];
+    renderUploadedFiles();
     if (c.step2_report) {
         document.getElementById('s2-report').innerHTML = renderMarkdown(c.step2_report);
         document.getElementById('s2-result').style.display = 'block';
@@ -926,50 +930,108 @@ async function generateStep1() {
         } catch(e) { console.warn('自动创建企微文档失败:', e); }
         // 上报到平台（更新同一行，带上链接）
         const cc = getClient(currentClientId);
-        reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成清单', step1_doc_url: step1DocUrl });
+        reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: step1DocUrl ? '已生成清单链接' : '已生成清单', step1_doc_url: step1DocUrl });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s1-loading').classList.remove('visible'); }
 }
 
 // === Step 2 ===
-function clearUpload() {
-    document.getElementById('upload-filename').textContent = '';
-    document.getElementById('upload-clear').style.display = 'none';
-    document.getElementById('s2-transcript').value = '';
-    document.getElementById('file-input').value = '';
-    window._lastUploadedFile = null;
+// 多文件上传暂存
+let _uploadedFiles = []; // [{name, text, base64?}]
+
+function renderUploadedFiles() {
+    const c = getClient(currentClientId);
+    const files = (c && c.uploaded_files) || _uploadedFiles;
+    const container = document.getElementById('uploaded-files-list');
+    if (!files || files.length === 0) { container.innerHTML = ''; return; }
+    let html = '<div style="font-size:12px;color:#555;margin-bottom:6px">已上传 ' + files.length + ' 份沟通记录：</div>';
+    files.forEach((f, i) => {
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8faf8;border:0.5px solid #e0e0e0;border-radius:6px;margin-bottom:4px;font-size:12px">';
+        html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + f.name + (f.text ? ' (' + f.text.length + '字)' : '') + '</span>';
+        html += '<span style="color:#e53935;cursor:pointer;font-size:11px" onclick="removeUploadedFile(' + i + ')">删除</span>';
+        html += '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function removeUploadedFile(index) {
+    const c = getClient(currentClientId);
+    const files = (c && c.uploaded_files) || [];
+    files.splice(index, 1);
+    updateClient(currentClientId, { uploaded_files: files });
+    _uploadedFiles = files;
+    renderUploadedFiles();
 }
 
 async function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    window._lastUploadedFile = null; // reset
-    document.getElementById('upload-filename').textContent = file.name + ' (解析中...)';
-    document.getElementById('upload-clear').style.display = 'none';
-    if (file.name.endsWith('.txt')) {
-        const reader = new FileReader();
-        reader.onload = (e) => { document.getElementById('s2-transcript').value = e.target.result; document.getElementById('upload-filename').textContent = file.name + ` (${e.target.result.length}字)`; document.getElementById('upload-clear').style.display = 'inline'; };
-        reader.readAsText(file);
-    } else {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const b64 = btoa(String.fromCharCode(...new Uint8Array(e.target.result)));
-            window._lastUploadedFile = { name: file.name, base64: b64 };
+    const fileList = event.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const c = getClient(currentClientId);
+    const existing = (c && c.uploaded_files) || [];
+    
+    for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        if (file.name.endsWith('.txt')) {
+            const text = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsText(file);
+            });
+            existing.push({ name: file.name, text: text });
+        } else {
+            const arrayBuf = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsArrayBuffer(file);
+            });
+            const b64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)));
             try {
                 const resp = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, file_data: b64 }) });
                 const data = await resp.json();
-                if (data.text) { document.getElementById('s2-transcript').value = data.text; document.getElementById('upload-filename').textContent = file.name + ` (${data.char_count}字)`; document.getElementById('upload-clear').style.display = 'inline'; }
-                else { document.getElementById('upload-filename').textContent = file.name + ' (解析失败)'; document.getElementById('upload-clear').style.display = 'inline'; }
-            } catch (err) { document.getElementById('upload-filename').textContent = file.name + ' (上传失败)'; document.getElementById('upload-clear').style.display = 'inline'; }
-        };
-        reader.readAsArrayBuffer(file);
+                existing.push({ name: file.name, text: data.text || '', base64: b64 });
+            } catch(e) {
+                existing.push({ name: file.name + ' (解析失败)', text: '', base64: b64 });
+            }
+        }
     }
+    updateClient(currentClientId, { uploaded_files: existing });
+    _uploadedFiles = existing;
+    renderUploadedFiles();
+    document.getElementById('file-input').value = '';
+    showToast('已添加 ' + fileList.length + ' 个文件');
+}
+
+function saveTranscripts() {
+    const c = getClient(currentClientId);
+    const pastedText = document.getElementById('s2-transcript').value.trim();
+    // 如果有粘贴文字，也存进 uploaded_files
+    if (pastedText) {
+        const files = (c && c.uploaded_files) || [];
+        files.push({ name: '粘贴文字 (' + new Date().toLocaleTimeString() + ')', text: pastedText });
+        updateClient(currentClientId, { uploaded_files: files, transcript: pastedText });
+        document.getElementById('s2-transcript').value = '';
+        _uploadedFiles = files;
+        renderUploadedFiles();
+    }
+    // 上报状态
+    const cc = getClient(currentClientId);
+    if (cc && cc.admin_record_id) {
+        reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已上传沟通记录', step1_doc_url: cc.step1_doc_url || '' });
+    }
+    showToast('沟通记录已保存');
 }
 
 async function generateStep2() {
-    const transcript = document.getElementById('s2-transcript').value.trim();
-    if (!transcript) { alert('请粘贴或上传沟通记录'); return; }
+    // 合并所有上传文件的文本内容 + textarea 中的补充文字
     const c = getClient(currentClientId);
+    const uploadedFiles = (c && c.uploaded_files) || [];
+    const pastedText = document.getElementById('s2-transcript').value.trim();
+    
+    let allTexts = uploadedFiles.map(f => f.text || '').filter(t => t.length > 0);
+    if (pastedText) allTexts.push(pastedText);
+    const transcript = allTexts.join('\n\n---\n\n');
+    
+    if (!transcript) { alert('请先上传沟通记录文件或粘贴文字'); return; }
     const industry = c ? c.industry : '';
 
     updateClient(currentClientId, { transcript });
@@ -1125,7 +1187,7 @@ async function generateStep2() {
         }
         // 上报到平台：状态+所有链接
         const cc2 = getClient(currentClientId);
-        reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已完成', step1_doc_url: cc2.step1_doc_url || '', report_doc_url: reportDocUrl, demo_url: cc2.demo_url || '', transcript_doc_url: transcriptDocUrl });
+        reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已生成需求报告', step1_doc_url: cc2.step1_doc_url || '', report_doc_url: reportDocUrl, demo_url: cc2.demo_url || '', transcript_doc_url: transcriptDocUrl });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s2-loading').classList.remove('visible'); }
 }
@@ -1160,7 +1222,7 @@ async function createSmartsheet() {
             updateClient(currentClientId, { demo_url: data.url });
             // 更新后台
             const cc = getClient(currentClientId);
-            if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已完成', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
+            if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成表格Demo', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
         } else { div.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:12px;font-size:13px;color:#c62828">失败：'+(data.error||'')+'</div>'; }
         div.style.display = 'block';
     } catch (e) { alert(e.message); }
@@ -1170,10 +1232,14 @@ async function createSmartsheet() {
 // === Helpers ===
 function renderMarkdown(text) { text = text.replace(/^(好的|作为|我已经|根据您|以下是).*?(\n---|\n##|\n###)/s, '$2'); return marked.parse(text); }
 function renderWithTags(text) {
-    // 修正问题编号：只对带[维度]标签的行重新编号（解决AI编号到9后变0的bug）
+    // 修正问题编号：对带[维度]标签的行重新编号，用"数字. "格式但阻止marked解析为<ol>
     let qNum = 0;
-    text = text.replace(/^\d+\.\s*[\[【]/gm, (match) => { qNum++; return qNum + '. ['; });
+    text = text.replace(/^\d+[\.\)）]\s*[\[【]/gm, (match) => { qNum++; return qNum + '. ['; });
+    // 在每个编号行前加一个零宽空格，阻止marked把它当作有序列表
+    text = text.replace(/^(\d+)\. \[/gm, '\u200B$1. [');
     let html = renderMarkdown(text);
+    // 移除零宽空格
+    html = html.replace(/\u200B/g, '');
     html = html.replace(/[\[【]([^\]】]+)[\]】]/g, '<span style="display:inline-block;background:#eef4ff;color:#185FA5;font-size:11px;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:500">$1</span>');
     return html;
 }
@@ -1211,7 +1277,7 @@ async function exportWecomDoc(elId, title) {
             // 同步更新后台表格的链接
             const cc = getClient(currentClientId);
             if (cc && cc.admin_record_id) {
-                reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: cc.step2_report ? '已完成' : '已生成清单', step1_doc_url: cc.step1_doc_url || '', report_doc_url: cc.report_doc_url || '', demo_url: cc.demo_url || '', transcript_doc_url: cc.transcript_doc_url || '' });
+                reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: cc.demo_url ? '已生成表格Demo' : cc.step2_report ? '已生成需求报告' : '已生成清单链接', step1_doc_url: cc.step1_doc_url || '', report_doc_url: cc.report_doc_url || '', demo_url: cc.demo_url || '', transcript_doc_url: cc.transcript_doc_url || '' });
             }
             const card = document.getElementById(elId).closest('.card');
             const existingLink = card.querySelector('.wecom-doc-link');
