@@ -9,7 +9,8 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif; background: #f8f9fb; color: #1a1a1a; line-height: 1.6; min-height: 100vh; }
-        .container { max-width: 780px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px 40px; }
+        @media (max-width: 768px) { .container { padding: 16px; max-width: 100%; } }
 
         .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         .app-header h1 { font-size: 17px; font-weight: 500; }
@@ -34,7 +35,8 @@
         .section-label { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 10px; }
 
         /* Client cards */
-        .client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+        .client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+        @media (min-width: 1024px) { .client-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); } }
         .client-card { background: #fff; border-radius: 12px; padding: 16px; cursor: pointer; border: 0.5px solid rgba(0,0,0,0.06); transition: all 0.15s; }
         .client-card:hover { border-color: #185FA5; }
         .client-card .name { font-size: 14px; font-weight: 500; }
@@ -81,14 +83,16 @@
         .output-item-info .time { font-size: 10px; color: #999; margin-top: 2px; }
         .output-item-link { font-size: 11px; color: #185FA5; text-decoration: none; }
 
-        .rendered-content { background: #fafbfc; border: 0.5px solid #eee; border-radius: 10px; padding: 20px; font-size: 13px; line-height: 1.9; max-height: 600px; overflow-y: auto; }
+        .rendered-content { background: #fafbfc; border: 0.5px solid #eee; border-radius: 10px; padding: 20px; font-size: 13px; line-height: 1.9; max-height: 70vh; overflow-y: auto; }
+        @media (min-width: 1024px) { .rendered-content { padding: 28px 32px; font-size: 14px; } }
         .rendered-content h1,.rendered-content h2,.rendered-content h3 { color: #185FA5; margin-top: 18px; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 0.5px solid #f0f0f0; }
         .rendered-content h1 { font-size: 16px; } .rendered-content h2 { font-size: 14px; } .rendered-content h3 { font-size: 13px; border-bottom: none; color: #333; }
         .rendered-content p { margin-bottom: 6px; } .rendered-content ul,.rendered-content ol { padding-left: 18px; margin-bottom: 8px; }
         .rendered-content li { margin-bottom: 5px; } .rendered-content strong { color: #185FA5; }
         .rendered-content em { color: #666; font-style: normal; font-size: 12px; }
         .rendered-content blockquote { border-left: 2px solid #185FA5; padding: 5px 12px; margin: 8px 0; background: #f8faff; border-radius: 0 6px 6px 0; color: #555; font-size: 12px; }
-        .rendered-content table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+        .rendered-content table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; display: block; overflow-x: auto; }
+        @media (min-width: 1024px) { .rendered-content table { display: table; font-size: 13px; } }
         .rendered-content th,.rendered-content td { border: 0.5px solid #eee; padding: 5px 8px; text-align: left; }
         .rendered-content th { background: #f8f9fa; font-weight: 500; }
 
@@ -117,6 +121,8 @@
         .empty-state p { font-size: 13px; margin-bottom: 14px; }
 
         .step-panel { display: none; }
+        @media (min-width: 1024px) { .step-panel { max-width: 900px; } }
+        @media (min-width: 768px) { .action-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
     </style>
 </head>
 <body>
@@ -655,8 +661,15 @@ function openClient(id) {
         demoSchema = c.step2_schema;
         renderSchema(demoSchema);
         document.getElementById('s2-demo-section').style.display = 'block';
+        // 清除旧的创建结果
+        document.getElementById('s2-create-result').style.display = 'none';
+        document.getElementById('s2-create-result').innerHTML = '';
     } else {
+        demoSchema = null;
         document.getElementById('s2-demo-section').style.display = 'none';
+        document.getElementById('s2-schema-card').style.display = 'none';
+        document.getElementById('s2-create-result').style.display = 'none';
+        document.getElementById('s2-create-result').innerHTML = '';
     }
 
     // Show default view (action cards, hide panels)
@@ -1283,6 +1296,8 @@ async function generateDemo() {
     document.getElementById('s2-demo-section').style.display = 'block';
     document.getElementById('s2-demo-loading').classList.add('visible');
     document.getElementById('s2-schema-card').style.display = 'none';
+    document.getElementById('s2-create-result').style.display = 'none';
+    document.getElementById('s2-create-result').innerHTML = '';
 
     try {
         const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求+知识库字段经验池设计Demo。
