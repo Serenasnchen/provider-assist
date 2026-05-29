@@ -298,11 +298,12 @@
                 <textarea id="s2-transcript" style="min-height:120px" placeholder="粘贴补充的会议转写或沟通记录（可选）..."></textarea>
                 <div class="actions" style="gap:8px;display:flex;flex-wrap:wrap">
                     <button class="btn btn-secondary" onclick="saveTranscripts()">保存沟通记录</button>
-                    <button class="btn btn-primary" onclick="generateStep2()">生成需求报告 + Demo</button>
+                    <button class="btn btn-primary" onclick="generateReport()">生成需求分析报告</button>
                 </div>
             </div>
             <div id="s2-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在分析...</p></div>
-            <div id="s2-result" style="display:none">
+            <!-- 阶段1：需求分析报告 -->
+            <div id="s2-report-section" style="display:none">
                 <div class="card">
                     <h3>需求分析报告</h3>
                     <div id="s2-report" class="rendered-content"></div>
@@ -318,11 +319,33 @@
                         </div>
                     </div>
                 </div>
+                <!-- 待确认事项 -->
+                <div id="s2-todo-card" class="card" style="border-left:3px solid #ff9800;display:none">
+                    <h3 style="color:#e65100">待确认事项</h3>
+                    <div id="s2-todo" class="rendered-content"></div>
+                </div>
+                <!-- 确认区域 -->
+                <div class="card" style="background:#f8faff;border:1px solid #d4e5f7">
+                    <div style="display:flex;align-items:flex-start;gap:10px">
+                        <span style="font-size:20px">📤</span>
+                        <div style="flex:1">
+                            <p style="font-size:13px;font-weight:500;margin:0 0 4px">发给客户确认</p>
+                            <p style="font-size:12px;color:#666;margin:0 0 10px">导出报告发给客户查看，待客户确认无误后，点击下方按钮生成智能表格 Demo</p>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                <button class="btn btn-primary" onclick="generateDemo()">客户已确认，生成智能表格 Demo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 阶段2：智能表格 Demo -->
+            <div id="s2-demo-section" style="display:none">
+                <div id="s2-demo-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在生成智能表格设计...</p></div>
                 <div id="s2-schema-card" class="card" style="display:none">
                     <h3>智能表格 Demo</h3>
                     <div id="s2-schema" class="rendered-content"></div>
                     <div class="actions">
-                        <button class="btn btn-primary btn-sm" id="btn-create" style="display:none" onclick="createSmartsheet()">创建企微智能表格</button>
+                        <button class="btn btn-primary btn-sm" id="btn-create" onclick="createSmartsheet()">创建企微智能表格</button>
                         <button class="btn btn-secondary btn-sm" onclick="copyRendered('s2-schema')">复制</button>
                     </div>
                     <div id="s2-create-result" style="margin-top:10px;display:none"></div>
@@ -617,11 +640,21 @@ function openClient(id) {
     }
     if (c.step2_report) {
         document.getElementById('s2-report').innerHTML = renderMarkdown(c.step2_report);
-        document.getElementById('s2-result').style.display = 'block';
+        document.getElementById('s2-report-section').style.display = 'block';
+        if (c.step2_todo) {
+            document.getElementById('s2-todo').innerHTML = renderMarkdown(c.step2_todo);
+            document.getElementById('s2-todo-card').style.display = 'block';
+        }
     } else {
-        document.getElementById('s2-result').style.display = 'none';
+        document.getElementById('s2-report-section').style.display = 'none';
     }
-    if (c.step2_schema) { demoSchema = c.step2_schema; renderSchema(demoSchema); }
+    if (c.step2_schema) {
+        demoSchema = c.step2_schema;
+        renderSchema(demoSchema);
+        document.getElementById('s2-demo-section').style.display = 'block';
+    } else {
+        document.getElementById('s2-demo-section').style.display = 'none';
+    }
 
     // Show default view (action cards, hide panels)
     hidePanel();
@@ -1064,15 +1097,14 @@ function saveTranscripts() {
     showToast('沟通记录已保存');
 }
 
-async function generateStep2() {
-    // 合并所有上传文件的文本内容 + textarea 中的补充文字 + 已保存的 transcript
+async function generateReport() {
+    // 阶段1：只生成需求分析报告 + 待确认事项
     const c = getClient(currentClientId);
     const uploadedFiles = (c && c.uploaded_files) || [];
     const pastedText = document.getElementById('s2-transcript').value.trim();
     
     let allTexts = uploadedFiles.map(f => f.text || '').filter(t => t.length > 0);
     if (pastedText) allTexts.push(pastedText);
-    // 如果上面都没内容，尝试用之前已保存的 transcript
     if (allTexts.length === 0 && c && c.transcript) {
         allTexts.push(c.transcript);
     }
@@ -1084,10 +1116,10 @@ async function generateStep2() {
     updateClient(currentClientId, { transcript });
     document.getElementById('s2-loading').classList.add('visible');
     document.querySelector('#s2-loading p').textContent = '正在匹配知识库...';
-    document.getElementById('s2-result').style.display = 'none';
+    document.getElementById('s2-report-section').style.display = 'none';
 
     try {
-        // 1. 后端匹配知识库获取上下文（深度引用）
+        // 1. 后端匹配知识库获取上下文
         const matchResp = await fetch('/api/match', { method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ industry, direction: transcript.substring(0, 300) }) });
         let kbContext = '';
@@ -1128,8 +1160,8 @@ async function generateStep2() {
         // 2. 客户一致性检测上下文
         const step1Info = c ? `\n## Step1录入的客户信息（用于一致性检查）\n行业：${c.industry||'未填'}\n业务描述：${c.business_desc||'未填'}\n痛点：${c.pain_points||'未填'}\n如果沟通记录中的客户行业/业务与上述信息明显不一致，请在报告开头用⚠️提醒。\n` : '';
 
-        // 3. 并行调用DeepSeek生成三个产出物
-        document.querySelector('#s2-loading p').textContent = '正在并行生成报告 + Demo + 待确认事项...';
+        // 3. 并行调用生成报告 + 待确认事项
+        document.querySelector('#s2-loading p').textContent = '正在生成需求分析报告...';
 
         const reportPrompt = `你是专业的企业微信智能表格售前方案顾问。根据沟通记录+知识库，生成详细需求洞察报告。
 
@@ -1158,25 +1190,15 @@ async function generateStep2() {
 
 重点检测：流程是否完整、数据接入方式、权限设计、自动化需求、外部系统对接、历史数据迁移、预算时间。`;
 
-        const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求+知识库字段经验池设计Demo。
-重要：参考知识库中的表结构和字段来设计，不要凭空编。每表8-12字段，2-3条示例数据。
-直接输出JSON，不要markdown代码块。
-格式：{"doc_name":"名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
-类型：FIELD_TYPE_TEXT/NUMBER/SINGLE_SELECT/DATE_TIME/CURRENCY/PERCENTAGE/PROGRESS/PHONE_NUMBER/EMAIL/CHECKBOX`;
-
         const reportUserPrompt = step1Info + kbContext + '## 客户沟通记录\n\n' + transcript + '\n\n请生成报告（不含待确认事项）。';
         const todoUserPrompt = '## 沟通记录\n\n' + transcript.substring(0, 3000) + '\n\n请列出待确认事项。';
-        const schemaUserPrompt = kbContext + '## 沟通记录\n\n' + transcript.substring(0, 2000) + '\n\n设计智能表格Demo。';
 
-        // 并行执行3个调用（部分失败不影响其他）
         const results = await Promise.allSettled([
             callDeepSeek(reportPrompt, reportUserPrompt),
-            callDeepSeek(todoPrompt, todoUserPrompt),
-            callDeepSeek(schemaPrompt, schemaUserPrompt)
+            callDeepSeek(todoPrompt, todoUserPrompt)
         ]);
         const report = results[0].status === 'fulfilled' ? results[0].value : '';
         const todoResult = results[1].status === 'fulfilled' ? results[1].value : '';
-        const schemaText = results[2].status === 'fulfilled' ? results[2].value : '';
 
         // 渲染报告
         if (report) {
@@ -1185,27 +1207,17 @@ async function generateStep2() {
             document.getElementById('s2-report').innerHTML = '<p style="color:#e53935">报告生成失败，请重试</p>';
         }
 
-        // 解析并渲染schema
-        let schema = null;
-        if (schemaText) {
-            try { schema = JSON.parse(schemaText); } catch {
-                const m = schemaText.match(/```(?:json)?\s*([\s\S]*?)```/);
-                if (m) try { schema = JSON.parse(m[1]); } catch {}
-                if (!schema) { const j = schemaText.match(/\{[\s\S]*\}/); if (j) try { schema = JSON.parse(j[0]); } catch {} }
-            }
+        // 渲染待确认事项
+        if (todoResult) {
+            document.getElementById('s2-todo').innerHTML = renderMarkdown(todoResult);
+            document.getElementById('s2-todo-card').style.display = 'block';
         }
-        if (schema && schema.sheets) { demoSchema = schema; renderSchema(schema); }
 
-        // 显示待确认事项（单独卡片）
-        const todoCard = document.createElement('div');
-        todoCard.className = 'card';
-        todoCard.style.borderLeft = '3px solid #ff9800';
-        todoCard.innerHTML = '<h3 style="color:#e65100">待确认事项</h3><div class="rendered-content">' + renderMarkdown(todoResult) + '</div>';
-        document.getElementById('s2-result').appendChild(todoCard);
-
-        document.getElementById('s2-result').style.display = 'block';
-        updateClient(currentClientId, { step2_report: report || '', step2_todo: todoResult || '', step2_schema: demoSchema, status: 'done' });
+        document.getElementById('s2-report-section').style.display = 'block';
+        // 保存报告和知识库上下文（供后续生成Demo用）
+        updateClient(currentClientId, { step2_report: report || '', step2_todo: todoResult || '', _kb_context: kbContext });
         updateTimeline(getClient(currentClientId));
+
         // 自动创建需求报告企微文档
         let reportDocUrl = '';
         let transcriptDocUrl = '';
@@ -1232,11 +1244,56 @@ async function generateStep2() {
                 }
             } catch(e) { console.warn('上传沟通记录失败:', e); }
         }
-        // 上报到平台：状态+所有链接
+        // 上报到平台
         const cc2 = getClient(currentClientId);
         reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已生成需求报告', step1_doc_url: cc2.step1_doc_url || '', report_doc_url: reportDocUrl, demo_url: cc2.demo_url || '', transcript_doc_url: transcriptDocUrl });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s2-loading').classList.remove('visible'); }
+}
+
+async function generateDemo() {
+    // 阶段2：客户确认后，生成智能表格 Demo
+    const c = getClient(currentClientId);
+    if (!c || !c.step2_report) { alert('请先生成需求分析报告'); return; }
+
+    const transcript = c.transcript || '';
+    const kbContext = c._kb_context || '';
+
+    document.getElementById('s2-demo-section').style.display = 'block';
+    document.getElementById('s2-demo-loading').classList.add('visible');
+    document.getElementById('s2-schema-card').style.display = 'none';
+
+    try {
+        const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求+知识库字段经验池设计Demo。
+重要：参考知识库中的表结构和字段来设计，不要凭空编。每表8-12字段，2-3条示例数据。
+直接输出JSON，不要markdown代码块。
+格式：{"doc_name":"名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
+类型：FIELD_TYPE_TEXT/NUMBER/SINGLE_SELECT/DATE_TIME/CURRENCY/PERCENTAGE/PROGRESS/PHONE_NUMBER/EMAIL/CHECKBOX`;
+
+        const schemaUserPrompt = kbContext + '## 需求分析报告\n\n' + c.step2_report.substring(0, 2500) + '\n\n## 沟通记录\n\n' + transcript.substring(0, 1500) + '\n\n设计智能表格Demo。';
+
+        const schemaText = await callDeepSeek(schemaPrompt, schemaUserPrompt);
+
+        // 解析 schema JSON
+        let schema = null;
+        if (schemaText) {
+            try { schema = JSON.parse(schemaText); } catch {
+                const m = schemaText.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (m) try { schema = JSON.parse(m[1]); } catch {}
+                if (!schema) { const j = schemaText.match(/\{[\s\S]*\}/); if (j) try { schema = JSON.parse(j[0]); } catch {} }
+            }
+        }
+        if (schema && schema.sheets) {
+            demoSchema = schema;
+            renderSchema(schema);
+            updateClient(currentClientId, { step2_schema: demoSchema, status: 'done' });
+            updateTimeline(getClient(currentClientId));
+        } else {
+            document.getElementById('s2-schema-card').style.display = 'block';
+            document.getElementById('s2-schema').innerHTML = '<p style="color:#e53935">Demo生成失败，请重试</p>';
+        }
+    } catch (e) { alert('请求失败: ' + e.message); }
+    finally { document.getElementById('s2-demo-loading').classList.remove('visible'); }
 }
 
 function renderSchema(schema) {
