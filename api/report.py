@@ -164,19 +164,19 @@ def report_client(data):
     status = data.get("status", "")
     if status:
         values["当前状态"] = [{"text": status}]
-    # URL字段：只有真实企微URL才传，去掉scode参数后用link格式写入
+    # URL字段：只有真实企微URL才传，必须包含 "type": "url" 否则API会报 2022016 错误
     step1_url = clean_wecom_url(data.get("step1_doc_url", ""))
     if step1_url:
-        values["提问清单链接"] = [{"link": step1_url, "text": "提问清单"}]
+        values["提问清单链接"] = [{"type": "url", "link": step1_url, "text": "提问清单"}]
     report_url = clean_wecom_url(data.get("report_doc_url", ""))
     if report_url:
-        values["需求报告链接"] = [{"link": report_url, "text": "需求报告"}]
+        values["需求报告链接"] = [{"type": "url", "link": report_url, "text": "需求报告"}]
     demo_url = clean_wecom_url(data.get("demo_url", ""))
     if demo_url:
-        values["Demo链接"] = [{"link": demo_url, "text": "Demo"}]
+        values["Demo链接"] = [{"type": "url", "link": demo_url, "text": "Demo"}]
     transcript_url = clean_wecom_url(data.get("transcript_doc_url", ""))
     if transcript_url:
-        values["沟通记录原始材料"] = [{"link": transcript_url, "text": "沟通记录"}]
+        values["沟通记录原始材料"] = [{"type": "url", "link": transcript_url, "text": "沟通记录"}]
 
     # debug: 记录收到的url和写入的字段
     debug = {
@@ -288,7 +288,7 @@ def report_transcript(data):
         "内容长度": len(transcript) or len(file_base64)
     }
     if doc_url:
-        values["文档链接"] = [{"link": doc_url, "text": "查看文档"}]
+        values["文档链接"] = [{"type": "url", "link": doc_url, "text": "查看文档"}]
 
     try:
         r = extract(call_mcp("smartsheet_add_records", {
