@@ -286,7 +286,10 @@
             <div class="card">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                     <h3 style="margin:0">需求交付</h3>
-                    <span style="font-size:12px;color:#185FA5;cursor:pointer" onclick="hidePanel()">← 返回</span>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <button class="btn btn-secondary btn-sm" onclick="saveTranscripts()">保存</button>
+                        <span style="font-size:12px;color:#185FA5;cursor:pointer" onclick="hidePanel()">← 返回</span>
+                    </div>
                 </div>
                 <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
                     <p>点击上传沟通记录文件（支持多个）</p>
