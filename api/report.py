@@ -122,13 +122,24 @@ def create_admin_table():
 
 
 def is_valid_wecom_url(url):
-    """检查是否为有效的企微文档URL（支持多种格式）"""
+    """检查是否为有效的企微文档URL"""
     if not url:
         return False
     return ("doc.weixin.qq.com" in url or
             "docs.qq.com" in url or
-            "qyapi.weixin.qq.com" in url or
             url.startswith("https://"))
+
+
+def clean_wecom_url(url):
+    """清理企微URL：去掉scode参数（智能表格URL字段不接受带scode的链接）"""
+    if not url:
+        return ""
+    # 去掉 ?scode=xxx 或 &scode=xxx
+    if "?scode=" in url:
+        url = url.split("?scode=")[0]
+    elif "&scode=" in url:
+        url = url.split("&scode=")[0]
+    return url
 
 
 def text_val(s):
@@ -153,19 +164,19 @@ def report_client(data):
     status = data.get("status", "")
     if status:
         values["当前状态"] = [{"text": status}]
-    # URL字段：只有真实企微URL才传
+    # URL字段：只有真实企微URL才传，且要去掉scode参数
     step1_url = data.get("step1_doc_url", "")
     if is_valid_wecom_url(step1_url):
-        values["提问清单链接"] = [{"link": step1_url, "text": "提问清单"}]
+        values["提问清单链接"] = [{"link": clean_wecom_url(step1_url), "text": "提问清单"}]
     report_url = data.get("report_doc_url", "")
     if is_valid_wecom_url(report_url):
-        values["需求报告链接"] = [{"link": report_url, "text": "需求报告"}]
+        values["需求报告链接"] = [{"link": clean_wecom_url(report_url), "text": "需求报告"}]
     demo_url = data.get("demo_url", "")
     if is_valid_wecom_url(demo_url):
-        values["Demo链接"] = [{"link": demo_url, "text": "Demo"}]
+        values["Demo链接"] = [{"link": clean_wecom_url(demo_url), "text": "Demo"}]
     transcript_url = data.get("transcript_doc_url", "")
     if is_valid_wecom_url(transcript_url):
-        values["沟通记录原始材料"] = [{"link": transcript_url, "text": "沟通记录"}]
+        values["沟通记录原始材料"] = [{"link": clean_wecom_url(transcript_url), "text": "沟通记录"}]
 
     # debug: 记录收到的url和写入的字段
     debug = {
