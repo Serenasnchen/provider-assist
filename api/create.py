@@ -56,7 +56,7 @@ def setup_sheet_fields(docid, sid, fields, records, steps, sname):
     if fields and dfid:
         call_mcp("smartsheet_update_fields", {
             "docid": docid, "sheet_id": sid,
-            "fields": [{"field_id": dfid, "field_title": fields[0]["field_title"], "field_type": dftype}]
+            "fields": [{"field_id": dfid, "field_title": fields[0]["field_title"], "field_type": fields[0].get("field_type", "FIELD_TYPE_TEXT")}]
         })
         if len(fields) > 1:
             call_mcp("smartsheet_add_fields", {
