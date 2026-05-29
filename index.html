@@ -592,6 +592,15 @@ function openClient(id) {
     } else {
         document.getElementById('s1-result').style.display = 'none';
     }
+    // 清理并恢复企微文档链接
+    document.querySelectorAll('.wecom-doc-link').forEach(el => el.remove());
+    if (c.step1_doc_url) {
+        const card = document.getElementById('s1-content').closest('.card');
+        const linkDiv = document.createElement('div');
+        linkDiv.className = 'wecom-doc-link';
+        linkDiv.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + c.step1_doc_url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
+        card.appendChild(linkDiv);
+    }
 
     // Restore Step2
     document.getElementById('s2-transcript').value = c.transcript || '';
@@ -905,10 +914,14 @@ async function generateStep1() {
             if (docData.success && docData.url) {
                 step1DocUrl = docData.url;
                 updateClient(currentClientId, { step1_doc_url: step1DocUrl });
-                // 显示链接
+                // 显示链接（只保留一个）
+                const card = document.getElementById('s1-content').closest('.card');
+                const existingLink = card.querySelector('.wecom-doc-link');
+                if (existingLink) existingLink.remove();
                 const linkDiv = document.createElement('div');
+                linkDiv.className = 'wecom-doc-link';
                 linkDiv.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + docData.url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
-                document.getElementById('s1-content').closest('.card').appendChild(linkDiv);
+                card.appendChild(linkDiv);
             }
         } catch(e) { console.warn('自动创建企微文档失败:', e); }
         // 上报到平台（更新同一行，带上链接）
@@ -1200,9 +1213,13 @@ async function exportWecomDoc(elId, title) {
             if (cc && cc.admin_record_id) {
                 reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: cc.step2_report ? '已完成' : '已生成清单', step1_doc_url: cc.step1_doc_url || '', report_doc_url: cc.report_doc_url || '', demo_url: cc.demo_url || '', transcript_doc_url: cc.transcript_doc_url || '' });
             }
+            const card = document.getElementById(elId).closest('.card');
+            const existingLink = card.querySelector('.wecom-doc-link');
+            if (existingLink) existingLink.remove();
             const div = document.createElement('div');
+            div.className = 'wecom-doc-link';
             div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + data.url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
-            document.getElementById(elId).closest('.card').appendChild(div);
+            card.appendChild(div);
         } else { showToast('失败: ' + (data.error || '')); }
     } catch (e) { showToast('请求失败'); }
 }

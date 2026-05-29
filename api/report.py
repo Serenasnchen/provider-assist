@@ -164,24 +164,19 @@ def report_client(data):
     status = data.get("status", "")
     if status:
         values["当前状态"] = [{"text": status}]
-    # URL字段：只有真实企微URL才传，去掉scode参数
-    # 注意：智能表格URL字段对格式要求严格，用text格式写入链接
-    step1_url = data.get("step1_doc_url", "")
-    if is_valid_wecom_url(step1_url):
-        cleaned = clean_wecom_url(step1_url)
-        values["提问清单链接"] = [{"type": "text", "text": cleaned}]
-    report_url = data.get("report_doc_url", "")
-    if is_valid_wecom_url(report_url):
-        cleaned = clean_wecom_url(report_url)
-        values["需求报告链接"] = [{"type": "text", "text": cleaned}]
-    demo_url = data.get("demo_url", "")
-    if is_valid_wecom_url(demo_url):
-        cleaned = clean_wecom_url(demo_url)
-        values["Demo链接"] = [{"type": "text", "text": cleaned}]
-    transcript_url = data.get("transcript_doc_url", "")
-    if is_valid_wecom_url(transcript_url):
-        cleaned = clean_wecom_url(transcript_url)
-        values["沟通记录原始材料"] = [{"type": "text", "text": cleaned}]
+    # URL字段：只有真实企微URL才传，去掉scode参数后用link格式写入
+    step1_url = clean_wecom_url(data.get("step1_doc_url", ""))
+    if step1_url:
+        values["提问清单链接"] = [{"link": step1_url, "text": "提问清单"}]
+    report_url = clean_wecom_url(data.get("report_doc_url", ""))
+    if report_url:
+        values["需求报告链接"] = [{"link": report_url, "text": "需求报告"}]
+    demo_url = clean_wecom_url(data.get("demo_url", ""))
+    if demo_url:
+        values["Demo链接"] = [{"link": demo_url, "text": "Demo"}]
+    transcript_url = clean_wecom_url(data.get("transcript_doc_url", ""))
+    if transcript_url:
+        values["沟通记录原始材料"] = [{"link": transcript_url, "text": "沟通记录"}]
 
     # debug: 记录收到的url和写入的字段
     debug = {
