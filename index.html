@@ -1146,14 +1146,31 @@ async function generateReport() {
                 });
             }
             if (matchData.matched_templates && matchData.matched_templates.length) {
-                kbContext += '## 字段经验池（该行业真实交付的完整表结构）\n';
+                kbContext += '## 字段经验池（该行业真实交付的完整表结构，必须参考）\n';
                 matchData.matched_templates.forEach(tpl => {
                     const meta = tpl.meta || {};
                     kbContext += `### ${meta.industry||''}-${meta.scene||''} (${meta.total_tables||'?'}表${meta.total_fields||'?'}字段)\n`;
+                    if (meta.design_principle) kbContext += `设计原则：${meta.design_principle}\n`;
                     if (tpl.tables) { tpl.tables.forEach(t => {
-                        kbContext += `  表「${t.table_name||''}」: `;
-                        (t.field_groups||[]).forEach(g => { kbContext += `[${g.group_name||''}]${(g.fields||[]).map(f=>f.title||'').slice(0,8).join(',')} `; });
-                        kbContext += '\n';
+                        kbContext += `  表「${t.table_name||''}」`;
+                        if (t.description) kbContext += `（${t.description}）`;
+                        kbContext += ':\n';
+                        // 处理 field_groups 格式（带分组+类型）
+                        if (t.field_groups && t.field_groups.length) {
+                            t.field_groups.forEach(g => {
+                                const fieldDescs = (g.fields||[]).map(f => {
+                                    let desc = f.title || '';
+                                    if (f.type) desc += `(${f.type})`;
+                                    return desc;
+                                });
+                                kbContext += `    [${g.group_name||''}] ${fieldDescs.join(', ')}\n`;
+                            });
+                        }
+                        // 处理 fields 纯字符串数组格式
+                        else if (t.fields && t.fields.length) {
+                            const fieldList = t.fields.map(f => typeof f === 'string' ? f : (f.field_title || f.title || ''));
+                            kbContext += `    字段：${fieldList.join(', ')}\n`;
+                        }
                     }); }
                 });
                 kbContext += '\n';
@@ -1268,12 +1285,20 @@ async function generateDemo() {
 
     try {
         const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求+知识库字段经验池设计Demo。
-重要：参考知识库中的表结构和字段来设计，不要凭空编。每表8-12字段，2-3条示例数据。
-直接输出JSON，不要markdown代码块。
-格式：{"doc_name":"名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
-类型：FIELD_TYPE_TEXT/NUMBER/SINGLE_SELECT/DATE_TIME/CURRENCY/PERCENTAGE/PROGRESS/PHONE_NUMBER/EMAIL/CHECKBOX`;
 
-        const schemaUserPrompt = kbContext + '## 需求分析报告\n\n' + c.step2_report.substring(0, 2500) + '\n\n## 沟通记录\n\n' + transcript.substring(0, 1500) + '\n\n设计智能表格Demo。';
+## 核心原则（必须严格遵守）
+1. 子表名称、字段名称必须优先从知识库字段经验池中选取，禁止凭空编造
+2. 如果知识库有对应行业的字段模板，直接复用其中的表名和字段名，只根据客户实际需求增减
+3. 字段类型必须与知识库中的类型保持一致（如知识库用TEXT就用TEXT，用SINGLE_SELECT就用SINGLE_SELECT）
+4. 每表控制在8-15个字段，2-3条示例数据
+5. 只有当知识库完全没有相关字段时，才可以自行设计
+
+## 输出格式
+直接输出JSON，不要markdown代码块。
+{"doc_name":"名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
+类型：FIELD_TYPE_TEXT/NUMBER/SINGLE_SELECT/DATE_TIME/CURRENCY/PERCENTAGE/PROGRESS/PHONE_NUMBER/EMAIL/CHECKBOX/URL/SELECT`;
+
+        const schemaUserPrompt = kbContext + '\n## 需求分析报告\n\n' + c.step2_report.substring(0, 2500) + '\n\n## 沟通记录\n\n' + transcript.substring(0, 1500) + '\n\n请严格参考上面「字段经验池」中的表名和字段名来设计智能表格Demo。字段经验池中已有的字段必须直接复用，不要重新编造名称。';
 
         const schemaText = await callDeepSeek(schemaPrompt, schemaUserPrompt);
 
