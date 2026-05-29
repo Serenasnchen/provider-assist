@@ -1350,7 +1350,9 @@ async function createSmartsheet() {
         const data = await resp.json();
         const div = document.getElementById('s2-create-result');
         if (data.success && data.url) {
-            div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;font-size:14px"><strong>智能表格创建成功</strong><br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;margin-top:4px;display:inline-block">打开企微智能表格 →</a></div>';
+            let stepsHtml = '';
+            if (data.steps && data.steps.length) { stepsHtml = '<div style="font-size:11px;color:#666;margin-top:6px">' + data.steps.join('<br>') + '</div>'; }
+            div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;font-size:14px"><strong>智能表格创建成功</strong><br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;margin-top:4px;display:inline-block">打开企微智能表格 →</a>'+stepsHtml+'</div>';
             // 保存Demo链接到客户数据
             updateClient(currentClientId, { demo_url: data.url });
             // 更新后台

@@ -46,24 +46,41 @@ def extract(mcp_resp):
 def setup_sheet_fields(docid, sid, fields, records, steps, sname):
     """为单个智能表格的默认子表配置字段和数据"""
     fr = extract(call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sid}))
-    dfid, dftype = None, "FIELD_TYPE_TEXT"
+    dfid = None
     if isinstance(fr, dict):
         fl = fr.get("fields", [])
         if fl:
             dfid = fl[0].get("field_id")
-            dftype = fl[0].get("field_type", "FIELD_TYPE_TEXT")
 
     if fields and dfid:
+        # 更新第一个字段（复用默认字段）
         call_mcp("smartsheet_update_fields", {
             "docid": docid, "sheet_id": sid,
             "fields": [{"field_id": dfid, "field_title": fields[0]["field_title"], "field_type": fields[0].get("field_type", "FIELD_TYPE_TEXT")}]
         })
-        if len(fields) > 1:
+        # 分批添加剩余字段（每批最多5个，避免API限制）
+        remaining = fields[1:]
+        batch_size = 5
+        for i in range(0, len(remaining), batch_size):
+            batch = remaining[i:i+batch_size]
+            resp = call_mcp("smartsheet_add_fields", {
+                "docid": docid, "sheet_id": sid,
+                "fields": [{"field_title": f["field_title"], "field_type": f.get("field_type", "FIELD_TYPE_TEXT")} for f in batch]
+            })
+            r = extract(resp)
+            if isinstance(r, dict) and r.get("errcode", 0) != 0:
+                steps.append(f"  ⚠️ 添加字段批次失败: {r.get('errmsg', '')}")
+        steps.append(f"  {len(fields)} 个字段已配置")
+    elif fields and not dfid:
+        # 没拿到默认字段ID，尝试直接全部添加
+        batch_size = 5
+        for i in range(0, len(fields), batch_size):
+            batch = fields[i:i+batch_size]
             call_mcp("smartsheet_add_fields", {
                 "docid": docid, "sheet_id": sid,
-                "fields": [{"field_title": f["field_title"], "field_type": f["field_type"]} for f in fields[1:]]
+                "fields": [{"field_title": f["field_title"], "field_type": f.get("field_type", "FIELD_TYPE_TEXT")} for f in batch]
             })
-        steps.append(f"  {len(fields)} 个字段已配置")
+        steps.append(f"  {len(fields)} 个字段已添加(fallback)")
 
     if records:
         cf = extract(call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sid}))
