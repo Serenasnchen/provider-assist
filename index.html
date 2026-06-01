@@ -1042,6 +1042,9 @@ async function callDeepSeek(systemPrompt, userPrompt) {
     });
     if (!resp.ok) {
         const errText = await resp.text().catch(() => '');
+        if (resp.status === 402 || errText.includes('Insufficient Balance')) {
+            throw new Error('AI 服务余额不足，请联系管理员充值 DeepSeek API。');
+        }
         throw new Error('AI 服务错误(' + resp.status + '): ' + errText.substring(0, 100));
     }
     const d = await resp.json();
