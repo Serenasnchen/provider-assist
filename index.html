@@ -248,18 +248,25 @@
                 <button class="btn btn-secondary btn-sm" onclick="toggleProfile()">编辑</button>
             </div>
             <div id="profile-view">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:#666">
-                    <div><span style="color:#aaa">业务概述：</span><span id="pv-business">-</span></div>
-                    <div><span style="color:#aaa">痛点：</span><span id="pv-pain">-</span></div>
+                <div style="display:grid;grid-template-columns:1fr;gap:8px;font-size:12px;color:#666">
+                    <div><span style="color:#aaa">行业：</span><span id="pv-industry">-</span></div>
+                    <div><span style="color:#aaa">初始需求：</span><span id="pv-initial-demand">-</span></div>
+                    <div id="pv-company-intro" style="display:none;margin-top:4px;padding:8px;background:#f9fafb;border-radius:6px;font-size:11px;color:#555;line-height:1.6">
+                        <span style="color:#999">公司简介：</span><span id="pv-company-intro-text"></span>
+                    </div>
                 </div>
             </div>
             <div id="profile-edit" style="display:none">
                 <label>客户行业</label>
-                <input type="text" id="s1-industry">
-                <label>本次定制开发业务概述</label>
-                <textarea id="s1-business" style="min-height:60px"></textarea>
-                <label>本次定制开发需要智能表格解决的痛点</label>
-                <textarea id="s1-pain" style="min-height:60px"></textarea>
+                <input type="text" id="s1-industry" placeholder="如：金融、制造业、服装外贸">
+                <label>客户进线的初始需求表达</label>
+                <p style="font-size:11px;color:#999;margin-bottom:8px;line-height:1.6">
+💡 建议在群内引导客户描述：<br>
+· 他们目前的业务是什么？遇到了什么问题？<br>
+· 希望用定制开发解决什么具体场景？<br>
+· 把客户的原始表达粘贴到这里即可，不需要整理
+                </p>
+                <textarea id="s1-initial-demand" style="min-height:80px" placeholder="粘贴客户的原始表达..."></textarea>
                 <div class="actions">
                     <button class="btn btn-primary btn-sm" onclick="saveProfile()">保存</button>
                     <button class="btn btn-secondary btn-sm" onclick="toggleProfile()">取消</button>
@@ -442,6 +449,55 @@ function editProviderName() {
     }
 }
 
+// 搜索公司信息
+async function searchCompanyInfo(clientId, companyName, industry) {
+    try {
+        // 显示加载指示器
+        const c = getClient(clientId);
+        if (!c) return;
+        
+        const profileCard = document.getElementById('profile-card');
+        if (profileCard) {
+            let loadingDiv = document.getElementById('company-search-loading');
+            if (!loadingDiv) {
+                loadingDiv = document.createElement('div');
+                loadingDiv.id = 'company-search-loading';
+                loadingDiv.style.cssText = 'margin-top:10px;font-size:11px;color:#999;display:flex;align-items:center;gap:6px';
+                loadingDiv.innerHTML = '<span>🔍</span><span>正在搜索公司信息...</span>';
+                profileCard.appendChild(loadingDiv);
+            }
+        }
+
+        const resp = await fetch('/api/company_search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ company_name: companyName, industry: industry || '' })
+        });
+        
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.company_intro) {
+                updateClient(clientId, { company_intro: data.company_intro });
+                // 如果当前打开的就是这个客户，刷新显示
+                if (currentClientId === clientId) {
+                    const introDiv = document.getElementById('pv-company-intro');
+                    const introText = document.getElementById('pv-company-intro-text');
+                    if (introDiv && introText) {
+                        introText.textContent = data.company_intro;
+                        introDiv.style.display = 'block';
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error('搜索公司信息失败:', e);
+    } finally {
+        // 移除加载指示器
+        const loadingDiv = document.getElementById('company-search-loading');
+        if (loadingDiv) loadingDiv.remove();
+    }
+}
+
 // 上报到平台管理表（异步，不阻塞主流程）
 // targetClientId: 可选，指定要保存 record_id 的客户ID（用于自动同步场景）
 async function reportToAdmin(action, data, targetClientId) {
@@ -524,7 +580,7 @@ function renderClientList() {
 
     const stageInfo = {
         pending: { label: '待完善档案', pillCls: 'pill-draft', pillText: '待完善' },
-        prepared: { label: '已生成清单 · 待访谈', pillCls: 'pill-listed', pillText: '待访谈' },
+        prepared: { label: '已生成清单 · 待需求沟通会议', pillCls: 'pill-listed', pillText: '待沟通' },
         uploaded: { label: '待生成报告', pillCls: 'pill-waiting', pillText: '待出报告' },
         done: { label: '已完成', pillCls: 'pill-done', pillText: '已完成' }
     };
@@ -596,11 +652,13 @@ function createClient() {
     const modal = document.createElement('div');
     modal.id = 'create-modal';
     modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center';
-    modal.innerHTML = `<div style="background:#fff;border-radius:12px;padding:28px;width:360px;box-shadow:0 8px 30px rgba(0,0,0,0.15)">
+    modal.innerHTML = `<div style="background:#fff;border-radius:12px;padding:28px;width:380px;box-shadow:0 8px 30px rgba(0,0,0,0.15)">
         <h3 style="font-size:16px;margin-bottom:18px">新建客户</h3>
         <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">客户名称</label>
-        <input id="new-client-name" type="text" placeholder="输入客户名称" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:14px">
+        <p style="font-size:11px;color:#999;margin-bottom:6px">填写公司全称，系统会自动搜索公司信息</p>
+        <input id="new-client-name" type="text" placeholder="如：深圳市XX科技有限公司" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:14px">
         <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">客户行业</label>
+        <p style="font-size:11px;color:#999;margin-bottom:6px">大致行业方向即可，后续可修改</p>
         <input id="new-client-industry" type="text" placeholder="如：金融、制造业、服装外贸" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:18px">
         <div style="display:flex;gap:10px;justify-content:flex-end">
             <button onclick="document.getElementById('create-modal').remove()" style="padding:8px 18px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">取消</button>
@@ -617,13 +675,17 @@ function confirmCreateClient() {
     if (!name) { alert('请输入客户名称'); return; }
     document.getElementById('create-modal').remove();
     const clients = getClients();
-    const newClient = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), name, industry: industry || '', status: 'draft', created_at: new Date().toISOString(), step1_result: '', step2_report: '', step2_schema: null };
+    const newClient = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), name, industry: industry || '', status: 'draft', created_at: new Date().toISOString(), step1_result: '', step2_report: '', step2_schema: null, company_intro: '', initial_demand: '' };
     clients.unshift(newClient);
     saveClients(clients);
     renderClientList();
     openClient(newClient.id);
     // 创建时上报到后台（新增一行，拿到record_id保存）
-    (async () => { await reportToAdmin('report_client', { client_name: name, industry: industry, status: '新建', business_desc: '', pain_points: '' }); })();
+    (async () => { await reportToAdmin('report_client', { client_name: name, industry: industry, status: '新建', initial_demand: '' }, newClient.id); })();
+    // 创建后自动搜索公司信息
+    if (name) {
+        searchCompanyInfo(newClient.id, name, industry);
+    }
 }
 
 function openClient(id) {
@@ -632,27 +694,41 @@ function openClient(id) {
     if (!c) return;
     showPage('detail');
     document.getElementById('detail-name').textContent = c.name;
-    document.getElementById('detail-industry').textContent = c.industry ? c.industry + (c.business_desc ? ' · ' + c.business_desc.substring(0,15) : '') : '';
+    // 兼容处理：如果没有 initial_demand 但有旧字段，合并显示
+    let displayDemand = c.initial_demand || '';
+    if (!displayDemand && (c.business_desc || c.pain_points)) {
+        displayDemand = [c.business_desc, c.pain_points].filter(Boolean).join(' ');
+    }
+    document.getElementById('detail-industry').textContent = c.industry ? c.industry + (displayDemand ? ' · ' + displayDemand.substring(0,15) : '') : '';
     document.getElementById('detail-avatar').textContent = (c.name || '?')[0];
     const statusMap = { draft: ['待填写','pill-draft'], listed: ['已生成清单','pill-listed'], waiting: ['待上传转写','pill-waiting'], done: ['已完成','pill-done'] };
     const [label, cls] = statusMap[c.status] || ['',''];
     const el = document.getElementById('detail-status');
     el.textContent = label; el.className = 'status-pill ' + cls;
 
-    // Profile view
+    // Profile view - 显示新字段
     const pvInd = document.getElementById('pv-industry');
-    const pvBiz = document.getElementById('pv-business');
-    const pvPain = document.getElementById('pv-pain');
+    const pvDemand = document.getElementById('pv-initial-demand');
+    const pvCompanyIntro = document.getElementById('pv-company-intro');
+    const pvCompanyIntroText = document.getElementById('pv-company-intro-text');
+    
     if (pvInd) pvInd.textContent = c.industry || '-';
-    if (pvBiz) pvBiz.textContent = (c.business_desc || '-').substring(0, 40);
-    if (pvPain) pvPain.textContent = (c.pain_points || '-').substring(0, 40);
+    if (pvDemand) pvDemand.textContent = displayDemand ? displayDemand.substring(0, 60) + (displayDemand.length > 60 ? '...' : '') : '-';
+    
+    // 显示公司简介（如果有）
+    if (c.company_intro && pvCompanyIntro && pvCompanyIntroText) {
+        pvCompanyIntroText.textContent = c.company_intro;
+        pvCompanyIntro.style.display = 'block';
+    } else if (pvCompanyIntro) {
+        pvCompanyIntro.style.display = 'none';
+    }
+    
     document.getElementById('profile-edit').style.display = 'none';
     document.getElementById('profile-view').style.display = 'block';
 
     // Restore inputs
     document.getElementById('s1-industry').value = c.industry || '';
-    document.getElementById('s1-business').value = c.business_desc || '';
-    document.getElementById('s1-pain').value = c.pain_points || '';
+    document.getElementById('s1-initial-demand').value = displayDemand;
 
     // Restore Step1 result - 不自动显示旧结果，进入面板时默认隐藏
     // 旧结果保留在存储中，进入面板后点击按钮才显示/重新生成
@@ -777,21 +853,18 @@ function toggleProfile() {
 
 function saveProfile() {
     const industry = document.getElementById('s1-industry').value.trim();
-    const business = document.getElementById('s1-business').value.trim();
-    const pain = document.getElementById('s1-pain').value.trim();
-    updateClient(currentClientId, { industry, business_desc: business, pain_points: pain });
+    const initialDemand = document.getElementById('s1-initial-demand').value.trim();
+    updateClient(currentClientId, { industry, initial_demand: initialDemand });
     // Update view
-    const pvBiz = document.getElementById('pv-business');
-    const pvPain = document.getElementById('pv-pain');
-    if (pvBiz) pvBiz.textContent = (business || '-').substring(0, 30);
-    if (pvPain) pvPain.textContent = (pain || '-').substring(0, 30);
-    document.getElementById('detail-industry').textContent = industry + (business ? ' · ' + business.substring(0,15) : '');
+    const pvDemand = document.getElementById('pv-initial-demand');
+    if (pvDemand) pvDemand.textContent = initialDemand ? initialDemand.substring(0, 60) + (initialDemand.length > 60 ? '...' : '') : '-';
+    document.getElementById('detail-industry').textContent = industry + (initialDemand ? ' · ' + initialDemand.substring(0,15) : '');
     toggleProfile();
     updateTimeline(getClient(currentClientId));
     showToast('已保存');
     // 更新后台同一行
     const cc = getClient(currentClientId);
-    reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry, business_desc: business, pain_points: pain, status: '已完善档案' });
+    reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry, initial_demand: initialDemand, status: '已完善档案' });
 }
 
 function renderOutputs(c) {
@@ -799,14 +872,14 @@ function renderOutputs(c) {
     const list = document.getElementById('outputs-list');
 
     // 检查是否有任何产出物
-    const hasAny = c.industry || c.business_desc || c.pain_points || c.step1_result || c.step2_report || c.step2_todo || c.step2_schema || c.transcript || c.step1_doc_url || c.report_doc_url || c.demo_url;
+    const hasAny = c.industry || c.initial_demand || c.business_desc || c.pain_points || c.step1_result || c.step2_report || c.step2_todo || c.step2_schema || c.transcript || c.step1_doc_url || c.report_doc_url || c.demo_url || c.company_intro;
     if (!hasAny) { card.style.display = 'none'; return; }
     card.style.display = 'block';
 
     let html = '';
 
     // 客户背景信息
-    if (c.industry || c.business_desc || c.pain_points) {
+    if (c.industry || c.initial_demand || c.business_desc || c.pain_points || c.company_intro) {
         html += `<div style="border-bottom:0.5px solid #f0f0f0;padding:12px 0">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
                 <span style="font-size:15px">📌</span>
@@ -814,9 +887,10 @@ function renderOutputs(c) {
             </div>
             <div style="padding-left:25px;font-size:12px;line-height:1.8;color:#555">`;
         if (c.industry) html += `<div><span style="color:#999">行业：</span>${c.industry}</div>`;
-        if (c.business_desc) html += `<div><span style="color:#999">业务概述：</span>${c.business_desc}</div>`;
-        if (c.pain_points) html += `<div><span style="color:#999">痛点：</span>${c.pain_points}</div>`;
-        html += `</div></div>`;
+        if (c.company_intro) html += `<div><span style="color:#999">公司简介：</span>${c.company_intro}</div>`;
+        // 兼容显示：优先显示 initial_demand
+        const displayDemand = c.initial_demand || [c.business_desc, c.pain_points].filter(Boolean).join(' · ');
+        if (displayDemand) html += `<div><span style="color:#999">初始需求：</span>${displayDemand}</div>`;
     }
 
     // 服务商上传材料
@@ -978,12 +1052,13 @@ async function callDeepSeek(systemPrompt, userPrompt) {
 // === Step 1 ===
 async function generateStep1() {
     const industry = document.getElementById('s1-industry').value.trim();
-    const business = document.getElementById('s1-business').value.trim();
-    const pain = document.getElementById('s1-pain').value.trim();
+    const initialDemand = document.getElementById('s1-initial-demand').value.trim();
     if (!industry) { alert('请填写客户行业'); return; }
 
     // Save inputs
-    updateClient(currentClientId, { industry, business_desc: business, pain_points: pain });
+    const c = getClient(currentClientId);
+    updateClient(currentClientId, { industry, initial_demand: initialDemand });
+    const companyIntro = (c && c.company_intro) || '';
 
     document.getElementById('s1-loading').classList.add('visible');
     document.querySelector('#s1-loading p').textContent = '正在匹配知识库...';
@@ -992,7 +1067,7 @@ async function generateStep1() {
     try {
         // Step1: 后端匹配知识库，返回prompt
         const matchResp = await fetch('/api/question_list', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ industry, business_desc: business, pain_points: pain, direction: business }) });
+            body: JSON.stringify({ industry, initial_demand: initialDemand, company_name: c ? c.name : '', company_intro: companyIntro }) });
         if (!matchResp.ok) { alert('知识库匹配失败(' + matchResp.status + ')'); return; }
         const matchData = await matchResp.json();
         if (matchData.error) { alert(matchData.error); return; }
@@ -1032,7 +1107,7 @@ async function generateStep1() {
         } catch(e) { console.warn('自动创建企微文档失败:', e); }
         // 上报到平台（更新同一行，带上链接）
         const cc = getClient(currentClientId);
-        reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: step1DocUrl ? '已生成清单链接' : '已生成清单', step1_doc_url: step1DocUrl });
+        reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry: cc.industry, initial_demand: cc.initial_demand || cc.business_desc || '', status: step1DocUrl ? '已生成清单链接' : '已生成清单', step1_doc_url: step1DocUrl });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s1-loading').classList.remove('visible'); }
 }
@@ -1237,7 +1312,7 @@ async function generateReport() {
         }
 
         // 2. 客户一致性检测上下文
-        const step1Info = c ? `\n## Step1录入的客户信息（用于一致性检查）\n行业：${c.industry||'未填'}\n业务描述：${c.business_desc||'未填'}\n痛点：${c.pain_points||'未填'}\n如果沟通记录中的客户行业/业务与上述信息明显不一致，请在报告开头用⚠️提醒。\n` : '';
+        const step1Info = c ? `\n## Step1录入的客户信息（用于一致性检查）\n行业：${c.industry||'未填'}\n初始需求表达：${c.initial_demand || c.business_desc || '未填'}\n如果沟通记录中的客户行业/业务与上述信息明显不一致，请在报告开头用⚠️提醒。\n` : '';
 
         // 3. 并行调用生成报告 + 待确认事项
         document.querySelector('#s2-loading p').textContent = '正在生成需求分析报告...';

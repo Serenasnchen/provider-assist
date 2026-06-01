@@ -288,12 +288,12 @@ SYSTEM_PROMPT = """你是一个资深的企业微信智能表格定制开发售�
 
 ## 输出结构（严格按以下3个部分输出，不要开场白，内容要精简）
 
-### PART1: 业务场景速览
+### PART1: 客户背景与行业痛点
 
-用2-3句话总结客户可能的业务场景，帮服务商快速理解这个客户大概率处在什么背景下。格式例如：
-"这是一个XX行业客户，核心业务是XX，目前的主要问题可能是XX、XX和XX。基于同行业经验，他们通常需要XX。"
+**公司简介**
+（如果有公司简介信息，直接引用；如果没有，根据公司名和行业做合理推断）
 
-然后列出该行业的常见痛点（基于你的行业交付经验），帮服务商心里有数：
+**行业常见痛点**（基于行业交付经验，智能表格可解决的典型问题）
 - 🔥 痛点1：一句话描述
 - 🔥 痛点2：一句话描述
 - 🔥 痛点3：一句话描述
@@ -338,21 +338,33 @@ SYSTEM_PROMPT = """你是一个资深的企业微信智能表格定制开发售�
 def generate_question_list(body):
     """返回知识库上下文和prompt，前端直接调DeepSeek"""
     industry = body.get("industry", "")
+    # 支持新旧字段：优先使用 initial_demand，兼容旧的 pain_points/business_desc
+    initial_demand = body.get("initial_demand", "")
     pain_points = body.get("pain_points", "")
     direction = body.get("direction", "")
     business_desc = body.get("business_desc", "")
+    company_intro = body.get("company_intro", "")
+    
+    # 如果有 initial_demand，优先使用；否则合并旧字段
+    if not initial_demand:
+        initial_demand = f"{business_desc} {pain_points}".strip()
 
     # 构建知识库上下文
-    context = build_context(industry, pain_points, direction or business_desc)
+    context = build_context(industry, initial_demand or pain_points, direction or business_desc)
 
     # 组装用户prompt
     user_prompt = "## 客户信息\n"
     user_prompt += f"- 行业：{industry}\n"
-    if business_desc:
-        user_prompt += f"- 业务描述：{business_desc}\n"
-    if pain_points:
-        user_prompt += f"- 痛点/希望解决的问题：{pain_points}\n"
-    if direction:
+    if company_intro:
+        user_prompt += f"- 公司简介：{company_intro}\n"
+    if initial_demand:
+        user_prompt += f"- 客户初始需求表达：{initial_demand}\n"
+    elif business_desc or pain_points:
+        if business_desc:
+            user_prompt += f"- 业务描述：{business_desc}\n"
+        if pain_points:
+            user_prompt += f"- 痛点/希望解决的问题：{pain_points}\n"
+    if direction and direction != business_desc:
         user_prompt += f"- 需求方向：{direction}\n"
 
     if context["industry_knowledge"]:
