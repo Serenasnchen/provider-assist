@@ -654,22 +654,11 @@ function openClient(id) {
     document.getElementById('s1-business').value = c.business_desc || '';
     document.getElementById('s1-pain').value = c.pain_points || '';
 
-    // Restore Step1 result
-    if (c.step1_result) {
-        document.getElementById('s1-content').innerHTML = renderWithTags(c.step1_result);
-        document.getElementById('s1-result').style.display = 'block';
-    } else {
-        document.getElementById('s1-result').style.display = 'none';
-    }
-    // 清理并恢复企微文档链接
+    // Restore Step1 result - 不自动显示旧结果，进入面板时默认隐藏
+    // 旧结果保留在存储中，进入面板后点击按钮才显示/重新生成
+    document.getElementById('s1-result').style.display = 'none';
+    // 清理企微文档链接（会在 showPanel 中恢复）
     document.querySelectorAll('.wecom-doc-link').forEach(el => el.remove());
-    if (c.step1_doc_url) {
-        const card = document.getElementById('s1-content').closest('.card');
-        const linkDiv = document.createElement('div');
-        linkDiv.className = 'wecom-doc-link';
-        linkDiv.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + c.step1_doc_url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
-        card.appendChild(linkDiv);
-    }
 
     // Restore Step2
     _uploadedFiles = c.uploaded_files || [];
@@ -741,6 +730,30 @@ function showPanel(panel) {
     document.getElementById(panel).style.display = 'block';
     document.getElementById('actions-grid').style.display = 'none';
     document.getElementById('outputs-card').style.display = 'none';
+
+    // 进入 step1 时：如果已有历史结果，显示出来并把按钮改为"重新生成"
+    if (panel === 'step1') {
+        const c = getClient(currentClientId);
+        const btn = document.querySelector('#step1 .btn-primary');
+        // 清理旧的企微文档链接
+        document.querySelectorAll('.wecom-doc-link').forEach(el => el.remove());
+        if (c && c.step1_result) {
+            document.getElementById('s1-content').innerHTML = renderWithTags(c.step1_result);
+            document.getElementById('s1-result').style.display = 'block';
+            if (btn) btn.textContent = '重新生成调研准备材料';
+            // 恢复企微文档链接
+            if (c.step1_doc_url) {
+                const card = document.getElementById('s1-content').closest('.card');
+                const linkDiv = document.createElement('div');
+                linkDiv.className = 'wecom-doc-link';
+                linkDiv.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + c.step1_doc_url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
+                card.appendChild(linkDiv);
+            }
+        } else {
+            document.getElementById('s1-result').style.display = 'none';
+            if (btn) btn.textContent = '生成调研准备材料';
+        }
+    }
 }
 
 function hidePanel() {
