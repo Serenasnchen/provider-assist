@@ -149,6 +149,12 @@
         .export-dropdown.visible { display: block; }
         .export-dropdown .export-item { padding: 10px 16px; cursor: pointer; font-size: 13px; transition: background var(--transition); font-weight: 500; }
         .export-dropdown .export-item:hover { background: var(--bg-subtle); color: var(--brand); }
+        @media (max-width: 768px) {
+            .export-group { position: static; }
+            .export-dropdown { position: fixed; bottom: 0; left: 0; right: 0; top: auto; margin-top: 0; border-radius: var(--radius) var(--radius) 0 0; min-width: 100%; padding: 8px 0 env(safe-area-inset-bottom, 8px); }
+            .export-dropdown .export-item { padding: 14px 20px; font-size: 15px; text-align: center; border-bottom: 1px solid #f3f4f6; }
+            .export-dropdown .export-item:last-child { border-bottom: none; }
+        }
 
         .page { display: none; } .page.active { display: block; }
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
@@ -188,7 +194,7 @@
         <!-- 首次注册 -->
         <div id="provider-setup" class="card" style="padding:20px;margin-bottom:14px">
             <h3 style="font-size:14px;margin-bottom:4px">欢迎使用服务商需求调研助手</h3>
-            <p style="font-size:12px;color:#888;margin-bottom:14px">请先填写您的信息，方便平台进行服务商管理</p>
+            <p style="font-size:12px;color:#888;margin-bottom:14px">请先填写您的信息,方便平台进行服务商管理</p>
             <label style="font-size:12px;font-weight:500;display:block;margin-bottom:4px">服务商名称</label>
             <input type="text" id="setup-provider-name" placeholder="您的姓名或公司名称" style="width:100%;padding:9px 12px;border:0.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:12px">
             <button class="btn btn-primary btn-sm" onclick="saveProviderSetup()">确认并开始使用</button>
@@ -249,22 +255,22 @@
             </div>
             <div id="profile-view">
                 <div style="display:grid;grid-template-columns:1fr;gap:8px;font-size:12px;color:#666">
-                    <div><span style="color:#aaa">行业：</span><span id="pv-industry">-</span></div>
-                    <div><span style="color:#aaa">初始需求：</span><span id="pv-initial-demand">-</span></div>
+                    <div><span style="color:#aaa">行业:</span><span id="pv-industry">-</span></div>
+                    <div><span style="color:#aaa">初始需求:</span><span id="pv-initial-demand">-</span></div>
                     <div id="pv-company-intro" style="display:none;margin-top:4px;padding:8px;background:#f9fafb;border-radius:6px;font-size:11px;color:#555;line-height:1.6">
-                        <span style="color:#999">公司简介：</span><span id="pv-company-intro-text"></span>
+                        <span style="color:#999">公司简介:</span><span id="pv-company-intro-text"></span>
                     </div>
                 </div>
             </div>
             <div id="profile-edit" style="display:none">
                 <label>客户行业</label>
-                <input type="text" id="s1-industry" placeholder="如：金融、制造业、服装外贸">
+                <input type="text" id="s1-industry" placeholder="如:金融、制造业、服装外贸">
                 <label>客户进线的初始需求表达</label>
                 <p style="font-size:11px;color:#999;margin-bottom:8px;line-height:1.6">
-💡 建议在群内引导客户描述：<br>
-· 他们目前的业务是什么？遇到了什么问题？<br>
-· 希望用定制开发解决什么具体场景？<br>
-· 把客户的原始表达粘贴到这里即可，不需要整理
+💡 建议在群内引导客户描述:<br>
+· 他们目前的业务是什么?遇到了什么问题?<br>
+· 希望用定制开发解决什么具体场景?<br>
+· 把客户的原始表达粘贴到这里即可,不需要整理
                 </p>
                 <textarea id="s1-initial-demand" style="min-height:80px" placeholder="粘贴客户的原始表达..."></textarea>
                 <div class="actions">
@@ -304,7 +310,7 @@
                     <h3 style="margin:0">调研准备</h3>
                     <span style="font-size:12px;color:#185FA5;cursor:pointer" onclick="hidePanel()">← 返回</span>
                 </div>
-                <p style="font-size:12px;color:#888;margin-bottom:14px">基于客户信息 + 知识库，生成提问清单和分析材料</p>
+                <p style="font-size:12px;color:#888;margin-bottom:14px">基于客户信息 + 知识库,生成提问清单和分析材料</p>
                 <div class="actions"><button class="btn btn-primary" onclick="generateStep1()">生成调研准备材料</button></div>
             </div>
             <div id="s1-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在匹配知识库...</p></div>
@@ -338,20 +344,20 @@
                     </div>
                 </div>
                 <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
-                    <p>点击上传沟通记录文件（支持多个）</p>
-                    <p class="hint">支持 .txt / .docx，可多次上传</p>
+                    <p>点击上传沟通记录文件(支持多个)</p>
+                    <p class="hint">支持 .txt / .docx,可多次上传</p>
                 </div>
                 <input type="file" id="file-input" accept=".txt,.docx" multiple style="display:none" onchange="handleFileUpload(event)">
                 <div id="uploaded-files-list" style="margin-top:8px"></div>
                 <div class="or-divider">或直接粘贴补充</div>
-                <textarea id="s2-transcript" style="min-height:120px" placeholder="粘贴补充的会议转写或沟通记录（可选）..."></textarea>
+                <textarea id="s2-transcript" style="min-height:120px" placeholder="粘贴补充的会议转写或沟通记录(可选)..."></textarea>
                 <div class="actions" style="gap:8px;display:flex;flex-wrap:wrap">
                     <button class="btn btn-secondary" onclick="saveTranscripts()">保存沟通记录</button>
                     <button class="btn btn-primary" onclick="generateReport()">生成需求分析报告</button>
                 </div>
             </div>
             <div id="s2-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在分析...</p></div>
-            <!-- 阶段1：需求分析报告 -->
+            <!-- 阶段1:需求分析报告 -->
             <div id="s2-report-section" style="display:none">
                 <div class="card">
                     <h3>需求分析报告</h3>
@@ -379,15 +385,15 @@
                         <span style="font-size:20px">📤</span>
                         <div style="flex:1">
                             <p style="font-size:13px;font-weight:500;margin:0 0 4px">发给客户确认</p>
-                            <p style="font-size:12px;color:#666;margin:0 0 10px">导出报告发给客户查看，待客户确认无误后，点击下方按钮生成智能表格 Demo</p>
+                            <p style="font-size:12px;color:#666;margin:0 0 10px">导出报告发给客户查看,待客户确认无误后,点击下方按钮生成智能表格 Demo</p>
                             <div style="display:flex;gap:8px;flex-wrap:wrap">
-                                <button class="btn btn-primary" onclick="generateDemo()">客户已确认，生成智能表格 Demo</button>
+                                <button class="btn btn-primary" onclick="generateDemo()">客户已确认,生成智能表格 Demo</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- 阶段2：智能表格 Demo -->
+            <!-- 阶段2:智能表格 Demo -->
             <div id="s2-demo-section" style="display:none">
                 <div id="s2-demo-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在生成智能表格设计...</p></div>
                 <div id="s2-schema-card" class="card" style="display:none">
@@ -455,7 +461,7 @@ async function searchCompanyInfo(clientId, companyName, industry) {
         // 显示加载指示器
         const c = getClient(clientId);
         if (!c) return;
-        
+
         const profileCard = document.getElementById('profile-card');
         if (profileCard) {
             let loadingDiv = document.getElementById('company-search-loading');
@@ -473,12 +479,12 @@ async function searchCompanyInfo(clientId, companyName, industry) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ company_name: companyName, industry: industry || '' })
         });
-        
+
         if (resp.ok) {
             const data = await resp.json();
             if (data.company_intro) {
                 updateClient(clientId, { company_intro: data.company_intro });
-                // 如果当前打开的就是这个客户，刷新显示
+                // 如果当前打开的就是这个客户,刷新显示
                 if (currentClientId === clientId) {
                     const introDiv = document.getElementById('pv-company-intro');
                     const introText = document.getElementById('pv-company-intro-text');
@@ -498,8 +504,8 @@ async function searchCompanyInfo(clientId, companyName, industry) {
     }
 }
 
-// 上报到平台管理表（异步，不阻塞主流程）
-// targetClientId: 可选，指定要保存 record_id 的客户ID（用于自动同步场景）
+// 上报到平台管理表(异步,不阻塞主流程)
+// targetClientId: 可选,指定要保存 record_id 的客户ID(用于自动同步场景)
 async function reportToAdmin(action, data, targetClientId) {
     const providerName = localStorage.getItem(PROVIDER_KEY) || '未知';
     try {
@@ -512,7 +518,7 @@ async function reportToAdmin(action, data, targetClientId) {
         });
         const result = await resp.json();
         console.log('[reportToAdmin] 返回:', JSON.stringify(result));
-        // 保存record_id到客户数据（用于后续更新同一行）
+        // 保存record_id到客户数据(用于后续更新同一行)
         const cid = targetClientId || currentClientId;
         if (result.record_id && cid) {
             updateClient(cid, { admin_record_id: result.record_id });
@@ -524,7 +530,7 @@ async function reportToAdmin(action, data, targetClientId) {
 // === Storage ===
 function getClients() {
     let data = localStorage.getItem(STORAGE_KEY);
-    // 如果localStorage为空，尝试从sessionStorage恢复
+    // 如果localStorage为空,尝试从sessionStorage恢复
     if (!data || data === '[]') {
         const backup = sessionStorage.getItem(STORAGE_KEY + '_backup');
         if (backup && backup !== '[]') {
@@ -539,14 +545,14 @@ function saveClients(clients) {
     try {
         const data = JSON.stringify(clients);
         if (data.length > 4 * 1024 * 1024) {
-            showToast('存储空间即将用满，建议导出并删除已完成客户');
+            showToast('存储空间即将用满,建议导出并删除已完成客户');
         }
         localStorage.setItem(STORAGE_KEY, data);
         // 同时备份到sessionStorage
         sessionStorage.setItem(STORAGE_KEY + '_backup', data);
     } catch (e) {
         if (e.name === 'QuotaExceededError') {
-            showToast('存储空间已满，请删除部分已完成客户');
+            showToast('存储空间已满,请删除部分已完成客户');
         }
     }
 }
@@ -641,7 +647,7 @@ function renderClientList() {
 }
 
 function deleteClient(id) {
-    if (!confirm('确定删除这个客户吗？')) return;
+    if (!confirm('确定删除这个客户吗?')) return;
     const clients = getClients().filter(c => c.id !== id);
     saveClients(clients);
     renderClientList();
@@ -655,11 +661,11 @@ function createClient() {
     modal.innerHTML = `<div style="background:#fff;border-radius:12px;padding:28px;width:380px;box-shadow:0 8px 30px rgba(0,0,0,0.15)">
         <h3 style="font-size:16px;margin-bottom:18px">新建客户</h3>
         <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">客户名称</label>
-        <p style="font-size:11px;color:#999;margin-bottom:6px">填写公司全称，系统会自动搜索公司信息</p>
-        <input id="new-client-name" type="text" placeholder="如：深圳市XX科技有限公司" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:14px">
+        <p style="font-size:11px;color:#999;margin-bottom:6px">填写公司全称,系统会自动搜索公司信息</p>
+        <input id="new-client-name" type="text" placeholder="如:深圳市XX科技有限公司" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:14px">
         <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">客户行业</label>
-        <p style="font-size:11px;color:#999;margin-bottom:6px">大致行业方向即可，后续可修改</p>
-        <input id="new-client-industry" type="text" placeholder="如：金融、制造业、服装外贸" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:18px">
+        <p style="font-size:11px;color:#999;margin-bottom:6px">大致行业方向即可,后续可修改</p>
+        <input id="new-client-industry" type="text" placeholder="如:金融、制造业、服装外贸" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:18px">
         <div style="display:flex;gap:10px;justify-content:flex-end">
             <button onclick="document.getElementById('create-modal').remove()" style="padding:8px 18px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">取消</button>
             <button onclick="confirmCreateClient()" style="padding:8px 18px;border:none;border-radius:8px;background:#0052d9;color:#fff;cursor:pointer;font-size:14px;font-weight:500">创建</button>
@@ -680,7 +686,7 @@ function confirmCreateClient() {
     saveClients(clients);
     renderClientList();
     openClient(newClient.id);
-    // 创建时上报到后台（新增一行，拿到record_id保存）
+    // 创建时上报到后台(新增一行,拿到record_id保存)
     (async () => { await reportToAdmin('report_client', { client_name: name, industry: industry, status: '新建', initial_demand: '' }, newClient.id); })();
     // 创建后自动搜索公司信息
     if (name) {
@@ -694,7 +700,7 @@ function openClient(id) {
     if (!c) return;
     showPage('detail');
     document.getElementById('detail-name').textContent = c.name;
-    // 兼容处理：如果没有 initial_demand 但有旧字段，合并显示
+    // 兼容处理:如果没有 initial_demand 但有旧字段,合并显示
     let displayDemand = c.initial_demand || '';
     if (!displayDemand && (c.business_desc || c.pain_points)) {
         displayDemand = [c.business_desc, c.pain_points].filter(Boolean).join(' ');
@@ -711,18 +717,18 @@ function openClient(id) {
     const pvDemand = document.getElementById('pv-initial-demand');
     const pvCompanyIntro = document.getElementById('pv-company-intro');
     const pvCompanyIntroText = document.getElementById('pv-company-intro-text');
-    
+
     if (pvInd) pvInd.textContent = c.industry || '-';
     if (pvDemand) pvDemand.textContent = displayDemand ? displayDemand.substring(0, 60) + (displayDemand.length > 60 ? '...' : '') : '-';
-    
-    // 显示公司简介（如果有）
+
+    // 显示公司简介(如果有)
     if (c.company_intro && pvCompanyIntro && pvCompanyIntroText) {
         pvCompanyIntroText.textContent = c.company_intro;
         pvCompanyIntro.style.display = 'block';
     } else if (pvCompanyIntro) {
         pvCompanyIntro.style.display = 'none';
     }
-    
+
     document.getElementById('profile-edit').style.display = 'none';
     document.getElementById('profile-view').style.display = 'block';
 
@@ -730,16 +736,14 @@ function openClient(id) {
     document.getElementById('s1-industry').value = c.industry || '';
     document.getElementById('s1-initial-demand').value = displayDemand;
 
-    // Restore Step1 result - 不自动显示旧结果，进入面板时默认隐藏
-    // 旧结果保留在存储中，进入面板后点击按钮才显示/重新生成
+    // Restore Step1 result - 不自动显示旧结果,进入面板时默认隐藏
+    // 旧结果保留在存储中,进入面板后点击按钮才显示/重新生成
     document.getElementById('s1-result').style.display = 'none';
-    // 清理企微文档链接（会在 showPanel 中恢复）
-    document.querySelectorAll('.wecom-doc-link').forEach(el => el.remove());
 
     // Restore Step2
     _uploadedFiles = c.uploaded_files || [];
     renderUploadedFiles();
-    // 恢复已保存的粘贴文字到 textarea（如果没有 uploaded_files 但有 transcript）
+    // 恢复已保存的粘贴文字到 textarea(如果没有 uploaded_files 但有 transcript)
     if (c.transcript && (!c.uploaded_files || c.uploaded_files.length === 0)) {
         document.getElementById('s2-transcript').value = c.transcript;
     } else {
@@ -789,7 +793,7 @@ function editClientName() {
 }
 
 function deleteCurrentClient() {
-    if (!confirm('确定删除这个客户吗？')) return;
+    if (!confirm('确定删除这个客户吗?')) return;
     const clients = getClients().filter(c => c.id !== currentClientId);
     saveClients(clients);
     goBack();
@@ -807,24 +811,14 @@ function showPanel(panel) {
     document.getElementById('actions-grid').style.display = 'none';
     document.getElementById('outputs-card').style.display = 'none';
 
-    // 进入 step1 时：如果已有历史结果，显示出来并把按钮改为"重新生成"
+    // 进入 step1 时：如果已有历史结果，显示出来并把按钮改为“重新生成”
     if (panel === 'step1') {
         const c = getClient(currentClientId);
         const btn = document.querySelector('#step1 .btn-primary');
-        // 清理旧的企微文档链接
-        document.querySelectorAll('.wecom-doc-link').forEach(el => el.remove());
         if (c && c.step1_result) {
             document.getElementById('s1-content').innerHTML = renderWithTags(c.step1_result);
             document.getElementById('s1-result').style.display = 'block';
             if (btn) btn.textContent = '重新生成调研准备材料';
-            // 恢复企微文档链接
-            if (c.step1_doc_url) {
-                const card = document.getElementById('s1-content').closest('.card');
-                const linkDiv = document.createElement('div');
-                linkDiv.className = 'wecom-doc-link';
-                linkDiv.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + c.step1_doc_url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
-                card.appendChild(linkDiv);
-            }
         } else {
             document.getElementById('s1-result').style.display = 'none';
             if (btn) btn.textContent = '生成调研准备材料';
@@ -886,11 +880,11 @@ function renderOutputs(c) {
                 <p style="font-size:13px;font-weight:500;margin:0">客户背景</p>
             </div>
             <div style="padding-left:25px;font-size:12px;line-height:1.8;color:#555">`;
-        if (c.industry) html += `<div><span style="color:#999">行业：</span>${c.industry}</div>`;
-        if (c.company_intro) html += `<div><span style="color:#999">公司简介：</span>${c.company_intro}</div>`;
-        // 兼容显示：优先显示 initial_demand
+        if (c.industry) html += `<div><span style="color:#999">行业:</span>${c.industry}</div>`;
+        if (c.company_intro) html += `<div><span style="color:#999">公司简介:</span>${c.company_intro}</div>`;
+        // 兼容显示:优先显示 initial_demand
         const displayDemand = c.initial_demand || [c.business_desc, c.pain_points].filter(Boolean).join(' · ');
-        if (displayDemand) html += `<div><span style="color:#999">初始需求：</span>${displayDemand}</div>`;
+        if (displayDemand) html += `<div><span style="color:#999">初始需求:</span>${displayDemand}</div>`;
     }
 
     // 服务商上传材料
@@ -984,7 +978,7 @@ function expandFull(el) {
 
 function updateTimeline(c) {
     if (!c) return;
-    // 确定当前进度级别：0=录入 1=已生成清单 2=待沟通 3=已生成报告 4=已交付Demo
+    // 确定当前进度级别:0=录入 1=已生成清单 2=待沟通 3=已生成报告 4=已交付Demo
     let level = 0;
     if (c.industry) level = 1;
     if (c.step1_result) level = 2;
@@ -1033,7 +1027,7 @@ function updateTimeline(c) {
     document.getElementById('node-4-outputs').innerHTML = n4;
 }
 
-// === DeepSeek API (前端直调，无超时限制) ===
+// === DeepSeek API (前端直调,无超时限制) ===
 async function callDeepSeek(systemPrompt, userPrompt) {
     const resp = await fetch('https://api.deepseek.com/chat/completions', {
         method: 'POST',
@@ -1043,7 +1037,7 @@ async function callDeepSeek(systemPrompt, userPrompt) {
     if (!resp.ok) {
         const errText = await resp.text().catch(() => '');
         if (resp.status === 402 || errText.includes('Insufficient Balance')) {
-            throw new Error('AI 服务余额不足，请联系管理员充值 DeepSeek API。');
+            throw new Error('AI 服务余额不足,请联系管理员充值 DeepSeek API。');
         }
         throw new Error('AI 服务错误(' + resp.status + '): ' + errText.substring(0, 100));
     }
@@ -1068,7 +1062,7 @@ async function generateStep1() {
     document.getElementById('s1-result').style.display = 'none';
 
     try {
-        // Step1: 后端匹配知识库，返回prompt
+        // Step1: 后端匹配知识库,返回prompt
         const matchResp = await fetch('/api/question_list', { method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ industry, initial_demand: initialDemand, company_name: c ? c.name : '', company_intro: companyIntro }) });
         if (!matchResp.ok) { alert('知识库匹配失败(' + matchResp.status + ')'); return; }
@@ -1077,7 +1071,7 @@ async function generateStep1() {
 
         const ctx = matchData.context_used || {};
 
-        // 前端直接调DeepSeek（无超时限制）
+        // 前端直接调DeepSeek(无超时限制)
         document.querySelector('#s1-loading p').textContent = '正在生成调研准备材料...';
         const result = await callDeepSeek(matchData.system_prompt, matchData.user_prompt);
 
@@ -1088,7 +1082,7 @@ async function generateStep1() {
         updateClient(currentClientId, { step1_result: result, status: 'waiting' });
         updateTimeline(getClient(currentClientId));
         document.getElementById('detail-industry').textContent = industry;
-        // 自动创建企微文档（后台备份，不在界面展示）
+        // 自动创建企微文档(后台备份,不在界面展示)
         let step1DocUrl = '';
         try {
             const cc0 = getClient(currentClientId);
@@ -1100,7 +1094,7 @@ async function generateStep1() {
                 updateClient(currentClientId, { step1_doc_url: step1DocUrl });
             }
         } catch(e) { console.warn('自动创建企微文档失败:', e); }
-        // 上报到平台（更新同一行，带上链接）
+        // 上报到平台(更新同一行,带上链接)
         const cc = getClient(currentClientId);
         reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry: cc.industry, initial_demand: cc.initial_demand || cc.business_desc || '', status: step1DocUrl ? '已生成清单链接' : '已生成清单', step1_doc_url: step1DocUrl });
     } catch (e) { alert('请求失败: ' + e.message); }
@@ -1116,7 +1110,7 @@ function renderUploadedFiles() {
     const files = (c && c.uploaded_files) || _uploadedFiles;
     const container = document.getElementById('uploaded-files-list');
     if (!files || files.length === 0) { container.innerHTML = ''; return; }
-    let html = '<div style="font-size:12px;color:#555;margin-bottom:6px">已上传 ' + files.length + ' 份沟通记录：</div>';
+    let html = '<div style="font-size:12px;color:#555;margin-bottom:6px">已上传 ' + files.length + ' 份沟通记录:</div>';
     files.forEach((f, i) => {
         html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8faf8;border:0.5px solid #e0e0e0;border-radius:6px;margin-bottom:4px;font-size:12px">';
         html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + f.name + (f.text ? ' (' + f.text.length + '字)' : '') + '</span>';
@@ -1176,7 +1170,7 @@ async function handleFileUpload(event) {
     if (!fileList || fileList.length === 0) return;
     const c = getClient(currentClientId);
     const existing = (c && c.uploaded_files) || [];
-    
+
     for (let i = 0; i < fileList.length; i++) {
         const file = fileList[i];
         if (file.name.endsWith('.txt')) {
@@ -1212,7 +1206,7 @@ async function handleFileUpload(event) {
 function saveTranscripts() {
     const c = getClient(currentClientId);
     const pastedText = document.getElementById('s2-transcript').value.trim();
-    // 如果有粘贴文字，也存进 uploaded_files
+    // 如果有粘贴文字,也存进 uploaded_files
     if (pastedText) {
         const files = (c && c.uploaded_files) || [];
         files.push({ name: '粘贴文字 (' + new Date().toLocaleTimeString() + ')', text: pastedText });
@@ -1230,18 +1224,18 @@ function saveTranscripts() {
 }
 
 async function generateReport() {
-    // 阶段1：只生成需求分析报告 + 待确认事项
+    // 阶段1:只生成需求分析报告 + 待确认事项
     const c = getClient(currentClientId);
     const uploadedFiles = (c && c.uploaded_files) || [];
     const pastedText = document.getElementById('s2-transcript').value.trim();
-    
+
     let allTexts = uploadedFiles.map(f => f.text || '').filter(t => t.length > 0);
     if (pastedText) allTexts.push(pastedText);
     if (allTexts.length === 0 && c && c.transcript) {
         allTexts.push(c.transcript);
     }
     const transcript = allTexts.join('\n\n---\n\n');
-    
+
     if (!transcript) { alert('请先上传沟通记录文件或粘贴文字'); return; }
     const industry = c ? c.industry : '';
 
@@ -1259,32 +1253,32 @@ async function generateReport() {
             const matchData = await matchResp.json();
             if (matchData.industry_knowledge) kbContext += '## 行业知识\n' + matchData.industry_knowledge + '\n\n';
             if (matchData.matched_cases && matchData.matched_cases.length) {
-                kbContext += '## 同行业真实交付案例（参考方案设计和字段）\n';
+                kbContext += '## 同行业真实交付案例(参考方案设计和字段)\n';
                 matchData.matched_cases.forEach(cs => {
                     const meta = cs.meta || {};
                     const sol = cs.solution || {};
                     kbContext += `### ${meta.industry||''}-${meta.scene||''}\n`;
-                    if (cs.pain_points) kbContext += '痛点：' + cs.pain_points.join('; ') + '\n';
-                    if (sol.architecture) kbContext += '方案：' + sol.architecture + '\n';
+                    if (cs.pain_points) kbContext += '痛点:' + cs.pain_points.join('; ') + '\n';
+                    if (sol.architecture) kbContext += '方案:' + sol.architecture + '\n';
                     if (sol.tables) { sol.tables.forEach(t => {
                         const fields = (t.fields||[]).map(f => typeof f==='string'?f:(f.field_title||f.title||'')).slice(0,12);
                         kbContext += `  表「${t.table_name||''}」: ${fields.join(', ')}\n`;
                     }); }
-                    if (sol.automation_rules) kbContext += '自动化：' + sol.automation_rules.slice(0,3).join('; ') + '\n';
+                    if (sol.automation_rules) kbContext += '自动化:' + sol.automation_rules.slice(0,3).join('; ') + '\n';
                     kbContext += '\n';
                 });
             }
             if (matchData.matched_templates && matchData.matched_templates.length) {
-                kbContext += '## 字段经验池（该行业真实交付的完整表结构，必须参考）\n';
+                kbContext += '## 字段经验池(该行业真实交付的完整表结构,必须参考)\n';
                 matchData.matched_templates.forEach(tpl => {
                     const meta = tpl.meta || {};
                     kbContext += `### ${meta.industry||''}-${meta.scene||''} (${meta.total_tables||'?'}表${meta.total_fields||'?'}字段)\n`;
-                    if (meta.design_principle) kbContext += `设计原则：${meta.design_principle}\n`;
+                    if (meta.design_principle) kbContext += `设计原则:${meta.design_principle}\n`;
                     if (tpl.tables) { tpl.tables.forEach(t => {
                         kbContext += `  表「${t.table_name||''}」`;
-                        if (t.description) kbContext += `（${t.description}）`;
+                        if (t.description) kbContext += `(${t.description})`;
                         kbContext += ':\n';
-                        // 处理 field_groups 格式（带分组+类型）
+                        // 处理 field_groups 格式(带分组+类型)
                         if (t.field_groups && t.field_groups.length) {
                             t.field_groups.forEach(g => {
                                 const fieldDescs = (g.fields||[]).map(f => {
@@ -1298,7 +1292,7 @@ async function generateReport() {
                         // 处理 fields 纯字符串数组格式
                         else if (t.fields && t.fields.length) {
                             const fieldList = t.fields.map(f => typeof f === 'string' ? f : (f.field_title || f.title || ''));
-                            kbContext += `    字段：${fieldList.join(', ')}\n`;
+                            kbContext += `    字段:${fieldList.join(', ')}\n`;
                         }
                     }); }
                 });
@@ -1307,39 +1301,39 @@ async function generateReport() {
         }
 
         // 2. 客户一致性检测上下文
-        const step1Info = c ? `\n## Step1录入的客户信息（用于一致性检查）\n行业：${c.industry||'未填'}\n初始需求表达：${c.initial_demand || c.business_desc || '未填'}\n如果沟通记录中的客户行业/业务与上述信息明显不一致，请在报告开头用⚠️提醒。\n` : '';
+        const step1Info = c ? `\n## Step1录入的客户信息(用于一致性检查)\n行业:${c.industry||'未填'}\n初始需求表达:${c.initial_demand || c.business_desc || '未填'}\n如果沟通记录中的客户行业/业务与上述信息明显不一致,请在报告开头用⚠️提醒。\n` : '';
 
         // 3. 并行调用生成报告 + 待确认事项
         document.querySelector('#s2-loading p').textContent = '正在生成需求分析报告...';
 
-        const reportPrompt = `你是专业的企业微信智能表格售前方案顾问。根据沟通记录+知识库，生成详细需求洞察报告。
+        const reportPrompt = `你是专业的企业微信智能表格售前方案顾问。根据沟通记录+知识库,生成详细需求洞察报告。
 
-## 输出结构（直接输出，不要开场白/总结语）
+## 输出结构(直接输出,不要开场白/总结语)
 
 ## 客户信息
 ## 核心痛点
-逐条列出，每条引用客户原话并标优先级P0/P1/P2
+逐条列出,每条引用客户原话并标优先级P0/P1/P2
 ## 业务场景
-核心流程（用→表示）、角色清单、数据流向
+核心流程(用→表示)、角色清单、数据流向
 ## 智能表格搭建方案
-### 子表结构（参考知识库字段经验池设计）
+### 子表结构(参考知识库字段经验池设计)
 | 子表名 | 用途 | 核心字段(8-12个) | 使用角色 |
-### 自动化规则（触发→动作）
+### 自动化规则(触发→动作)
 ### 视图设计
-### 权限设计（按角色）
+### 权限设计(按角色)
 ## 预估交付周期
 
-原则：1.字段设计必须参考知识库中同行业的真实案例 2.痛点引用原话 3.方案要细致到字段名级别`;
+原则:1.字段设计必须参考知识库中同行业的真实案例 2.痛点引用原话 3.方案要细致到字段名级别`;
 
-        const todoPrompt = `分析沟通记录，找出客户没讲清楚的地方，输出待确认事项清单。直接输出，不要开场白。
-每条格式：
-❓ **事项名称**：具体问题
-- 为什么重要：xxx
-- 建议怎么问：xxx
+        const todoPrompt = `分析沟通记录,找出客户没讲清楚的地方,输出待确认事项清单。直接输出,不要开场白。
+每条格式:
+❓ **事项名称**:具体问题
+- 为什么重要:xxx
+- 建议怎么问:xxx
 
-重点检测：流程是否完整、数据接入方式、权限设计、自动化需求、外部系统对接、历史数据迁移、预算时间。`;
+重点检测:流程是否完整、数据接入方式、权限设计、自动化需求、外部系统对接、历史数据迁移、预算时间。`;
 
-        const reportUserPrompt = step1Info + kbContext + '## 客户沟通记录\n\n' + transcript + '\n\n请生成报告（不含待确认事项）。';
+        const reportUserPrompt = step1Info + kbContext + '## 客户沟通记录\n\n' + transcript + '\n\n请生成报告(不含待确认事项)。';
         const todoUserPrompt = '## 沟通记录\n\n' + transcript.substring(0, 3000) + '\n\n请列出待确认事项。';
 
         const results = await Promise.allSettled([
@@ -1353,7 +1347,7 @@ async function generateReport() {
         if (report) {
             document.getElementById('s2-report').innerHTML = renderMarkdown(report);
         } else {
-            document.getElementById('s2-report').innerHTML = '<p style="color:#e53935">报告生成失败，请重试</p>';
+            document.getElementById('s2-report').innerHTML = '<p style="color:#e53935">报告生成失败,请重试</p>';
         }
 
         // 渲染待确认事项
@@ -1363,8 +1357,8 @@ async function generateReport() {
         }
 
         document.getElementById('s2-report-section').style.display = 'block';
-        // 保存报告和知识库上下文（供后续生成Demo用）
-        // 保存报告，同时清除旧的Demo数据（报告变了，旧Demo无效）
+        // 保存报告和知识库上下文(供后续生成Demo用)
+        // 保存报告,同时清除旧的Demo数据(报告变了,旧Demo无效)
         updateClient(currentClientId, { step2_report: report || '', step2_todo: todoResult || '', _kb_context: kbContext, step2_schema: null, demo_url: '' });
         updateTimeline(getClient(currentClientId));
 
@@ -1402,7 +1396,7 @@ async function generateReport() {
 }
 
 async function generateDemo() {
-    // 阶段2：客户确认后，生成智能表格 Demo
+    // 阶段2:客户确认后,生成智能表格 Demo
     const c = getClient(currentClientId);
     if (!c || !c.step2_report) { alert('请先生成需求分析报告'); return; }
 
@@ -1419,18 +1413,18 @@ async function generateDemo() {
         const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求+知识库字段经验池设计Demo。
 
 ## 设计原则
-1. 知识库字段经验池是参考而非约束——它代表同行业服务商的真实交付经验，能大幅提高设计准确性
-2. 当知识库有相关行业/场景的模板时，以它为基础进行设计，根据客户实际需求增减字段
-3. 当客户有知识库未覆盖的需求时，发挥你的专业判断力自行设计
+1. 知识库字段经验池是参考而非约束--它代表同行业服务商的真实交付经验,能大幅提高设计准确性
+2. 当知识库有相关行业/场景的模板时,以它为基础进行设计,根据客户实际需求增减字段
+3. 当客户有知识库未覆盖的需求时,发挥你的专业判断力自行设计
 4. 最终产出应该是知识库经验 + 客户个性化需求的结合体
-5. 每表控制在8-15个字段，2-3条示例数据
+5. 每表控制在8-15个字段,2-3条示例数据
 
 ## 输出格式
-直接输出JSON，不要markdown代码块。
+直接输出JSON,不要markdown代码块。
 {"doc_name":"名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
-类型：FIELD_TYPE_TEXT/NUMBER/SINGLE_SELECT/DATE_TIME/CURRENCY/PERCENTAGE/PROGRESS/PHONE_NUMBER/EMAIL/CHECKBOX/URL/SELECT`;
+类型:FIELD_TYPE_TEXT/NUMBER/SINGLE_SELECT/DATE_TIME/CURRENCY/PERCENTAGE/PROGRESS/PHONE_NUMBER/EMAIL/CHECKBOX/URL/SELECT`;
 
-        const schemaUserPrompt = kbContext + '\n## 需求分析报告\n\n' + c.step2_report.substring(0, 2500) + '\n\n## 沟通记录\n\n' + transcript.substring(0, 1500) + '\n\n请结合上面「字段经验池」和客户的实际需求，设计智能表格Demo。知识库是参考基础，客户特有的需求用你的专业判断来补充。';
+        const schemaUserPrompt = kbContext + '\n## 需求分析报告\n\n' + c.step2_report.substring(0, 2500) + '\n\n## 沟通记录\n\n' + transcript.substring(0, 1500) + '\n\n请结合上面「字段经验池」和客户的实际需求,设计智能表格Demo。知识库是参考基础,客户特有的需求用你的专业判断来补充。';
 
         const schemaText = await callDeepSeek(schemaPrompt, schemaUserPrompt);
 
@@ -1450,7 +1444,7 @@ async function generateDemo() {
             updateTimeline(getClient(currentClientId));
         } else {
             document.getElementById('s2-schema-card').style.display = 'block';
-            document.getElementById('s2-schema').innerHTML = '<p style="color:#e53935">Demo生成失败，请重试</p>';
+            document.getElementById('s2-schema').innerHTML = '<p style="color:#e53935">Demo生成失败,请重试</p>';
         }
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s2-demo-loading').classList.remove('visible'); }
@@ -1460,7 +1454,7 @@ function renderSchema(schema) {
     let html = '<h4 style="color:#0052d9;margin-bottom:12px">' + (schema.doc_name||'Demo') + '</h4>';
     schema.sheets.forEach((s, i) => {
         html += '<div style="margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden">';
-        html += '<div style="background:#f8faf8;padding:8px 12px;font-size:13px;font-weight:600;color:#155724;border-bottom:1px solid #eee">子表'+(i+1)+'：'+s.sheet_name+'</div>';
+        html += '<div style="background:#f8faf8;padding:8px 12px;font-size:13px;font-weight:600;color:#155724;border-bottom:1px solid #eee">子表'+(i+1)+':'+s.sheet_name+'</div>';
         html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><tr>';
         s.fields.forEach(f => { html += '<th style="background:#fafafa;padding:5px 8px;border-bottom:1px solid #eee;font-weight:500;text-align:left">'+f.field_title+'</th>'; });
         html += '</tr>';
@@ -1489,7 +1483,7 @@ async function createSmartsheet() {
             // 更新后台
             const cc = getClient(currentClientId);
             if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成表格Demo', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
-        } else { div.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:12px;font-size:13px;color:#c62828">失败：'+(data.error||'')+'</div>'; }
+        } else { div.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:12px;font-size:13px;color:#c62828">失败:'+(data.error||'')+'</div>'; }
         div.style.display = 'block';
     } catch (e) { alert(e.message); }
     finally { btn.disabled = false; btn.textContent = '创建企微智能表格'; }
@@ -1498,10 +1492,10 @@ async function createSmartsheet() {
 // === Helpers ===
 function renderMarkdown(text) { text = text.replace(/^(好的|作为|我已经|根据您|以下是).*?(\n---|\n##|\n###)/s, '$2'); return marked.parse(text); }
 function renderWithTags(text) {
-    // 修正问题编号：对带[维度]标签的行重新编号，用"数字. "格式但阻止marked解析为<ol>
+    // 修正问题编号:对带[维度]标签的行重新编号,用"数字. "格式但阻止marked解析为<ol>
     let qNum = 0;
-    text = text.replace(/^\d+[\.\)）]\s*[\[【]/gm, (match) => { qNum++; return qNum + '. ['; });
-    // 在每个编号行前加一个零宽空格，阻止marked把它当作有序列表
+    text = text.replace(/^\d+[\.\))]\s*[\[【]/gm, (match) => { qNum++; return qNum + '. ['; });
+    // 在每个编号行前加一个零宽空格,阻止marked把它当作有序列表
     text = text.replace(/^(\d+)\. \[/gm, '\u200B$1. [');
     let html = renderMarkdown(text);
     // 移除零宽空格
@@ -1512,9 +1506,28 @@ function renderWithTags(text) {
 function renderBadges(ctx, tplKey) { return `<span class="status-badge ${ctx.industry_matched?'matched':'unmatched'}">${ctx.industry_matched?'行业':'无行业'}</span><span class="status-badge ${ctx.cases_matched?'matched':'unmatched'}">${ctx.cases_matched?'案例':'无案例'}</span><span class="status-badge ${ctx[tplKey]?'matched':'unmatched'}">${ctx[tplKey]?'模板':'无模板'}</span>`; }
 
 function copyRendered(id) { navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => showToast('已复制')); }
-function toggleExport(id) { closeAllExports(); document.getElementById(id).classList.toggle('visible'); }
-function closeAllExports() { document.querySelectorAll('.export-dropdown').forEach(d => d.classList.remove('visible')); }
-document.addEventListener('click', e => { if (!e.target.closest('.export-group')) closeAllExports(); });
+function toggleExport(id) {
+    closeAllExports();
+    const dd = document.getElementById(id);
+    dd.classList.toggle('visible');
+    // 移动端显示遮罩
+    if (dd.classList.contains('visible') && window.innerWidth <= 768) {
+        let overlay = document.getElementById('export-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'export-overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:99';
+            overlay.onclick = closeAllExports;
+            document.body.appendChild(overlay);
+        } else { overlay.style.display = 'block'; }
+    }
+}
+function closeAllExports() {
+    document.querySelectorAll('.export-dropdown').forEach(d => d.classList.remove('visible'));
+    const overlay = document.getElementById('export-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+document.addEventListener('click', e => { if (!e.target.closest('.export-group') && !e.target.closest('#export-overlay')) closeAllExports(); });
 
 function exportWord(elId, title) { const html = `<html><head><meta charset="utf-8"><style>body{font-family:"Microsoft YaHei";font-size:12pt;line-height:1.8}h1,h2,h3{color:#0052d9}strong{color:#0052d9}</style></head><body>${document.getElementById(elId).innerHTML}</body></html>`; const blob = new Blob([html],{type:'application/msword'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=title+'.doc'; a.click(); closeAllExports(); }
 function exportPDF(elId, title) { html2pdf().set({margin:15,filename:title+'.pdf',html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4'}}).from(document.getElementById(elId)).save(); closeAllExports(); }
@@ -1524,7 +1537,7 @@ async function exportWecomDoc(elId, title) {
     try {
         const c = getClient(currentClientId);
         const docTitle = (c ? c.name + ' - ' : '') + title;
-        // 优先使用原始markdown内容（保留序号），否则用innerText
+        // 优先使用原始markdown内容(保留序号),否则用innerText
         let content = '';
         if (elId === 's1-content' && c && c.step1_result) {
             content = c.step1_result;
@@ -1545,13 +1558,8 @@ async function exportWecomDoc(elId, title) {
             if (cc && cc.admin_record_id) {
                 reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: cc.demo_url ? '已生成表格Demo' : cc.step2_report ? '已生成需求报告' : '已生成清单链接', step1_doc_url: cc.step1_doc_url || '', report_doc_url: cc.report_doc_url || '', demo_url: cc.demo_url || '', transcript_doc_url: cc.transcript_doc_url || '' });
             }
-            const card = document.getElementById(elId).closest('.card');
-            const existingLink = card.querySelector('.wecom-doc-link');
-            if (existingLink) existingLink.remove();
-            const div = document.createElement('div');
-            div.className = 'wecom-doc-link';
-            div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:10px;font-size:13px"><a href="' + data.url + '" target="_blank" style="color:#0052d9;font-weight:500">打开企微文档 →</a></div>';
-            card.appendChild(div);
+            // 在新窗口打开文档
+            window.open(data.url, '_blank');
         } else { showToast('失败: ' + (data.error || '')); }
     } catch (e) { showToast('请求失败'); }
 }
@@ -1596,10 +1604,10 @@ function handleImport(event) {
     console.log('[provider-assist] localStorage状态:', data ? data.length + '字节, ' + JSON.parse(data).length + '个客户' : '空');
 })();
 
-// === 自动回补：页面加载时检测未同步的客户数据并自动写入后台 ===
+// === 自动回补:页面加载时检测未同步的客户数据并自动写入后台 ===
 (async function autoSyncToAdmin() {
     const providerName = localStorage.getItem(PROVIDER_KEY);
-    if (!providerName) return; // 未注册服务商，跳过
+    if (!providerName) return; // 未注册服务商,跳过
     const clients = getClients();
     if (!clients.length) return;
 
@@ -1613,10 +1621,10 @@ function handleImport(event) {
         else if (c.step1_result) status = c.step1_doc_url ? '已生成清单链接' : '已生成清单';
         else if (c.industry && (c.business_desc || c.pain_points)) status = '已完善档案';
 
-        // 判断是否需要同步：
-        // 1. 没有 admin_record_id（后台从没成功写入过）
-        // 2. 有链接但后台可能没更新过（通过 last_synced_status 标记判断）
-        const needsSync = !c.admin_record_id || (c._last_synced_status !== status) || 
+        // 判断是否需要同步:
+        // 1. 没有 admin_record_id(后台从没成功写入过)
+        // 2. 有链接但后台可能没更新过(通过 last_synced_status 标记判断)
+        const needsSync = !c.admin_record_id || (c._last_synced_status !== status) ||
             (c.step1_doc_url && !c._synced_step1_url) ||
             (c.report_doc_url && !c._synced_report_url) ||
             (c.demo_url && !c._synced_demo_url);
@@ -1638,7 +1646,7 @@ function handleImport(event) {
             }, c.id);
 
             if (result && result.success !== false) {
-                // 标记已同步状态，避免下次重复
+                // 标记已同步状态,避免下次重复
                 updateClient(c.id, {
                     _last_synced_status: status,
                     _synced_step1_url: c.step1_doc_url || '',
@@ -1652,7 +1660,7 @@ function handleImport(event) {
         }
     }
     if (syncCount > 0) {
-        console.log('[autoSync] 自动同步完成，更新了', syncCount, '个客户');
+        console.log('[autoSync] 自动同步完成,更新了', syncCount, '个客户');
     }
 })();
 </script>
