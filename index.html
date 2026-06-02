@@ -1471,11 +1471,14 @@ function renderSchema(schema) {
 
 async function createSmartsheet() {
     if (!demoSchema) return;
+    const schemaObj = typeof demoSchema === 'string' ? JSON.parse(demoSchema) : demoSchema;
     const btn = document.getElementById('btn-create');
     btn.disabled = true; btn.textContent = '创建中...';
     try {
-        const resp = await fetch('/api/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(demoSchema) });
-        const data = await resp.json();
+        const resp = await fetch('/api/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(schemaObj) });
+        const respText = await resp.text();
+        let data;
+        try { data = JSON.parse(respText); } catch(pe) { throw new Error('创建失败(服务器返回非JSON): ' + respText.substring(0, 100)); }
         const div = document.getElementById('s2-create-result');
         if (data.success && data.url) {
             let stepsHtml = '';
