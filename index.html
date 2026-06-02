@@ -1572,6 +1572,11 @@ async function exportWecomDoc(elId, title) {
         const data = await resp.json();
         if (data.success && data.url) {
             showToast('企微文档已创建');
+            // 在内容区下方显示链接
+            const linkDiv = document.createElement('div');
+            linkDiv.style.cssText = 'margin-top:12px;padding:10px 14px;background:#e8f5e9;border-radius:8px;font-size:13px;';
+            linkDiv.innerHTML = '✅ 企微文档已创建：<a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;">'+docTitle+' →</a>';
+            document.getElementById(elId).parentNode.insertBefore(linkDiv, document.getElementById(elId).nextSibling);
             if (elId === 's1-content') { updateClient(currentClientId, { step1_doc_url: data.url }); }
             else if (elId === 's2-report') { updateClient(currentClientId, { report_doc_url: data.url }); }
             // 同步更新后台表格的链接
