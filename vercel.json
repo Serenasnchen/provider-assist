@@ -1,11 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "api/chat.py": { "maxDuration": 60 },
-    "api/question_list.py": { "maxDuration": 60 },
-    "api/analyze.py": { "maxDuration": 60 },
-    "api/company_search.py": { "maxDuration": 30 }
-  },
   "rewrites": [
     { "source": "/style.css", "destination": "/style.css" },
     { "source": "/app.js", "destination": "/app.js" },
