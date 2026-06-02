@@ -184,6 +184,12 @@ def process_add_sheet(data):
     if not sid:
         return {"error": f"子表「{sname}」创建失败", "success": False}
 
+    # 重命名子表（add_sheet的title参数可能不生效）
+    call_mcp("smartsheet_update_sheet", {
+        "docid": docid, "sheet_id": sid,
+        "properties": {"sheet_id": sid, "title": sname}
+    })
+
     steps.append(f"子表「{sname}」就绪")
     setup_sheet_fields(docid, sid, fields, records, steps, sname)
 
