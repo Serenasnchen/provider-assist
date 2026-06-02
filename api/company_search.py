@@ -12,14 +12,13 @@ def call_deepseek(prompt):
     if not api_key:
         return "Error: DEEPSEEK_API_KEY not configured"
 
-    system_prompt = """你是一个企业信息助手。根据公司名称和行业，生成一段2-3句话的公司简介。
-简介应包含：
-1. 公司的主营业务是什么
-2. 所属行业和大致规模
-3. 如果是知名公司，可简要提及特点
-
-如果公司名称不够明确或无法判断，就根据行业做合理推断。保持客观、简洁、专业。
-不要编造具体数据，可以用"可能"、"通常"等词。
+    system_prompt = """你是一个企业信息助手。根据公司名称和行业，生成一段公司简介。
+写法要求：
+- 用一段自然的话介绍这家公司：做什么的、主营业务、客户群体、大致规模
+- 如果是知名公司，可以提一下特点
+- 如果公司名称不够明确，就根据行业做合理推断
+- 3-5句话，保持客观简洁，不要编造具体数据
+- 像一个了解这个行业的人在介绍客户，不要像填表
 """
 
     payload = {
@@ -50,11 +49,11 @@ def call_deepseek(prompt):
 
 
 def search_company_info(company_name, industry=""):
-    """搜索公司信息，返回简介"""
-    prompt = f"公司名称：{company_name}\n"
+    """搜索公司信息,返回简介"""
+    prompt = f"公司名称:{company_name}\n"
     if industry:
-        prompt += f"行业：{industry}\n"
-    prompt += "\n请生成该公司的简介（2-3句话）："
+        prompt += f"行业:{industry}\n"
+    prompt += "\n请生成该公司的简介(2-3句话):"
 
     intro = call_deepseek(prompt)
     return {"company_intro": intro.strip()}
