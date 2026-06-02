@@ -1,0 +1,174 @@
+{
+  "meta": {
+    "industry": "服装生产",
+    "scene": "样板/版房工序进度跟踪",
+    "source": "开平联旺真实交付",
+    "total_tables": 1,
+    "total_fields": 75,
+    "design_principle": "必须用单表多视图（服务商实测：分表会让数据无法同步），每工序段5字段标准结构",
+    "applicable_when": "客户提到：样板、版房、制版、车版、洗水、工序跟踪、进度管理、服装生产"
+  },
+  "tables": [
+    {
+      "table_name": "样板进度表",
+      "description": "服装样板从下单、产品信息登记到验收全流程进度、时间、耗时、状态跟踪及年度/季度/月度统计",
+      "users": "业务员、跟单员、纸样员、裁版员、裁片外发加工员、车版员、洗水员、验收员、管理人员",
+      "design_note": "单一超宽表，不拆分子表。每岗位建独立视图+视图内按人员分组。进度总表保留所有人可见全局视图。",
+      "field_groups": [
+        {
+          "group_name": "产品信息",
+          "fields": [
+            {"title": "编号", "type": "TEXT", "logic": "YYMMDD-XXX格式自动生成，如260305-001"},
+            {"title": "下单日期", "type": "DATE_TIME"},
+            {"title": "客户", "type": "TEXT"},
+            {"title": "整体进度", "type": "SINGLE_SELECT", "options": ["进行中", "已完成", "已作废"]},
+            {"title": "牌子", "type": "TEXT"},
+            {"title": "款号", "type": "TEXT"},
+            {"title": "图片（上限9张）", "type": "IMAGE"},
+            {"title": "品名", "type": "TEXT"},
+            {"title": "产品种类", "type": "SINGLE_SELECT", "options": ["牛仔", "梭织", "针织"]},
+            {"title": "布料名称", "type": "TEXT"},
+            {"title": "颜色", "type": "TEXT"},
+            {"title": "里布", "type": "TEXT"},
+            {"title": "袋布", "type": "TEXT"},
+            {"title": "样板类型", "type": "SINGLE_SELECT", "options": ["试水版", "正式版"]},
+            {"title": "尺码", "type": "TEXT"},
+            {"title": "数量/码", "type": "NUMBER"},
+            {"title": "任务总耗时", "type": "TEXT", "logic": "公式：验收完成期-业务开单期"},
+            {"title": "备注", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "01业务流程",
+          "standard_5_fields": true,
+          "fields": [
+            {"title": "01业务员", "type": "TEXT"},
+            {"title": "01业务工作", "type": "SINGLE_SELECT", "options": ["未完成", "已完成", "✅如期", "⚠️逾期"]},
+            {"title": "01业务倒计时", "type": "TEXT", "logic": "公式：约定周期-已用天数"},
+            {"title": "01业务开单期", "type": "DATE_TIME"},
+            {"title": "01客交版期", "type": "DATE_TIME"},
+            {"title": "业务实际结束日期", "type": "DATE_TIME"},
+            {"title": "01业务耗时", "type": "TEXT", "logic": "公式：结束-开始"}
+          ]
+        },
+        {
+          "group_name": "02跟单流程",
+          "standard_5_fields": true,
+          "fields": [
+            {"title": "02跟单员", "type": "TEXT"},
+            {"title": "02跟单工作", "type": "SINGLE_SELECT", "options": ["未完成", "已完成"]},
+            {"title": "02跟单倒计时", "type": "TEXT"},
+            {"title": "02跟单开始期", "type": "DATE_TIME", "logic": "上一工序完成后自动赋值"},
+            {"title": "02跟单实际结束期", "type": "DATE_TIME"},
+            {"title": "02跟单耗时", "type": "TEXT"},
+            {"title": "02是否需要洗水", "type": "CHECKBOX", "logic": "开关字段，控制07洗水流程是否激活"},
+            {"title": "02裁片是否需要外发工厂处理工艺", "type": "CHECKBOX", "logic": "开关字段，控制05裁片外发是否激活"},
+            {"title": "02加工工艺种类", "type": "TEXT"},
+            {"title": "02是否因突发情况作废任务", "type": "CHECKBOX"},
+            {"title": "02作废原因", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "03纸样流程",
+          "standard_5_fields": true,
+          "fields": [
+            {"title": "03纸样员", "type": "TEXT"},
+            {"title": "03纸样工作", "type": "SINGLE_SELECT", "options": ["未完成", "已完成"]},
+            {"title": "03纸样倒计时", "type": "TEXT"},
+            {"title": "03纸样开始期", "type": "DATE_TIME", "logic": "上一工序完成后自动赋值"},
+            {"title": "03纸样实际完成期", "type": "DATE_TIME"},
+            {"title": "03纸样耗时", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "04裁版流程",
+          "standard_5_fields": true,
+          "fields": [
+            {"title": "04裁版员", "type": "TEXT"},
+            {"title": "04裁版工作", "type": "SINGLE_SELECT", "options": ["未完成", "已完成"]},
+            {"title": "04裁版倒计时", "type": "TEXT"},
+            {"title": "04裁版开始期", "type": "DATE_TIME"},
+            {"title": "04裁版实际完成期", "type": "DATE_TIME"},
+            {"title": "04裁版耗时", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "05裁片外发加工流程",
+          "standard_5_fields": true,
+          "condition": "仅当02跟单流程中「裁片是否需要外发」勾选时激活",
+          "fields": [
+            {"title": "05裁片外发加工员", "type": "TEXT"},
+            {"title": "05裁片外发加工工作", "type": "SINGLE_SELECT", "options": ["未完成", "已完成"]},
+            {"title": "05裁片外发加工倒计时", "type": "TEXT"},
+            {"title": "05裁片外发加工开始期", "type": "DATE_TIME"},
+            {"title": "05裁片外发加工实际完成期", "type": "DATE_TIME"},
+            {"title": "05裁片外发加工耗时", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "06车版流程",
+          "standard_5_fields": true,
+          "fields": [
+            {"title": "06车版员", "type": "TEXT"},
+            {"title": "06车版工作", "type": "SINGLE_SELECT", "options": ["未完成", "已完成"]},
+            {"title": "06车版倒计时", "type": "TEXT"},
+            {"title": "06车版开始期", "type": "DATE_TIME"},
+            {"title": "06车版实际完成期", "type": "DATE_TIME"},
+            {"title": "06车版耗时", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "07洗水流程",
+          "standard_5_fields": true,
+          "condition": "仅当02跟单流程中「是否需要洗水」勾选时激活",
+          "fields": [
+            {"title": "07洗水员", "type": "TEXT"},
+            {"title": "07洗水工作", "type": "SINGLE_SELECT", "options": ["未完成", "已完成"]},
+            {"title": "07洗水倒计时", "type": "TEXT"},
+            {"title": "07离厂洗水开始期", "type": "DATE_TIME"},
+            {"title": "07离厂洗水结束期", "type": "DATE_TIME"},
+            {"title": "07离场洗水耗时", "type": "TEXT"},
+            {"title": "07返洗水开始期", "type": "DATE_TIME"},
+            {"title": "07返洗水实际结束期", "type": "DATE_TIME"},
+            {"title": "07返洗水耗时", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "08验收流程",
+          "standard_5_fields": true,
+          "fields": [
+            {"title": "08验收员", "type": "TEXT"},
+            {"title": "08验收工作", "type": "SINGLE_SELECT", "options": ["未完成", "已完成"]},
+            {"title": "08验收倒计时", "type": "TEXT"},
+            {"title": "08验收开始期", "type": "DATE_TIME"},
+            {"title": "08验收实际完成期", "type": "DATE_TIME"},
+            {"title": "08验收耗时", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "辅助",
+          "fields": [
+            {"title": "任务时长/天", "type": "NUMBER"},
+            {"title": "自动编号", "type": "TEXT"},
+            {"title": "统计/年份", "type": "TEXT", "logic": "从创建时间自动提取，如2026"},
+            {"title": "统计/季度", "type": "TEXT", "logic": "如2026Q1"},
+            {"title": "统计/月份", "type": "TEXT", "logic": "如2026Q1-03"},
+            {"title": "创建时间", "type": "DATE_TIME"}
+          ]
+        }
+      ]
+    }
+  ],
+  "view_design": [
+    {"view_name": "进度总表", "type": "表格", "scope": "所有人可见全部任务"},
+    {"view_name": "业务员视图", "type": "表格", "scope": "只看本岗位任务，视图内按人员分组"},
+    {"view_name": "跟单员视图", "type": "表格", "scope": "同上"},
+    {"view_name": "纸样员视图", "type": "表格", "scope": "同上"},
+    {"view_name": "裁版员视图", "type": "表格", "scope": "同上"},
+    {"view_name": "车版员视图", "type": "表格", "scope": "同上"},
+    {"view_name": "洗水员视图", "type": "表格", "scope": "同上"},
+    {"view_name": "验收员视图", "type": "表格", "scope": "同上"},
+    {"view_name": "仪表盘", "type": "仪表盘", "metrics": ["各部门待完成任务数", "任务总数", "任务量排名", "任务耗时最长"]}
+  ],
+  "dashboard_metrics": ["各部门待完成任务数", "任务总数", "任务量排名", "任务耗时最长"]
+}

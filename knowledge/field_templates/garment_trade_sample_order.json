@@ -1,0 +1,168 @@
+{
+  "meta": {
+    "industry": "服装外贸",
+    "scene": "打样+大货订单全链路",
+    "source": "城邦美商真实交付",
+    "total_tables": 2,
+    "total_fields": 82,
+    "applicable_when": "客户提到：外贸、打样、多厂家打样、海外品牌、QA验货、船务出运、FPI、中英双语"
+  },
+  "tables": [
+    {
+      "table_name": "打样管理-Sample Making Management",
+      "description": "登记客户打样基础信息、打样进度、QA验样及寄样全流程，含成交率统计",
+      "users": "业务、跟单、QA",
+      "field_groups": [
+        {
+          "group_name": "业务部/Business Department",
+          "fields": [
+            {"title": "打样编号/Sample No.", "type": "TEXT", "logic": "自动生成：客户简称+创建日期(YYMMDD)+序号(每天重置001)，如QVC-251016-001"},
+            {"title": "客户名称/Customer", "type": "TEXT"},
+            {"title": "业务负责人/Business Owner", "type": "TEXT"},
+            {"title": "客户简称/Customer Abbreviation", "type": "TEXT"},
+            {"title": "客户联系方式/Customer Contact Information", "type": "PHONE_NUMBER"},
+            {"title": "客户地址/Customer Address", "type": "TEXT"},
+            {"title": "产品图片/Photo", "type": "IMAGE"},
+            {"title": "客户对接需求/Customer Docking Requirements", "type": "TEXT"},
+            {"title": "重新打样/Re-sample", "type": "CHECKBOX"}
+          ]
+        },
+        {
+          "group_name": "跟单部/Merchandising Department",
+          "fields": [
+            {"title": "跟单负责人/Merchandising Supervisor", "type": "TEXT"},
+            {"title": "跟单员备注/Merchandiser's Remarks", "type": "TEXT"},
+            {"title": "样品确认状态/Sample Confirmation Status", "type": "SINGLE_SELECT", "options": ["可打样/Sample Available", "不可打样/Sample Unavailable"]},
+            {"title": "订单类型/Order TYPE", "type": "SINGLE_SELECT", "options": ["TSV", "Normal"]},
+            {"title": "打样厂家/Sample-making Factory", "type": "SELECT", "logic": "多选，支持同时给多家工厂打样（厂家1/厂家2/厂家3...）"},
+            {"title": "打样状态/Sample Status", "type": "SINGLE_SELECT", "options": ["打样中/Sampling in Progress", "已完成/Sampling Finished"]},
+            {"title": "开始日期", "type": "DATE_TIME"},
+            {"title": "结束日期", "type": "DATE_TIME"},
+            {"title": "打样用时", "type": "TEXT", "logic": "公式：结束日期-开始日期，格式XXd XXh XXm"}
+          ]
+        },
+        {
+          "group_name": "QA组/QA Team",
+          "fields": [
+            {"title": "QA负责人/QA Owner", "type": "TEXT"},
+            {"title": "验样报告/Inspection Report", "type": "ATTACHMENT"},
+            {"title": "寄样通知/Sample Shipment Notice", "type": "SINGLE_SELECT", "options": ["可寄样/Sample Ready for Shipment", "不可寄样/Sample Not Ready for Shipment"]},
+            {"title": "快递单号/Tracking Number", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "产品基础信息/Product Basic Information",
+          "fields": [
+            {"title": "工厂PO编号/FTY PO Number", "type": "TEXT"},
+            {"title": "HM物料编码/HM ITEM Code", "type": "TEXT"},
+            {"title": "客户PO编号/Customer PO Number", "type": "TEXT"},
+            {"title": "客户物料编码/Customer Item Code", "type": "TEXT"},
+            {"title": "产品描述/Description", "type": "TEXT"},
+            {"title": "关联订单", "type": "TEXT", "logic": "关联到订单管理表"}
+          ]
+        },
+        {
+          "group_name": "辅助",
+          "fields": [
+            {"title": "创建时间", "type": "DATE_TIME", "logic": "自动记录"},
+            {"title": "自动编号", "type": "TEXT", "logic": "自动"},
+            {"title": "成交数", "type": "NUMBER", "logic": "公式统计"},
+            {"title": "打样数", "type": "NUMBER", "logic": "公式统计"},
+            {"title": "成交率", "type": "PERCENTAGE", "logic": "成交数/打样数"}
+          ]
+        }
+      ]
+    },
+    {
+      "table_name": "订单管理-Order Management",
+      "description": "记录订单基础资料、生产进度、PP会议、各环节质检、船务出运及订单完成率管控；通过打样编号关联打样表",
+      "users": "业务、跟单、QA、船务",
+      "field_groups": [
+        {
+          "group_name": "订单基础信息/Basic Order Information",
+          "fields": [
+            {"title": "打样编号/Sample No.", "type": "TEXT", "logic": "关联打样管理表，可反查打样图片、客户要求、验样报告"},
+            {"title": "客户名称/Customer", "type": "TEXT"},
+            {"title": "订单进度/Order Progress", "type": "SINGLE_SELECT", "options": ["生产中/in production", "已完成/Finished"]},
+            {"title": "预计完成日期/Planned Completion Date", "type": "DATE_TIME"},
+            {"title": "实际完成日期/Actual Completion Date", "type": "DATE_TIME"},
+            {"title": "订单类型/Order TYPE", "type": "SINGLE_SELECT"},
+            {"title": "客户采购日期/Client PO Date", "type": "DATE_TIME"},
+            {"title": "工厂PO编号/FTY PO Number", "type": "TEXT"},
+            {"title": "客户PO编号/Customer PO Number", "type": "TEXT"},
+            {"title": "客户物料编码/Customer Item Code", "type": "TEXT"},
+            {"title": "HM物料编码/HM ITEM Code", "type": "TEXT"},
+            {"title": "产品图片/Photo", "type": "IMAGE"},
+            {"title": "产品描述/Description", "type": "TEXT"},
+            {"title": "PO数量/PO QTY", "type": "NUMBER"},
+            {"title": "PO单价/PO Unit Price", "type": "CURRENCY"},
+            {"title": "订单金额", "type": "CURRENCY", "logic": "PO数量×PO单价"},
+            {"title": "已发货数量", "type": "NUMBER"},
+            {"title": "发货港口", "type": "SINGLE_SELECT", "options": ["盐田/Yantian", "上海", "宁波"]}
+          ]
+        },
+        {
+          "group_name": "业务部/Business Department",
+          "fields": [
+            {"title": "业务负责人/Business Owner", "type": "TEXT"},
+            {"title": "工厂预计发货日期/FTY ETD", "type": "DATE_TIME"},
+            {"title": "QA样品截止日期", "type": "DATE_TIME"},
+            {"title": "业务备注", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "船务部/Shipping Department",
+          "fields": [
+            {"title": "船务负责人", "type": "TEXT"},
+            {"title": "最晚订仓日", "type": "DATE_TIME"},
+            {"title": "实际发货日期/Actual Shipping ETD", "type": "DATE_TIME"},
+            {"title": "实际到港日期/Actual Shipping ETA", "type": "DATE_TIME"},
+            {"title": "船务备注", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "跟单部/Merchandising Department",
+          "fields": [
+            {"title": "跟单负责人", "type": "TEXT"},
+            {"title": "工厂PO下达日期", "type": "DATE_TIME"},
+            {"title": "合同签回日期", "type": "DATE_TIME"},
+            {"title": "工厂名称", "type": "TEXT"},
+            {"title": "室内/外", "type": "SINGLE_SELECT"},
+            {"title": "电力部分", "type": "TEXT"},
+            {"title": "实际QA样品寄出日期", "type": "DATE_TIME"},
+            {"title": "实际QA样品审批日期", "type": "DATE_TIME"},
+            {"title": "实际QA样品签核日期", "type": "DATE_TIME"},
+            {"title": "QA样品备注", "type": "TEXT"},
+            {"title": "包装-IM评级标签/UPC状态", "type": "TEXT"},
+            {"title": "FPI截止日期", "type": "DATE_TIME"},
+            {"title": "PP会议预约", "type": "DATE_TIME"},
+            {"title": "验货预约", "type": "DATE_TIME"}
+          ]
+        },
+        {
+          "group_name": "QA组/QA Team",
+          "fields": [
+            {"title": "QA负责人", "type": "TEXT"},
+            {"title": "样品检验日期", "type": "DATE_TIME"},
+            {"title": "样品检验人", "type": "TEXT"},
+            {"title": "测试报告", "type": "ATTACHMENT"},
+            {"title": "跌落测试", "type": "SINGLE_SELECT", "options": ["Pass", "Failed"]},
+            {"title": "FPI报告", "type": "ATTACHMENT"},
+            {"title": "FPI放行日期", "type": "DATE_TIME"},
+            {"title": "FPI放行状态", "type": "SINGLE_SELECT", "options": ["Pass", "Failed"]},
+            {"title": "PP会议细节跟进", "type": "TEXT"}
+          ]
+        },
+        {
+          "group_name": "辅助",
+          "fields": [
+            {"title": "完成率", "type": "PERCENTAGE", "logic": "已发货/PO数量"},
+            {"title": "是否超期", "type": "SINGLE_SELECT", "options": ["是", "否"]},
+            {"title": "超期率", "type": "PERCENTAGE"}
+          ]
+        }
+      ]
+    }
+  ],
+  "dashboard_metrics": ["打样总数/成交数/成交率", "订单金额/客户排名", "生产中/已完成/占比", "完成率/超期率"]
+}

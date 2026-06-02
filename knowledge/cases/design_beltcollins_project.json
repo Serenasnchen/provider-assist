@@ -1,0 +1,85 @@
+{
+  "meta": {
+    "industry": "设计行业",
+    "sub_industry": "国际景观设计",
+    "customer": "BeltCollins贝尔高林",
+    "service_provider": "江苏微盛网络科技有限公司",
+    "consultant": "徐伦·微盛AI",
+    "scene": "项目管理+任务调度+人力投入+付款追踪",
+    "scale": "50人",
+    "date": "2026-05-14"
+  },
+  "demand_summary": "国际化设计公司，多地办公（中国大陆/香港/东南亚），需要项目全生命周期管理——从立项、任务分配、人力投入、进度跟踪到回款结算的全流程数字化。实现人力投入实时可视化，多项目并行时资源分配透明。",
+  "pain_points": [
+    "项目管理依赖本地Excel，效率低下且缺乏透明度",
+    "人力投入占比靠Team Leader手动统计，耗时且易出错",
+    "多项目并行时资源分配不透明，管理者难以了解人员工时分布",
+    "回款/开票跟踪与项目脱节，无法直观看到某项目收款情况",
+    "团队人员信息维护分散，更新不及时",
+    "缺少自动化提醒机制（里程碑到达、任务到期）",
+    "数据权限管控不足，各地办公室数据混在一起"
+  ],
+  "solution": {
+    "architecture": "7表联动的企微智能表格系统（项目管理+人力调度+财务追踪）",
+    "tables": [
+      {
+        "table_name": "Project Master（项目主表）",
+        "purpose": "项目全生命周期管理，记录核心数据",
+        "usage_role": "项目经理PM、项目总监、商务/销售",
+        "fields": ["Proposal ID", "Project Code", "Project Name CN", "Project Name EN", "Yearly", "Status", "Start Date", "Dead line", "Target Currency(29种)", "Next Payment Due", "City", "Province/省份(34省市)", "Area/Region(9区域)"],
+        "field_count": 17
+      },
+      {
+        "table_name": "Task Scheduling（任务调度表）",
+        "purpose": "项目拆解为具体任务，分配角色和负责人",
+        "usage_role": "PM、Team Leader、各专业线负责人",
+        "fields": ["Role(Designer/CAD/Graphics/Softscape/TL/HDD)", "Proposal ID", "Team Leader", "Task Description", "Duration(h)", "Start Date", "End Date", "Status", "Notes"],
+        "field_count": 9
+      },
+      {
+        "table_name": "Team Roster（团队名册）",
+        "purpose": "管理团队成员信息，支撑人员分配",
+        "usage_role": "HR、PM、Team Leader",
+        "fields": ["User Name", "Title/Role(16种职级)", "Is Team Leader", "Team(4团队)", "Area/Region(9区域)", "Email", "Manpower Source(8来源)", "Support From(8来源)"],
+        "field_count": 9
+      },
+      {
+        "table_name": "Project Status Definition（项目阶段定义）",
+        "purpose": "标准化定义项目各阶段名称，确保全公司理解一致",
+        "usage_role": "项目管理员、PM",
+        "fields": ["Stage", "Stage_describe", "type(5种阶段类型)"],
+        "field_count": 3
+      },
+      {
+        "table_name": "Payment Tracker（付款追踪表）",
+        "purpose": "跟踪发票开具、收款进度和逾期款项",
+        "usage_role": "PM、财务、商务/销售",
+        "fields": ["Project Manager", "Project Code", "Project Name", "Invoice Date", "Invoice #", "Inv Cur(6币种)", "Inv Amount(CNY)", "Partial Pay in Inv Cur(CNY)", "O/S Amt(CNY)", "Forecast Payment Month", "Follow up situation"],
+        "field_count": 11
+      },
+      {
+        "table_name": "Exchange Rate Reference（汇率参考表）",
+        "purpose": "维护各币种对人民币汇率，供付款模块换算",
+        "usage_role": "财务、项目管理员",
+        "fields": ["Code", "Chinese Name", "English Name", "Exchange Rate to CNY"],
+        "field_count": 4
+      },
+      {
+        "table_name": "China Provinces（中国省份辅助表）",
+        "purpose": "为项目主表省份字段提供下拉选项",
+        "usage_role": "系统自动引用（隐藏表）",
+        "fields": ["省份名称"],
+        "field_count": 1
+      }
+    ],
+    "key_features": [
+      "支持29种国际货币和汇率自动换算",
+      "人力工时按项目和任务维度自动计算投入占比",
+      "按地域/角色区分数据权限（大中华/东南亚/南亚等9区域）",
+      "16种职级头衔标准化管理",
+      "项目6种状态流转（Prospect/On Hold/Active/At Risk/Completed/Cancelled）",
+      "移动端友好，与企微打通消息通知"
+    ]
+  },
+  "delivery_description": "一、Project Master—项目主表（17字段），使用对象PM/总监/商务。二、Task Scheduling—任务调度表（9字段），使用对象PM/TL/专业线负责人。三、Team Roster—团队名册（9字段），使用对象HR/PM/TL。四、Project Status Definition—阶段定义（3字段），配置表。五、Payment Tracker—付款追踪表（11字段），使用对象PM/财务/商务。六、Exchange Rate Reference—汇率参考（4字段），配置表。七、China Provinces—省份辅助表（隐藏）。"
+}

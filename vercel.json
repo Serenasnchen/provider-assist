@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "git": {
-    "submodules": true
-  },
   "functions": {
     "api/chat.py": { "maxDuration": 60 },
     "api/question_list.py": { "maxDuration": 60 },
