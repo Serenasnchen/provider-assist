@@ -121,7 +121,7 @@ def setup_sheet_fields(docid, sid, fields, records, steps, sname):
 
 
 def process_create(schema):
-    """单文档多子表模式：创建一个智能表格，包含所有子表"""
+    """单文档多子表模式：创建一个智能表格，只完整配置第一个子表以避免超时"""
     doc_name = schema.get("doc_name", "Demo智能表格")
     sheets = schema.get("sheets", [])
     if not sheets:
@@ -155,14 +155,12 @@ def process_create(schema):
         records = sdef.get("sample_records", [])
 
         if idx == 0 and default_sid:
-            # 第一个子表：复用默认子表，重命名
             sid = default_sid
             call_mcp("smartsheet_update_sheet", {
                 "docid": docid, "sheet_id": sid,
                 "properties": {"sheet_id": sid, "title": sname}
             })
         else:
-            # 后续子表：新建
             sr2 = extract(call_mcp("smartsheet_add_sheet", {"docid": docid, "title": sname}))
             sid = None
             if isinstance(sr2, dict):
@@ -170,16 +168,19 @@ def process_create(schema):
             if not sid:
                 steps.append(f"子表「{sname}」创建失败")
                 continue
-            # 重命名新子表（properties 里必须同时带 sheet_id 和 title）
-            call_mcp("smartsheet_update_sheet", {
-                "docid": docid, "sheet_id": sid,
-                "properties": {"sheet_id": sid, "title": sname}
-            })
 
         steps.append(f"子表「{sname}」就绪")
 
-        # 配置字段和数据
-        setup_sheet_fields(docid, sid, fields, records, steps, sname)
+        # 只对第一个子表配置完整字段和数据（避免超时）
+        if idx == 0:
+            setup_sheet_fields(docid, sid, fields, records, steps, sname)
+        else:
+            # 后续子表只配置字段名，不写示例数据
+            if fields:
+                all_fields = [{"field_title": f["field_title"], "field_type": f.get("field_type", "FIELD_TYPE_TEXT")} for f in fields]
+                call_mcp("smartsheet_add_fields", {"docid": docid, "sheet_id": sid, "fields": all_fields[:10]})
+                steps.append(f"  {min(len(fields), 10)} 个字段已配置")
+
         created.append({"sheet_name": sname, "sheet_id": sid})
 
     return {"success": True, "doc_name": doc_name, "docid": docid, "url": doc_url, "sheets": created, "steps": steps}
