@@ -121,7 +121,7 @@ def setup_sheet_fields(docid, sid, fields, records, steps, sname):
 
 
 def process_create(schema):
-    """单文档多子表模式：创建一个智能表格，只完整配置第一个子表以避免超时"""
+    """创建文档+处理第一个子表"""
     doc_name = schema.get("doc_name", "Demo智能表格")
     sheets = schema.get("sheets", [])
     if not sheets:
@@ -129,7 +129,7 @@ def process_create(schema):
 
     steps = []
 
-    # 1. 创建文档
+    # 创建文档
     r = extract(call_mcp("create_doc", {"doc_type": 10, "doc_name": doc_name}))
     if not r or (isinstance(r, dict) and r.get("errcode", 0) != 0):
         return {"error": "创建文档失败", "detail": str(r), "success": False}
@@ -140,7 +140,7 @@ def process_create(schema):
         return {"error": "未获取 docid", "detail": str(r), "success": False}
     steps.append("文档已创建")
 
-    # 2. 获取默认子表
+    # 获取默认子表
     sr = extract(call_mcp("smartsheet_get_sheet", {"docid": docid}))
     default_sid = None
     if isinstance(sr, dict):
@@ -148,42 +148,46 @@ def process_create(schema):
         if isinstance(sl, list) and sl:
             default_sid = sl[0].get("sheet_id")
 
-    created = []
-    for idx, sdef in enumerate(sheets):
-        sname = sdef.get("sheet_name", f"子表{idx+1}")
-        fields = sdef.get("fields", [])
-        records = sdef.get("sample_records", [])
+    # 只处理第一个子表
+    sdef = sheets[0]
+    sname = sdef.get("sheet_name", "子表1")
+    fields = sdef.get("fields", [])
+    records = sdef.get("sample_records", [])
 
-        if idx == 0 and default_sid:
-            sid = default_sid
-            call_mcp("smartsheet_update_sheet", {
-                "docid": docid, "sheet_id": sid,
-                "properties": {"sheet_id": sid, "title": sname}
-            })
-        else:
-            sr2 = extract(call_mcp("smartsheet_add_sheet", {"docid": docid, "title": sname}))
-            sid = None
-            if isinstance(sr2, dict):
-                sid = sr2.get("sheet_id") or (sr2.get("properties", {}) or {}).get("sheet_id")
-            if not sid:
-                steps.append(f"子表「{sname}」创建失败")
-                continue
+    sid = default_sid
+    if sid:
+        call_mcp("smartsheet_update_sheet", {"docid": docid, "sheet_id": sid, "properties": {"sheet_id": sid, "title": sname}})
+    steps.append(f"子表「{sname}」就绪")
+    setup_sheet_fields(docid, sid, fields, records, steps, sname)
 
-        steps.append(f"子表「{sname}」就绪")
+    return {"success": True, "doc_name": doc_name, "docid": docid, "url": doc_url,
+            "sheets": [{"sheet_name": sname, "sheet_id": sid}],
+            "steps": steps, "remaining": len(sheets) - 1}
 
-        # 只对第一个子表配置完整字段和数据（避免超时）
-        if idx == 0:
-            setup_sheet_fields(docid, sid, fields, records, steps, sname)
-        else:
-            # 后续子表只配置字段名，不写示例数据
-            if fields:
-                all_fields = [{"field_title": f["field_title"], "field_type": f.get("field_type", "FIELD_TYPE_TEXT")} for f in fields]
-                call_mcp("smartsheet_add_fields", {"docid": docid, "sheet_id": sid, "fields": all_fields[:10]})
-                steps.append(f"  {min(len(fields), 10)} 个字段已配置")
 
-        created.append({"sheet_name": sname, "sheet_id": sid})
+def process_add_sheet(data):
+    """为已有文档添加一个子表（含字段+数据）"""
+    docid = data.get("docid")
+    sdef = data.get("sheet")
+    if not docid or not sdef:
+        return {"error": "缺少 docid 或 sheet", "success": False}
 
-    return {"success": True, "doc_name": doc_name, "docid": docid, "url": doc_url, "sheets": created, "steps": steps}
+    steps = []
+    sname = sdef.get("sheet_name", "子表")
+    fields = sdef.get("fields", [])
+    records = sdef.get("sample_records", [])
+
+    sr2 = extract(call_mcp("smartsheet_add_sheet", {"docid": docid, "title": sname}))
+    sid = None
+    if isinstance(sr2, dict):
+        sid = sr2.get("sheet_id") or (sr2.get("properties", {}) or {}).get("sheet_id")
+    if not sid:
+        return {"error": f"子表「{sname}」创建失败", "success": False}
+
+    steps.append(f"子表「{sname}」就绪")
+    setup_sheet_fields(docid, sid, fields, records, steps, sname)
+
+    return {"success": True, "sheet_name": sname, "sheet_id": sid, "steps": steps}
 
 
 class handler(BaseHTTPRequestHandler):
@@ -191,11 +195,16 @@ class handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length)
         try:
-            schema = json.loads(body)
+            data = json.loads(body)
         except:
             self._respond(400, {"error": "无效 JSON"})
             return
-        result = process_create(schema)
+
+        # 分流：如果有 docid + sheet，是追加子表；否则是创建新文档
+        if data.get("docid") and data.get("sheet"):
+            result = process_add_sheet(data)
+        else:
+            result = process_create(data)
         self._respond(200 if result.get("success") else 500, result)
 
     def do_OPTIONS(self):
