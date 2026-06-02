@@ -74,7 +74,7 @@ def match_cases(query, detailed_cases, top_k=2):
         if case_scene in query_lower:
             score += 3
         summary = case.get("demand_summary", "").lower()
-        for word in re.split(r'[，,、。\s]+', query_lower):
+        for word in re.split(r'[,,、。\s]+', query_lower):
             if len(word) >= 2 and word in summary:
                 score += 2
         if score > 0:
@@ -97,10 +97,10 @@ def match_field_template(query, templates):
         applicable = meta.get("applicable_when", "").lower()
         if industry in query_lower or query_lower in industry:
             score += 5
-        for word in re.split(r'[，,、。/\s+]+', scene):
+        for word in re.split(r'[,,、。/\s+]+', scene):
             if len(word) >= 2 and word in query_lower:
                 score += 3
-        for word in re.split(r'[，,、。/\s：:]+', applicable):
+        for word in re.split(r'[,,、。/\s::]+', applicable):
             if len(word) >= 2 and word in query_lower:
                 score += 2
         if score > best_score:
@@ -117,7 +117,7 @@ def build_context(industry, pain_points, direction):
     detailed_cases = load_detailed_cases()
     field_templates = load_field_templates()
 
-    # 1. 行业知识（完整传入）
+    # 1. 行业知识(完整传入)
     industry_data = match_industry(industry, industry_knowledge)
     industry_text = ""
     if industry_data:
@@ -136,22 +136,22 @@ def build_context(industry, pain_points, direction):
         comm_highlights = case.get("communication_highlights", [])
         delivery_desc = case.get("delivery_description", "")
 
-        case_context += f"### 真实交付案例：{meta.get('industry', '')} - {meta.get('scene', '')}\n"
-        case_context += f"客户规模：{meta.get('scale', '未知')}\n"
+        case_context += f"### 真实交付案例:{meta.get('industry', '')} - {meta.get('scene', '')}\n"
+        case_context += f"客户规模:{meta.get('scale', '未知')}\n"
 
-        # 客户痛点（学习客户会有什么疑问和需求）
+        # 客户痛点(学习客户会有什么疑问和需求)
         if pain:
-            case_context += f"客户原始痛点：\n"
+            case_context += f"客户原始痛点:\n"
             for p in pain:
                 case_context += f"  - {p}\n"
 
         # 方案架构
         if solution.get("architecture"):
-            case_context += f"最终方案：{solution['architecture']}\n"
+            case_context += f"最终方案:{solution['architecture']}\n"
 
         # 完整的表结构和字段
         if tables:
-            case_context += f"方案包含的子表和字段：\n"
+            case_context += f"方案包含的子表和字段:\n"
             for t in tables[:6]:
                 tname = t.get("table_name", "")
                 purpose = t.get("purpose", "")
@@ -159,7 +159,7 @@ def build_context(industry, pain_points, direction):
                 fields = t.get("fields", [])
                 case_context += f"  表「{tname}」({purpose})"
                 if usage_role:
-                    case_context += f" 使用者：{usage_role}"
+                    case_context += f" 使用者:{usage_role}"
                 case_context += "\n"
                 if fields:
                     # fields可能是字符串列表或dict列表
@@ -169,35 +169,35 @@ def build_context(industry, pain_points, direction):
                             field_names.append(f)
                         elif isinstance(f, dict):
                             field_names.append(f.get("field_title", f.get("title", "")))
-                    case_context += f"    字段：{', '.join(field_names)}\n"
+                    case_context += f"    字段:{', '.join(field_names)}\n"
 
-        # 自动化规则（帮助AI知道该问什么自动化需求）
+        # 自动化规则(帮助AI知道该问什么自动化需求)
         auto_rules = solution.get("automation_rules", [])
         if not auto_rules:
             auto_rules = case.get("automation_rules", [])
         if auto_rules:
-            case_context += f"配置的自动化规则：\n"
+            case_context += f"配置的自动化规则:\n"
             for r in auto_rules[:5]:
                 case_context += f"  - {r}\n"
 
-        # 服务商沟通记录（学习如何提问）
+        # 服务商沟通记录(学习如何提问)
         if comm_record:
-            case_context += f"服务商与客户沟通记录：\n  {comm_record}\n"
+            case_context += f"服务商与客户沟通记录:\n  {comm_record}\n"
 
-        # 沟通亮点（学习服务商确认了哪些关键信息）
+        # 沟通亮点(学习服务商确认了哪些关键信息)
         if comm_highlights:
-            case_context += f"沟通中确认的关键信息点（服务商在实际调研中需要弄清楚的）：\n"
+            case_context += f"沟通中确认的关键信息点(服务商在实际调研中需要弄清楚的):\n"
             for h in comm_highlights:
                 case_context += f"  - {h}\n"
 
         # 交付描述
         if delivery_desc:
             desc = delivery_desc[:300] if len(delivery_desc) > 300 else delivery_desc
-            case_context += f"交付说明：{desc}\n"
+            case_context += f"交付说明:{desc}\n"
 
         case_context += "\n"
 
-    # 如果精确匹配的案例没有沟通记录，补充一些有沟通记录的案例作为提问方式参考
+    # 如果精确匹配的案例没有沟通记录,补充一些有沟通记录的案例作为提问方式参考
     has_comm = any(
         c.get("communication_record") or c.get("communication_highlights")
         for c in matched_cases
@@ -209,31 +209,31 @@ def build_context(industry, pain_points, direction):
             cr = case.get("communication_record", "")
             if ch or cr:
                 meta = case.get("meta", {})
-                comm_examples += f"参考案例（{meta.get('industry','')}-{meta.get('scene','')[:20]}）中服务商确认的信息点：\n"
+                comm_examples += f"参考案例({meta.get('industry','')}-{meta.get('scene','')[:20]})中服务商确认的信息点:\n"
                 if cr:
-                    comm_examples += f"  沟通记录：{cr[:200]}\n"
+                    comm_examples += f"  沟通记录:{cr[:200]}\n"
                 for h in ch[:6]:
                     comm_examples += f"  - {h}\n"
                 comm_examples += "\n"
                 if len(comm_examples) > 1500:
                     break
         if comm_examples:
-            case_context += "\n### 其他行业的服务商提问参考（学习提问深度和方式）\n" + comm_examples
+            case_context += "\n### 其他行业的服务商提问参考(学习提问深度和方式)\n" + comm_examples
 
-    # 3. 字段模板（完整传入字段细节）
+    # 3. 字段模板(完整传入字段细节)
     matched_tpl = match_field_template(query, field_templates)
     tpl_context = ""
     if matched_tpl:
         meta = matched_tpl.get("meta", {})
-        tpl_context = f"### 字段经验池：{meta.get('industry', '')} - {meta.get('scene', '')}\n"
-        tpl_context += f"该行业真实交付过{meta.get('total_tables', '?')}张表，{meta.get('total_fields', '?')}个字段\n"
+        tpl_context = f"### 字段经验池:{meta.get('industry', '')} - {meta.get('scene', '')}\n"
+        tpl_context += f"该行业真实交付过{meta.get('total_tables', '?')}张表,{meta.get('total_fields', '?')}个字段\n"
         if meta.get("design_principle"):
-            tpl_context += f"设计原则：{meta['design_principle']}\n"
-        tpl_context += f"你需要据此判断该行业需要调研的方面：\n"
+            tpl_context += f"设计原则:{meta['design_principle']}\n"
+        tpl_context += f"你需要据此判断该行业需要调研的方面:\n"
         for table in matched_tpl.get("tables", [])[:8]:
             tpl_context += f"  表「{table.get('table_name', '')}」"
             if table.get("description"):
-                tpl_context += f"（{table['description']}）"
+                tpl_context += f"({table['description']})"
             tpl_context += ":\n"
             for g in table.get("field_groups", [])[:5]:
                 gname = g.get("group_name", "")
@@ -284,26 +284,26 @@ def call_deepseek(system_prompt, user_prompt):
 
 SYSTEM_PROMPT = """你是一个资深的企业微信智能表格定制开发售前顾问。
 
-你的任务：根据客户行业和初始需求，为服务商输出一份**简洁清晰**的调研准备材料。
+你的任务:根据客户行业和初始需求,为服务商输出一份**简洁清晰**的调研准备材料。
 
 ## ⚠️ 核心原则
-- 问题要短，一句话能说清就不写两句
-- 像面对面聊天，不要书面语
-- 整体排版清爽，服务商一眼看清该问什么
-- 不要在各部分之间加横线（---）
+- 问题要短,一句话能说清就不写两句
+- 像面对面聊天,不要书面语
+- 整体排版清爽,服务商一眼看清该问什么
+- 不要在各部分之间加横线(---)
 
-## 输出结构（严格3个部分，不要开场白/结尾总结，不要加横线分隔）
+## 输出结构(严格3个部分,不要开场白/结尾总结,不要加横线分隔)
 
 ### PART1: 客户画像
 
 **公司与需求背景**
 
-结合客户提供的公司信息和初始需求，分点写清楚：
-- **公司情况**：行业、规模、主营业务
-- **需求板块**：这次需求属于公司的哪个业务板块
-- **涉及环节**：这个板块通常有哪些环节
-- **涉及角色**：哪些人会参与
-- **需要考虑**：基于行业经验推断需要注意什么
+结合客户提供的公司信息和初始需求,分点写清楚:
+- **公司情况**:行业、规模、主营业务
+- **需求板块**:这次需求属于公司的哪个业务板块
+- **涉及环节**:这个板块通常有哪些环节
+- **涉及角色**:哪些人会参与
+- **需要考虑**:基于行业经验推断需要注意什么
 
 **行业常见痛点**
 - 🔥 痛点1
@@ -312,64 +312,64 @@ SYSTEM_PROMPT = """你是一个资深的企业微信智能表格定制开发售�
 
 ### PART2: 信息缺口
 
-客户描述中明显缺失的关键信息，列3-5条，每条一句话：
+客户描述中明显缺失的关键信息,列3-5条,每条一句话:
 - ❓ 缺失点
 
 ### PART3: 提问清单
 
-❗❗❗ 这部分必须用Markdown表格格式输出，严格按以下格式：
+❗❗❗ 这部分必须用Markdown表格格式输出,严格按以下格式:
 
 | 序号 | 维度 | 提问 |
 |------|------|------|
-| 1 | 痛点收敛 | 问题正文（一句话）<br>*行业常见情况描述。可以进一步问客户：“XXX？”“YYY？”* |
-| 2 | 业务流程 | 问题正文（一句话）<br>*行业常见情况描述。可以进一步问客户：“XXX？”“YYY？”* |
+| 1 | 痛点收敛 | 问题正文(一句话)<br>*行业常见情况描述。可以进一步问客户:"XXX?""YYY?"* |
+| 2 | 业务流程 | 问题正文(一句话)<br>*行业常见情况描述。可以进一步问客户:"XXX?""YYY?"* |
 | ... | ... | ... |
 
-注意：每行的“提问”列内容分两部分：
-- 第一行：问题正文（简短定性，一句话）
-- 第二行（用 <br> 换行）：*斜体小字*，先说行业常见情况，再说可以进一步问客户什么
-- ❗不要出现“话术参考：”“可追问：”这种前缀标签，直接写内容
+注意:每行的"提问"列内容分两部分:
+- 第一行:问题正文(简短定性,一句话)
+- 第二行(用 <br> 换行):*斜体小字*,先说行业常见情况,再说可以进一步问客户什么
+- ❗不要出现"话术参考:""可追问:"这种前缀标签,直接写内容
 
-## 提问维度（共8个，每个维度1个问题）
+## 提问维度(共8个,每个维度1个问题)
 
 | # | 维度 | 核心意图 |
 |---|------|----------|
-| 1 | 痛点收敛 | 目前哪个环节最让你头疼、最常出错或最花时间？ |
-| 2 | 业务流程 | 围绕这个痛点，业务是怎么流转的？经过哪些人？ |
-| 3 | 现状工具 | 现在用什么工具/方式在管？ |
-| 4 | 数据现状 | 数据现在存在哪里？量级多大？ |
-| 5 | 自动化 | 有没有希望系统自动帮你做的事？ |
-| 6 | 使用者与权限 | 谁来用？数据需要隔离吗？ |
-| 7 | 看板指标 | 最想看到什么数据指标？ |
-| 8 | 交付预期 | 希望多久上线？预算范围？ |
+| 1 | 痛点收敛 | 目前哪个环节最让你头疼、最常出错或最花时间? |
+| 2 | 业务流程 | 围绕这个痛点,业务是怎么流转的?经过哪些人? |
+| 3 | 现状工具 | 现在用什么工具/方式在管? |
+| 4 | 数据现状 | 数据现在存在哪里?量级多大? |
+| 5 | 自动化 | 有没有希望系统自动帮你做的事? |
+| 6 | 使用者与权限 | 谁来用?数据需要隔离吗? |
+| 7 | 看板指标 | 最想看到什么数据指标? |
+| 8 | 交付预期 | 希望多久上线?预算范围? |
 
 ## 提问规则
 
-1. 总共8个问题，不多不少
-2. 问题正文必须**简短定性**（一句话），用大白话，像聊天一样
-3. 问题必须结合客户的行业特点来设计，不能泛泛地问
-4. 每个问题后用 <br> 换行，紧跟 *斜体小字*，内容结构：
-   - 先说行业常见情况（如“该行业常见痛点是XXX”“典型流程是XXX”）
-   - 再说可以进一步问客户什么（直接写问句，不要加“话术参考：”“可追问：”等前缀）
-   - 如有常见选项，直接列举
+1. 总共8个问题,不多不少
+2. 问题正文必须**简短定性**(一句话),用大白话,像聊天一样
+3. 问题必须结合客户的行业特点来设计,不能泛泛地问
+4. 每个问题后用 <br> 换行,紧跟 *斜体小字*,内容结构:
+   - 先说行业常见情况(如"该行业常见痛点是XXX""典型流程是XXX")
+   - 再说可以进一步问客户什么(直接写问句,不要加"话术参考:""可追问:"等前缀)
+   - 如有常见选项,直接列举
 5. 参考知识库中的案例和字段经验池
 
-## 输出格式示例（仅示意，实际内容需结合客户行业）
+## 输出格式示例(仅示意,实际内容需结合客户行业)
 
 ### PART1: 客户画像
 
 **公司与需求背景**
 
-- **公司情况**：XX公司是一家从事服装外贸的企业，主营欧美市场女装出口
-- **需求板块**：属于订单管理板块，核心是解决从接单到交货的全流程跟踪问题
-- **涉及环节**：业务接单、打样确认、工厂排单、生产跟踪、质检、报关发货
-- **涉及角色**：业务员、设计师、工厂联系人、货代
-- **需要考虑**：多工厂分单的协同、交货期管控、客户确认环节的响应速度
+- **公司情况**:XX公司是一家从事服装外贸的企业,主营欧美市场女装出口
+- **需求板块**:属于订单管理板块,核心是解决从接单到交货的全流程跟踪问题
+- **涉及环节**:业务接单、打样确认、工厂排单、生产跟踪、质检、报关发货
+- **涉及角色**:业务员、设计师、工厂联系人、货代
+- **需要考虑**:多工厂分单的协同、交货期管控、客户确认环节的响应速度
 
 **行业常见痛点**
-- 🔥 订单状态分散在微信群和Excel，无法实时查看进度
-- 🔥 多工厂分单后信息同步滞后，导致交期延误
-- 🔥 样品确认流程繁琐，客户反复修改无记录
+- 🔥 订单状态分散在微信群和Excel,无法实时查看进度
+- 🔥 多工厂分单后信息同步滞后,导致交期延误
+- 🔥 样品确认流程繁琐,客户反复修改无记录
 
 ### PART2: 信息缺口
 
@@ -381,30 +381,30 @@ SYSTEM_PROMPT = """你是一个资深的企业微信智能表格定制开发售�
 
 | 序号 | 维度 | 提问 |
 |------|------|------|
-| 1 | 痛点收敛 | 目前哪个环节最让你头疼、最常出错或最花时间？<br>*可追问：“订单从接单到交货，哪个步骤经常卡住？”“有没有因信息没同步导致返工或客诉？”该行业常见痛点：订单跟进、多方协同、进度汇报。* |
-| 2 | 业务流程 | 一个订单从接单到交货，中间经过哪些环节和人？<br>*典型流程：接单→打样→确认→生产→质检→发货。可追问：“每个环节谁推进？信息怎么传？哪里容易断？”* |
-| 3 | 现状工具 | 现在用什么工具管这些事？<br>*常见选项：Excel、微信群、ERP（用友/金蝶）、纸质单、丝路通。追问：“哪里不够用？是功能缺还是没人用？”* |
-| 4 | 数据现状 | 订单数据现在存在哪里？大概多少条？<br>*追问：“数据是分散在各人电脑还是有统一的地方？更新频率多久？”* |
-| 5 | 自动化 | 有没有希望系统自动帮你做的事？<br>*服装外贸常见自动化场景：订单状态变更自动通知、交货期临近提醒、生产进度自动汇总。"哪些事情现在是手动做但觉得应该自动化的？"* |
-| 6 | 使用者与权限 | 谁来用这个表格？需要隔离数据吗？<br>*追问：“除了内部同事，工厂/客户/货代需要看或填数据吗？”* |
-| 7 | 看板指标 | 最想在看板上看到什么数据？<br>*服装外贸常见指标：订单完成率、交货准时率、各工厂在制量、客户返单率。"老板最关心哪个数字？"* |
-| 8 | 交付预期 | 希望多久能用上？预算大概多少？<br>*追问：“是希望一次性全部上线还是分阶段？有没有硬性时间节点？”* |
+| 1 | 痛点收敛 | 目前哪个环节最让你头疼、最常出错或最花时间?<br>*服装外贸常见痛点:订单变更后生产计划调整不及时、多工厂分单信息同步滞后、样品确认反复无记录。"订单从接单到交货,哪个步骤经常卡住?""有没有因信息没同步导致返工或客诉?"* |
+| 2 | 业务流程 | 一个订单从接单到交货,中间经过哪些环节和人?<br>*服装外贸典型流程:接单→打样→确认→生产→质检→发货,涉及业务员、设计、工厂、货代。"每个环节谁推进?信息怎么传?哪里容易断?"* |
+| 3 | 现状工具 | 现在用什么工具管这些事?<br>*服装外贸常见工具:Excel、微信群、ERP(用友/金蝶)、纸质单、丝路通。"哪里不够用?是功能缺还是太复杂没人用?"* |
+| 4 | 数据现状 | 订单数据现在存在哪里?大概多少条?<br>*服装外贸企业数据通常分散在各业务员电脑和微信聊天记录中。"是每个人各管各的还是有统一的地方?更新频率多久?"* |
+| 5 | 自动化 | 有没有希望系统自动帮你做的事?<br>*服装外贸常见自动化场景:订单状态变更自动通知、交货期临近提醒、生产进度自动汇总。"哪些事现在是手动做但觉得应该自动化?"* |
+| 6 | 使用者与权限 | 谁来用这个表格?需要隔离数据吗?<br>*服装外贸常有外部协作方(工厂、货代、客户)需要查看或填写数据。"除了内部同事,还有谁需要看或填?"* |
+| 7 | 看板指标 | 最想在看板上看到什么数据?<br>*服装外贸常见指标:订单完成率、交货准时率、各工厂在制量、客户返单率。"老板最关心哪个数字?"* |
+| 8 | 交付预期 | 希望多久能用上?预算大概多少?<br>*服装外贸客户通常希望1-2周内看到初版。"是希望一次性全部上线还是分阶段?有没有硬性时间节点?"* |
 
-❗❗❗ 重要：以上是示例，实际输出必须根据客户的具体行业和需求来写，不要照抄示例。
+❗❗❗ 重要:以上是示例,实际输出必须根据客户的具体行业和需求来写,不要照抄示例。
 """
 
 
 def generate_question_list(body):
-    """返回知识库上下文和prompt，前端直接调DeepSeek"""
+    """返回知识库上下文和prompt,前端直接调DeepSeek"""
     industry = body.get("industry", "")
-    # 支持新旧字段：优先使用 initial_demand，兼容旧的 pain_points/business_desc
+    # 支持新旧字段:优先使用 initial_demand,兼容旧的 pain_points/business_desc
     initial_demand = body.get("initial_demand", "")
     pain_points = body.get("pain_points", "")
     direction = body.get("direction", "")
     business_desc = body.get("business_desc", "")
     company_intro = body.get("company_intro", "")
-    
-    # 如果有 initial_demand，优先使用；否则合并旧字段
+
+    # 如果有 initial_demand,优先使用;否则合并旧字段
     if not initial_demand:
         initial_demand = f"{business_desc} {pain_points}".strip()
 
@@ -413,18 +413,18 @@ def generate_question_list(body):
 
     # 组装用户prompt
     user_prompt = "## 客户信息\n"
-    user_prompt += f"- 行业：{industry}\n"
+    user_prompt += f"- 行业:{industry}\n"
     if company_intro:
-        user_prompt += f"- 公司简介：{company_intro}\n"
+        user_prompt += f"- 公司简介:{company_intro}\n"
     if initial_demand:
-        user_prompt += f"- 客户初始需求表达：{initial_demand}\n"
+        user_prompt += f"- 客户初始需求表达:{initial_demand}\n"
     elif business_desc or pain_points:
         if business_desc:
-            user_prompt += f"- 业务描述：{business_desc}\n"
+            user_prompt += f"- 业务描述:{business_desc}\n"
         if pain_points:
-            user_prompt += f"- 痛点/希望解决的问题：{pain_points}\n"
+            user_prompt += f"- 痛点/希望解决的问题:{pain_points}\n"
     if direction and direction != business_desc:
-        user_prompt += f"- 需求方向：{direction}\n"
+        user_prompt += f"- 需求方向:{direction}\n"
 
     if context["industry_knowledge"]:
         user_prompt += f"\n## 行业背景知识\n{context['industry_knowledge']}\n"
@@ -433,9 +433,9 @@ def generate_question_list(body):
     if context["template_context"]:
         user_prompt += f"\n## 字段经验池参考\n{context['template_context']}\n"
 
-    user_prompt += "\n请严格按PART1-PART3的结构输出调研准备材料。PART1和PART2要精简，PART3提问清单严格8个问题，每个问题用“[维度]”+ 一句话问题 + 小字备注格式。问题要短，备注给服务商提示行业参考、引导方向、常见工具选项。"
+    user_prompt += "\n请严格按PART1-PART3的结构输出调研准备材料。PART1公司背景分点写，PART2简洁，PART3提问清单严格8个问题，用Markdown表格格式（序号|维度|提问），每个问题后用<br>换行加斜体小字（先说行业常见情况，再给追问句子，不要加任何前缀标签）。"
 
-    # 返回prompt供前端直接调DeepSeek（无超时限制）
+    # 返回prompt供前端直接调DeepSeek(无超时限制)
     return {
         "system_prompt": SYSTEM_PROMPT,
         "user_prompt": user_prompt,
