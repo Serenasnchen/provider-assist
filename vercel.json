@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "functions": {
+    "api/*.py": { "maxDuration": 60 }
+  },
   "rewrites": [
     { "source": "/style.css", "destination": "/style.css" },
     { "source": "/app.js", "destination": "/app.js" },
