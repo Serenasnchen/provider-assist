@@ -1473,25 +1473,37 @@ async function createSmartsheet() {
     if (!demoSchema) return;
     const schemaObj = typeof demoSchema === 'string' ? JSON.parse(demoSchema) : demoSchema;
     const btn = document.getElementById('btn-create');
-    btn.disabled = true; btn.textContent = '创建中...';
+    const div = document.getElementById('s2-create-result');
+    const total = schemaObj.sheets ? schemaObj.sheets.length : 0;
+    btn.disabled = true; btn.textContent = '创建中(1/' + total + ')...';
     try {
+        // 第一步：创建文档+第一个子表
         const resp = await fetch('/api/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(schemaObj) });
         const respText = await resp.text();
         let data;
-        try { data = JSON.parse(respText); } catch(pe) { throw new Error('创建失败(服务器返回非JSON): ' + respText.substring(0, 100)); }
-        const div = document.getElementById('s2-create-result');
-        if (data.success && data.url) {
-            let stepsHtml = '';
-            if (data.steps && data.steps.length) { stepsHtml = '<div style="font-size:11px;color:#666;margin-top:6px">' + data.steps.join('<br>') + '</div>'; }
-            div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;font-size:14px"><strong>智能表格创建成功</strong><br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;margin-top:4px;display:inline-block">打开企微智能表格 →</a>'+stepsHtml+'</div>';
-            // 保存Demo链接到客户数据
-            updateClient(currentClientId, { demo_url: data.url });
-            // 更新后台
-            const cc = getClient(currentClientId);
-            if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成表格Demo', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
-        } else { div.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:12px;font-size:13px;color:#c62828">失败:'+(data.error||'')+'</div>'; }
+        try { data = JSON.parse(respText); } catch(pe) { throw new Error('服务器返回异常: ' + respText.substring(0, 100)); }
+        if (!data.success) throw new Error(data.error || '创建文档失败');
+        const docid = data.docid;
+        const allSteps = data.steps || [];
+        // 后续子表逐个追加
+        for (let i = 1; i < total; i++) {
+            btn.textContent = '创建中(' + (i+1) + '/' + total + ')...';
+            try {
+                const addResp = await fetch('/api/create', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ docid: docid, sheet: schemaObj.sheets[i] }) });
+                const addText = await addResp.text();
+                const addData = JSON.parse(addText);
+                if (addData.steps) allSteps.push(...addData.steps);
+            } catch(ex) { allSteps.push('子表' + (i+1) + '创建异常: ' + ex.message); }
+        }
+        // 显示结果
+        let stepsHtml = '<div style="font-size:11px;color:#666;margin-top:6px">' + allSteps.join('<br>') + '</div>';
+        div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;font-size:14px"><strong>智能表格创建成功(' + total + '个子表)</strong><br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;margin-top:4px;display:inline-block">打开企微智能表格 →</a>'+stepsHtml+'</div>';
         div.style.display = 'block';
-    } catch (e) { alert(e.message); }
+        updateClient(currentClientId, { demo_url: data.url });
+        const cc = getClient(currentClientId);
+        if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成表格Demo', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
+    } catch (e) { alert('创建失败: ' + e.message); }
     finally { btn.disabled = false; btn.textContent = '创建企微智能表格'; }
 }
 
