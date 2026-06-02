@@ -117,18 +117,23 @@
         .output-item-link { font-size: 12px; color: var(--brand); text-decoration: none; font-weight: 500; }
         .output-item-link:hover { color: var(--brand-dark); }
 
-        .rendered-content { background: var(--bg-subtle); border: 1px solid #e5e7eb; border-radius: var(--radius); padding: 24px; font-size: 13.5px; line-height: 1.85; max-height: 70vh; overflow-y: auto; }
+        .rendered-content { background: var(--bg-subtle); border: 1px solid #e5e7eb; border-radius: var(--radius); padding: 24px; font-size: 13.5px; line-height: 1.85; max-height: 70vh; overflow-y: auto; overflow-x: hidden; }
         @media (min-width: 1024px) { .rendered-content { padding: 32px 36px; font-size: 14px; } }
-        .rendered-content h1,.rendered-content h2,.rendered-content h3 { color: var(--brand-dark); margin-top: 20px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; letter-spacing: -0.01em; }
+        .rendered-content h1,.rendered-content h2,.rendered-content h3 { color: var(--brand-dark); margin-top: 20px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: none; letter-spacing: -0.01em; }
         .rendered-content h1 { font-size: 18px; font-weight: 700; } .rendered-content h2 { font-size: 15px; font-weight: 600; } .rendered-content h3 { font-size: 14px; border-bottom: none; color: var(--text-primary); font-weight: 600; }
         .rendered-content p { margin-bottom: 8px; } .rendered-content ul,.rendered-content ol { padding-left: 20px; margin-bottom: 10px; }
         .rendered-content li { margin-bottom: 6px; } .rendered-content strong { color: var(--brand-dark); }
-        .rendered-content em { color: var(--text-secondary); font-style: normal; font-size: 12px; }
+        .rendered-content em { color: #888; font-style: italic; font-size: 12px; }
+        .rendered-content hr { display: none; }
         .rendered-content blockquote { border-left: 3px solid var(--brand); padding: 8px 16px; margin: 10px 0; background: var(--brand-light); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--text-secondary); font-size: 13px; }
-        .rendered-content table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12.5px; display: block; overflow-x: auto; }
-        @media (min-width: 1024px) { .rendered-content table { display: table; font-size: 13px; } }
+        .rendered-content table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12.5px; table-layout: fixed; }
+        @media (max-width: 768px) { .rendered-content table { font-size: 12px; } .rendered-content th,.rendered-content td { padding: 6px 8px; word-break: break-word; } }
+        @media (min-width: 1024px) { .rendered-content table { font-size: 13px; } }
         .rendered-content th,.rendered-content td { border: 1px solid #e5e7eb; padding: 8px 12px; text-align: left; }
         .rendered-content th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); }
+        .rendered-content table col:nth-child(1) { width: 50px; }
+        .rendered-content table col:nth-child(2) { width: 80px; }
+        .rendered-content table col:nth-child(3) { width: auto; }
 
         .loading { display: none; text-align: center; padding: 40px; }
         .loading.visible { display: block; }
