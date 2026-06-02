@@ -1501,8 +1501,9 @@ async function createSmartsheet() {
         }
         // 显示结果
         let stepsHtml = '<div style="font-size:11px;color:#666;margin-top:6px">' + allSteps.join('<br>') + '</div>';
-        div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;font-size:14px"><strong>智能表格创建成功(' + total + '个子表)</strong><br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;margin-top:4px;display:inline-block">打开企微智能表格 →</a>'+stepsHtml+'</div>';
+        div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;font-size:14px"><strong>✅ 智能表格创建成功(' + total + '个子表)</strong><br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;margin-top:8px;display:inline-block;font-size:15px;">打开企微智能表格 →</a>'+stepsHtml+'</div>';
         div.style.display = 'block';
+        window.open(data.url, '_blank');
         updateClient(currentClientId, { demo_url: data.url });
         const cc = getClient(currentClientId);
         if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成表格Demo', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
