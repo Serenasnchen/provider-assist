@@ -126,14 +126,14 @@
         .rendered-content em { color: #888; font-style: italic; font-size: 12px; }
         .rendered-content hr { display: none; }
         .rendered-content blockquote { border-left: 3px solid var(--brand); padding: 8px 16px; margin: 10px 0; background: var(--brand-light); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--text-secondary); font-size: 13px; }
-        .rendered-content table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12.5px; table-layout: fixed; }
+        .rendered-content table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12.5px; table-layout: auto; }
+        @media (max-width: 768px) { .rendered-content table { display: block; overflow-x: auto; } }
         @media (max-width: 768px) { .rendered-content table { font-size: 12px; } .rendered-content th,.rendered-content td { padding: 6px 8px; word-break: break-word; } }
         @media (min-width: 1024px) { .rendered-content table { font-size: 13px; } }
         .rendered-content th,.rendered-content td { border: 1px solid #e5e7eb; padding: 8px 12px; text-align: left; vertical-align: top; }
         .rendered-content th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); }
-        .rendered-content th:nth-child(1),.rendered-content td:nth-child(1) { width: 36px; text-align: center; }
-        .rendered-content th:nth-child(2),.rendered-content td:nth-child(2) { width: 64px; white-space: nowrap; }
-        .rendered-content th:nth-child(3),.rendered-content td:nth-child(3) { width: auto; }
+        .rendered-content th:nth-child(1),.rendered-content td:nth-child(1) { min-width: 36px; text-align: center; }
+        .rendered-content th:nth-child(2),.rendered-content td:nth-child(2) { min-width: 60px; white-space: nowrap; }
         .rendered-content td em { display: block; margin-top: 4px; color: #999; font-style: italic; font-size: 11.5px; line-height: 1.6; }
 
         .loading { display: none; text-align: center; padding: 40px; }
@@ -1307,7 +1307,7 @@ async function generateReport() {
         }
 
         // 2. 客户一致性检测上下文
-        const step1Info = c ? `\n## Step1录入的客户信息(用于一致性检查)\n行业:${c.industry||'未填'}\n初始需求表达:${c.initial_demand || c.business_desc || '未填'}\n如果沟通记录中的客户行业/业务与上述信息明显不一致,请在报告开头用⚠️提醒。\n` : '';
+        const step1Info = c ? `\n## Step1录入的客户信息(用于一致性检查和补全)\n客户名称:${c.name||'未填'}\n行业:${c.industry||'未填'}\n公司简介:${c.company_intro||'未填'}\n初始需求表达:${c.initial_demand || c.business_desc || '未填'}\n如果沟通记录中未提及公司名称,请直接使用上面的客户名称。如果沟通记录中的客户行业/业务与上述信息明显不一致,请在报告开头用⚠️提醒。\n` : '';
 
         // 3. 并行调用生成报告 + 待确认事项
         document.querySelector('#s2-loading p').textContent = '正在生成需求分析报告...';
@@ -1481,6 +1481,7 @@ async function createSmartsheet() {
     btn.disabled = true; btn.textContent = '创建中...';
     try {
         const resp = await fetch('/api/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload });
+        if (!resp.ok) { const errText = await resp.text(); throw new Error('服务器错误(' + resp.status + '): ' + errText.substring(0, 100)); }
         const data = await resp.json();
         const div = document.getElementById('s2-create-result');
         if (data.success && data.url) {
@@ -1494,7 +1495,14 @@ async function createSmartsheet() {
             if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成表格Demo', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
         } else { div.innerHTML = '<div style="background:#fce4ec;border-radius:8px;padding:12px;font-size:13px;color:#c62828">失败:'+(data.error||'')+'</div>'; }
         div.style.display = 'block';
-    } catch (e) { alert(e.message); }
+    } catch (e) {
+        const msg = e.message || '';
+        if (msg.includes('504') || msg.includes('FUNCTION_INVOCATION_TIMEOUT') || msg.includes('timeout')) {
+            alert('创建超时,表格子表较多时可能需要较长时间。请稍后在企微文档中查看是否已部分创建成功。');
+        } else {
+            alert('创建失败: ' + msg);
+        }
+    }
     finally { btn.disabled = false; btn.textContent = '创建企微智能表格'; }
 }
 
@@ -1560,6 +1568,7 @@ async function exportWecomDoc(elId, title) {
         const data = await resp.json();
         if (data.success && data.url) {
             showToast('企微文档已创建');
+            window.open(data.url, '_blank');
             if (elId === 's1-content') { updateClient(currentClientId, { step1_doc_url: data.url }); }
             else if (elId === 's2-report') { updateClient(currentClientId, { report_doc_url: data.url }); }
             // 同步更新后台表格的链接
