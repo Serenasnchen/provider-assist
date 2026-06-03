@@ -1,0 +1,126 @@
+{
+  "meta": {
+    "industry": "人力资源服务",
+    "sub_industry": "劳务派遣/面试管理",
+    "customer": "宁波佑昌",
+    "service_provider": "贵州遐宇科技",
+    "consultant": "饶安娜",
+    "scene": "面试管理+台账管理+应收应付提醒",
+    "date": "2026-05"
+  },
+  "demand_summary": "面试管理、合同管理等台账繁杂，人工录入耗时耗力，没有数据统计。需要梳理企业台账，减少录入时间，能够自动同步相关数据，到期自动提醒对应人员，数据权限划分。",
+  "pain_points": [
+    "面试管理台账繁杂，人工录入耗时耗力",
+    "合同管理没有数据统计",
+    "应收应付款到期无人提醒，项目负责人不知道款项是否到账",
+    "财务知道到账信息但项目负责人不知道，信息不对称",
+    "住宿押金、劳防用品、宿舍租赁都是线下Excel",
+    "客户管理和项目管理需要线上化",
+    "已有Boss系统但缺少提醒和统计功能",
+    "需要数据权限划分，不同角色看不同数据"
+  ],
+  "communication_highlights": [
+    "客户是劳务派遣行业，已有Boss系统处理基础业务",
+    "Boss系统有工资发放、开票流程、发票验证，但缺提醒和统计",
+    "应收应付款需要到期提醒：预计回款日到了但未到账，提醒项目负责人跟进",
+    "住宿押金、劳防用品、宿舍租赁三个台账需从线下Excel搬到线上",
+    "需要看板效果：押金多少钱、宿舍几间、费用总计",
+    "客户管理：面试人员信息登记、状态同步到智能表格",
+    "每天接触大量求职者，需要记录性别、年龄、手机号、面试企业等",
+    "面试推荐由供应商登记，项目经理查看结果",
+    "需要项目经理与供应商之间的协作流转"
+  ],
+  "solution": {
+    "architecture": "3表联动的企微智能表格系统（面试管理核心）",
+    "core_goals": [
+      "面试管理台账线上化，减少人工录入",
+      "数据自动同步（从客户系统同步面试人员）",
+      "到期自动提醒对应人员",
+      "数据权限划分（项目经理vs供应商）"
+    ],
+    "tables": [
+      {
+        "table_name": "面试管理（同步客户）",
+        "purpose": "同步项目经理加的面试人员，并登记面试时间",
+        "usage_role": "项目经理",
+        "fields": [
+          {"field_name": "客户", "field_type": "关联", "rule": "关联企业信息"},
+          {"field_name": "客户名称", "field_type": "文本", "rule": "自动带出"},
+          {"field_name": "姓名", "field_type": "文本", "required": true},
+          {"field_name": "性别", "field_type": "单选", "required": true},
+          {"field_name": "年龄", "field_type": "数字", "required": true},
+          {"field_name": "手机号码", "field_type": "电话", "required": true},
+          {"field_name": "面试企业", "field_type": "文本", "required": true},
+          {"field_name": "面试岗位", "field_type": "文本", "required": true},
+          {"field_name": "面试时间", "field_type": "日期时间", "required": true},
+          {"field_name": "邀约日期", "field_type": "日期", "required": true},
+          {"field_name": "面试状态", "field_type": "单选", "rule": "到面/未到面"},
+          {"field_name": "未到面原因", "field_type": "文本", "rule": "条件显示"},
+          {"field_name": "到面未达成原因", "field_type": "文本", "rule": "条件显示"},
+          {"field_name": "面试结果", "field_type": "单选", "rule": "通过/未通过"},
+          {"field_name": "是否入职", "field_type": "单选", "rule": "是/否"},
+          {"field_name": "入职日期", "field_type": "日期"},
+          {"field_name": "离职日期", "field_type": "日期"},
+          {"field_name": "邀约次数", "field_type": "数字"},
+          {"field_name": "邀约记录", "field_type": "文本"},
+          {"field_name": "客户跟进总结", "field_type": "文本"},
+          {"field_name": "添加人", "field_type": "人员（企微）"},
+          {"field_name": "添加时间", "field_type": "日期时间"},
+          {"field_name": "来源", "field_type": "单选"},
+          {"field_name": "添加人所属部门", "field_type": "单选", "rule": "如：招聘部"}
+        ]
+      },
+      {
+        "table_name": "面试推荐",
+        "purpose": "供应商登记面试人员，项目经理上传面试结果",
+        "usage_role": "供应商、项目经理",
+        "field_groups": [
+          {
+            "group_name": "面试信息（供应商填写）",
+            "fields": [
+              {"field_name": "姓名", "field_type": "文本", "required": true},
+              {"field_name": "电话号码", "field_type": "电话", "required": true},
+              {"field_name": "面试企业", "field_type": "文本", "required": true},
+              {"field_name": "面试时间", "field_type": "日期时间", "required": true},
+              {"field_name": "面试岗位", "field_type": "文本", "required": true},
+              {"field_name": "邀约面试状态", "field_type": "单选"}
+            ]
+          },
+          {
+            "group_name": "跟进人填写",
+            "fields": [
+              {"field_name": "面试状态", "field_type": "单选", "rule": "到面/未到面"},
+              {"field_name": "入职状态", "field_type": "单选"},
+              {"field_name": "跟进状态", "field_type": "单选"},
+              {"field_name": "备注", "field_type": "文本"},
+              {"field_name": "跟进人", "field_type": "人员（企微）"},
+              {"field_name": "登记人员", "field_type": "人员（企微）"},
+              {"field_name": "创建时间", "field_type": "日期时间"}
+            ]
+          }
+        ]
+      },
+      {
+        "table_name": "企业信息",
+        "purpose": "用于同步到面试推荐中，标记哪个项目经理进行跟进",
+        "usage_role": "管理员",
+        "fields": [
+          {"field_name": "企业", "field_type": "文本", "required": true},
+          {"field_name": "跟进人", "field_type": "人员（企微）", "required": true}
+        ]
+      }
+    ],
+    "automation_rules": [
+      "面试推荐表新增记录 → 自动同步到面试管理表",
+      "面试时间到期 → 提醒项目经理更新面试结果",
+      "应收应付款到期 → 提醒项目负责人跟进"
+    ],
+    "key_features": [
+      "供应商只能看到自己登记的面试信息",
+      "项目经理只能看到分配给自己的企业对应面试人员",
+      "面试管理表自动统计：到面率、入职率、邀约次数",
+      "支持手机端和电脑端录入"
+    ]
+  },
+  "delivery_description": "面试管理表-用于同步项目经理加的面试人员，并登记面试时间，使用对象：项目经理；面试推荐：用于供应商登记面试人员，并登记面试信息，项目经理上传面试结果，使用对象：供应商、项目经理；企业信息：用于同步到面试推荐中，哪个项目经理进行跟进"
+}

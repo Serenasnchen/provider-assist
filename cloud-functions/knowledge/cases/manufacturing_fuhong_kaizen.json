@@ -1,0 +1,132 @@
+{
+  "meta": {
+    "industry": "制造业",
+    "sub_industry": "员工改善提报与积分激励",
+    "customer": "福鸿",
+    "service_provider": "弈方咨询",
+    "consultant": "巩艳雪",
+    "scene": "改善建议提报+积分奖励+奖品管理",
+    "date": "2026-05-06"
+  },
+  "demand_summary": "改善建议提报登记及落实情况登记，自动给提报人和落实人加积分，积分可兑换奖品，做个奖品的采购入库和兑换出库自动计算现库存",
+  "communication_highlights": [
+    "提报日期默认当天但可手动修改",
+    "提报人默认自动填写，也可选择其他人代替提报",
+    "改善金额和改善节省时间为二选一必填",
+    "部门选择由提报人手动选择，适应组织变动",
+    "每条提报固定给提报人1分，落实人也固定1分",
+    "奖品兑换积分根据实际价格动态调整",
+    "同一类奖品价格不同需分开录入",
+    "奖品领取记录由管理员手动填写，系统自动扣除积分",
+    "人员名单需与企业微信通讯录真实姓名一致"
+  ],
+  "solution": {
+    "architecture": "6表联动的企微智能表格系统",
+    "core_goals": [
+      "规范改善提报必填项与填写逻辑",
+      "实现提报人/落实人积分自动计算",
+      "奖品领取记录可追溯",
+      "人员姓名与企微通讯录一致"
+    ],
+    "tables": [
+      {
+        "table_name": "改善提报记录表",
+        "purpose": "员工录入改善建议及落实情况",
+        "usage_role": "全员",
+        "fields": [
+          {"field_name": "提报日期", "field_type": "日期", "required": true, "rule": "默认当天，可手动修改"},
+          {"field_name": "提报人", "field_type": "人员（企微）", "required": true, "rule": "选择人员"},
+          {"field_name": "所属部门", "field_type": "单选下拉", "required": true, "rule": "手动选择，适配组织变动"},
+          {"field_name": "改善内容", "field_type": "文本", "required": true, "rule": "详细描述改善措施与效果"},
+          {"field_name": "改善类型", "field_type": "单选下拉", "required": true, "rule": "手动选择"},
+          {"field_name": "改善金额", "field_type": "数字", "required": false, "rule": "与改善节省时间二选一必填"},
+          {"field_name": "改善节省时间", "field_type": "数字", "required": false, "rule": "单位：分钟/小时，与改善金额二选一必填"},
+          {"field_name": "是否落实", "field_type": "复选框", "required": false, "rule": ""},
+          {"field_name": "落实人", "field_type": "人员（企微）", "required": false, "rule": "可与提报人相同"},
+          {"field_name": "提报人积分", "field_type": "数字", "required": false, "rule": "系统自动+1"},
+          {"field_name": "落实人积分", "field_type": "数字", "required": false, "rule": "系统自动+1"}
+        ]
+      },
+      {
+        "table_name": "部门排名表",
+        "purpose": "统计部门建议条数及排名",
+        "usage_role": "管理人员",
+        "fields": [
+          {"field_name": "部门名称", "field_type": "文本", "required": true, "rule": "手动填写"},
+          {"field_name": "建议计数", "field_type": "数字", "required": false, "rule": "关联引用改善提报自动计数"},
+          {"field_name": "排名", "field_type": "数字", "required": false, "rule": "自动计算排名"}
+        ]
+      },
+      {
+        "table_name": "人员积分表",
+        "purpose": "统计员工积分获得及使用情况",
+        "usage_role": "全员",
+        "fields": [
+          {"field_name": "人员姓名", "field_type": "人员（企微）", "required": true, "rule": "选择人员"},
+          {"field_name": "积分结余", "field_type": "数字", "required": false, "rule": "手动录入"},
+          {"field_name": "建议积分", "field_type": "数字", "required": false, "rule": "关联引用改善提报自动带出"},
+          {"field_name": "落实积分", "field_type": "数字", "required": false, "rule": "关联引用改善提报自动带出"},
+          {"field_name": "总积分", "field_type": "数字", "required": false, "rule": "自动计算"},
+          {"field_name": "已用积分", "field_type": "数字", "required": false, "rule": "关联引用奖品领取自动带出"},
+          {"field_name": "剩余积分", "field_type": "数字", "required": false, "rule": "自动计算"}
+        ]
+      },
+      {
+        "table_name": "奖品库存",
+        "purpose": "奖品信息登记+出入余量管理",
+        "usage_role": "全员",
+        "fields": [
+          {"field_name": "奖品名称", "field_type": "单行文本", "required": true, "rule": "如：保温杯、50元购物卡"},
+          {"field_name": "单位", "field_type": "单选", "required": true, "rule": "包/把"},
+          {"field_name": "所需积分", "field_type": "数字", "required": true, "rule": "兑换所需积分"},
+          {"field_name": "初始数量", "field_type": "数字", "required": true, "rule": ""},
+          {"field_name": "入库数量", "field_type": "数字", "required": false, "rule": "关联采购入库"},
+          {"field_name": "领取数量", "field_type": "数字", "required": false, "rule": "关联奖品领取"},
+          {"field_name": "现库存", "field_type": "数字", "required": false, "rule": "自动计算"}
+        ]
+      },
+      {
+        "table_name": "采购入库",
+        "purpose": "奖品采买情况登记",
+        "usage_role": "采购",
+        "fields": [
+          {"field_name": "入库人", "field_type": "人员（企微）", "required": true, "rule": "选择人员"},
+          {"field_name": "入库奖品", "field_type": "关联奖品库", "required": true, "rule": "自动带出奖品名称"},
+          {"field_name": "入库数量", "field_type": "数字", "required": true, "rule": ""},
+          {"field_name": "入库日期", "field_type": "日期", "required": true, "rule": "默认当天"}
+        ]
+      },
+      {
+        "table_name": "奖品领取",
+        "purpose": "员工奖品领取情况登记",
+        "usage_role": "全员",
+        "fields": [
+          {"field_name": "领取人", "field_type": "人员（企微）", "required": true, "rule": "选择人员"},
+          {"field_name": "兑换奖品", "field_type": "关联奖品库", "required": true, "rule": "自动带出所需积分"},
+          {"field_name": "扣除积分", "field_type": "数字", "required": false, "rule": "系统自动扣减"},
+          {"field_name": "领取日期", "field_type": "日期", "required": true, "rule": "默认当天"},
+          {"field_name": "确认领取", "field_type": "复选框", "required": false, "rule": "管理员填写"}
+        ]
+      }
+    ],
+    "automation_rules": [
+      "提报提交 → 自动给提报人+1、落实人+1",
+      "奖品领取提交 → 自动扣减对应用户积分、自动减库存",
+      "奖品采购入库 → 自动加库存"
+    ],
+    "implementation_steps": [
+      "新建6张智能表格，配置字段与关联关系",
+      "人事核对并导入人员表，确保与企微姓名一致",
+      "小范围测试：提报→积分→落实→兑换全流程",
+      "正式上线，人事定期维护人员表"
+    ],
+    "views": [
+      "员工提报表单（极简录入）：提报人、部门、提报日期、建议内容、改善类型、改善金额/节省时间",
+      "管理视图：全部提报-管理员查看完整数据",
+      "部门统计：按部门汇总提报数、排名",
+      "积分排行榜：积分降序展示",
+      "奖品库存：库存为0标红预警"
+    ]
+  },
+  "delivery_description": "改善提报——用于登记员工的改善建议及落实情况，使用对象全员；部门排名——用于统计部门建议条数及排名，使用对象管理人员；人员积分——用于统计员工积分获得及使用情况，使用对象全员；奖品库存——用于登记奖品信息及出入余量管理，使用对象全员；采购入库——用于登记奖品采买情况，使用对象采购；奖品领取——用于登记员工奖品领取情况，使用对象全员"
+}

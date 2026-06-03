@@ -1,13 +1,7 @@
 {
   "cloudFunctions": {
-    "nodejs": {
+    "python": {
       "maxDuration": 120
     }
-  },
-  "rewrites": [
-    {
-      "source": "/((?!api/)(?!functions/).*)",
-      "destination": "/index.html"
-    }
-  ]
+  }
 }

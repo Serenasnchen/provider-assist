@@ -1,0 +1,199 @@
+{
+  "meta": {
+    "industry": "餐饮/宴席",
+    "scene": "原料预估+库存管理+成本分析全链路",
+    "source": "基于服务商凌励反馈+餐饮行业真实交付逻辑补全",
+    "total_tables": 10,
+    "total_fields": 95,
+    "design_principle": "提到库存必有入库表；提到采购必有供应商表和采购单；提到配方必有BOM表；基础表+业务表+统计表三层",
+    "applicable_when": "客户提到：餐饮、宴席、原料、采购、库存、配方、BOM、领用、成本核算、后厨管理"
+  },
+  "relation_logic": [
+    "宴席订单 → 通过菜品明细关联 → 标准配方BOM → 自动计算原料总需求",
+    "原料总需求 - 当前库存 = 采购需求 → 生成采购单",
+    "采购单执行 → 入库登记 → 库存增加",
+    "后厨领用 → 出库登记 → 库存减少",
+    "标准用量 vs 实际领用 = 差异分析 → 成本报表"
+  ],
+  "tables": [
+    {
+      "table_name": "基础-供应商档案",
+      "description": "记录所有原料供应商信息，采购单关联用",
+      "layer": "基础表",
+      "fields": [
+        {"title": "供应商名称", "type": "TEXT"},
+        {"title": "联系人", "type": "TEXT"},
+        {"title": "联系电话", "type": "PHONE_NUMBER"},
+        {"title": "主营品类", "type": "SELECT", "options": ["肉类", "蔬菜", "调料", "海鲜", "干货"]},
+        {"title": "合作状态", "type": "SINGLE_SELECT", "options": ["正常合作", "暂停", "淘汰"]},
+        {"title": "备注", "type": "TEXT"}
+      ]
+    },
+    {
+      "table_name": "基础-菜品档案",
+      "description": "所有菜品的基础信息，关联BOM配方",
+      "layer": "基础表",
+      "fields": [
+        {"title": "菜品名称", "type": "TEXT"},
+        {"title": "菜品分类", "type": "SINGLE_SELECT", "options": ["凉菜", "热菜", "汤品", "主食", "甜品"]},
+        {"title": "适用场景", "type": "SELECT", "options": ["婚宴", "寿宴", "商务宴", "家宴"]},
+        {"title": "标准售价/份", "type": "CURRENCY"},
+        {"title": "标准成本/份", "type": "CURRENCY", "logic": "从BOM表汇总"},
+        {"title": "毛利率", "type": "PERCENTAGE", "logic": "(售价-成本)/售价"},
+        {"title": "备注", "type": "TEXT"}
+      ]
+    },
+    {
+      "table_name": "基础-原料档案",
+      "description": "所有原料的基础信息，含安全库存阈值",
+      "layer": "基础表",
+      "fields": [
+        {"title": "原料名称", "type": "TEXT"},
+        {"title": "原料分类", "type": "SINGLE_SELECT", "options": ["主料", "配料", "调料"]},
+        {"title": "计量单位", "type": "SINGLE_SELECT", "options": ["斤", "kg", "个", "瓶", "包"]},
+        {"title": "默认供应商", "type": "TEXT", "logic": "关联供应商档案"},
+        {"title": "参考单价", "type": "CURRENCY"},
+        {"title": "安全库存量", "type": "NUMBER", "logic": "低于此值触发补货标红"},
+        {"title": "保质期/天", "type": "NUMBER"},
+        {"title": "存储条件", "type": "SINGLE_SELECT", "options": ["常温", "冷藏", "冷冻"]}
+      ]
+    },
+    {
+      "table_name": "核心-标准配方BOM",
+      "description": "每道菜品的标准原料配方（一菜多料），成本预估核心依据",
+      "layer": "业务表",
+      "fields": [
+        {"title": "关联菜品", "type": "TEXT", "logic": "关联菜品档案"},
+        {"title": "原料名称", "type": "TEXT", "logic": "关联原料档案"},
+        {"title": "原料分类", "type": "SINGLE_SELECT", "options": ["主料", "配料"]},
+        {"title": "标准用量/份", "type": "NUMBER"},
+        {"title": "计量单位", "type": "TEXT"},
+        {"title": "参考单价", "type": "CURRENCY"},
+        {"title": "标准成本/份", "type": "CURRENCY", "logic": "用量×单价"},
+        {"title": "备注", "type": "TEXT"}
+      ]
+    },
+    {
+      "table_name": "业务-宴席订单",
+      "description": "前台录入宴席预订信息，作为原料预估的数据源头",
+      "layer": "业务表",
+      "fields": [
+        {"title": "订单编号", "type": "TEXT", "logic": "自动生成"},
+        {"title": "宴席日期", "type": "DATE_TIME"},
+        {"title": "客户姓名", "type": "TEXT"},
+        {"title": "联系电话", "type": "PHONE_NUMBER"},
+        {"title": "宴席类型", "type": "SINGLE_SELECT", "options": ["婚宴", "寿宴", "商务宴", "家宴", "其他"]},
+        {"title": "桌数", "type": "NUMBER"},
+        {"title": "套餐标准/桌", "type": "CURRENCY"},
+        {"title": "菜品明细", "type": "TEXT", "logic": "关联菜品档案，多选"},
+        {"title": "订单状态", "type": "SINGLE_SELECT", "options": ["已预订", "已确认", "已出餐", "已结算", "已取消"]},
+        {"title": "录入人", "type": "TEXT"},
+        {"title": "录入时间", "type": "DATE_TIME"},
+        {"title": "备注", "type": "TEXT"}
+      ]
+    },
+    {
+      "table_name": "业务-原料需求汇总",
+      "description": "根据订单+BOM自动计算未来一段周期内的原料总需求，与库存比对生成采购建议",
+      "layer": "业务表",
+      "fields": [
+        {"title": "统计周期", "type": "TEXT", "logic": "如：2026-05-27~2026-06-03"},
+        {"title": "原料名称", "type": "TEXT"},
+        {"title": "总需求量", "type": "NUMBER", "logic": "汇总该周期内所有订单×BOM标准用量×桌数"},
+        {"title": "当前库存量", "type": "NUMBER", "logic": "从库存表取"},
+        {"title": "缺口量", "type": "NUMBER", "logic": "总需求-当前库存，负数=需采购"},
+        {"title": "建议采购量", "type": "NUMBER", "logic": "缺口量+安全库存补充"},
+        {"title": "状态", "type": "SINGLE_SELECT", "options": ["库存充足", "需补货", "紧急采购"]},
+        {"title": "生成时间", "type": "DATE_TIME"}
+      ]
+    },
+    {
+      "table_name": "业务-采购单",
+      "description": "根据需求汇总生成采购任务，跟踪采购执行",
+      "layer": "业务表",
+      "fields": [
+        {"title": "采购单号", "type": "TEXT"},
+        {"title": "采购日期", "type": "DATE_TIME"},
+        {"title": "供应商", "type": "TEXT", "logic": "关联供应商档案"},
+        {"title": "原料名称", "type": "TEXT"},
+        {"title": "采购数量", "type": "NUMBER"},
+        {"title": "单价", "type": "CURRENCY"},
+        {"title": "金额", "type": "CURRENCY", "logic": "数量×单价"},
+        {"title": "预计到货日", "type": "DATE_TIME"},
+        {"title": "采购状态", "type": "SINGLE_SELECT", "options": ["待采购", "已下单", "已到货", "已入库"]},
+        {"title": "采购员", "type": "TEXT"},
+        {"title": "备注", "type": "TEXT"}
+      ]
+    },
+    {
+      "table_name": "业务-入库登记",
+      "description": "原料到货后仓管登记入库",
+      "layer": "业务表",
+      "fields": [
+        {"title": "入库单号", "type": "TEXT"},
+        {"title": "入库日期", "type": "DATE_TIME"},
+        {"title": "关联采购单", "type": "TEXT"},
+        {"title": "原料名称", "type": "TEXT"},
+        {"title": "入库数量", "type": "NUMBER"},
+        {"title": "实际单价", "type": "CURRENCY"},
+        {"title": "供应商", "type": "TEXT"},
+        {"title": "保质期至", "type": "DATE_TIME"},
+        {"title": "仓管签收人", "type": "TEXT"},
+        {"title": "备注", "type": "TEXT"}
+      ]
+    },
+    {
+      "table_name": "业务-领用出库",
+      "description": "后厨师傅在线登记领用，替代手写领用单",
+      "layer": "业务表",
+      "fields": [
+        {"title": "领用单号", "type": "TEXT"},
+        {"title": "领用日期", "type": "DATE_TIME"},
+        {"title": "关联宴席日期", "type": "DATE_TIME"},
+        {"title": "关联订单", "type": "TEXT"},
+        {"title": "领用师傅", "type": "TEXT"},
+        {"title": "原料名称", "type": "TEXT"},
+        {"title": "领用数量", "type": "NUMBER"},
+        {"title": "计量单位", "type": "TEXT"},
+        {"title": "标准用量", "type": "NUMBER", "logic": "从BOM×桌数自动带出"},
+        {"title": "差异量", "type": "NUMBER", "logic": "领用数量-标准用量"},
+        {"title": "差异率", "type": "PERCENTAGE", "logic": "差异量/标准用量"},
+        {"title": "仓管审核人", "type": "TEXT"},
+        {"title": "备注", "type": "TEXT"}
+      ]
+    },
+    {
+      "table_name": "统计-成本分析与利润",
+      "description": "按周/月汇总成本，与标准成本对比，生成利润报表",
+      "layer": "统计表",
+      "fields": [
+        {"title": "统计周期", "type": "TEXT", "logic": "如2026年第22周 / 2026年5月"},
+        {"title": "订单总收入", "type": "CURRENCY", "logic": "该周期所有订单金额汇总"},
+        {"title": "标准原料成本", "type": "CURRENCY", "logic": "按BOM标准用量×桌数×单价"},
+        {"title": "实际领用成本", "type": "CURRENCY", "logic": "按实际领用量×单价"},
+        {"title": "成本差异", "type": "CURRENCY", "logic": "实际-标准"},
+        {"title": "成本差异率", "type": "PERCENTAGE"},
+        {"title": "毛利", "type": "CURRENCY", "logic": "收入-实际成本"},
+        {"title": "毛利率", "type": "PERCENTAGE"},
+        {"title": "差异最大原料TOP3", "type": "TEXT"},
+        {"title": "差异最大师傅TOP3", "type": "TEXT"},
+        {"title": "生成时间", "type": "DATE_TIME"}
+      ]
+    }
+  ],
+  "automation_rules": [
+    "新订单录入后 → 自动计算原料总需求（BOM×桌数汇总）→ 与库存比对生成补货建议",
+    "领用登记后 → 自动比对标准用量，差异超±10%触发提醒总厨+财务",
+    "库存低于安全库存 → 标红+自动提醒仓管和采购员",
+    "每周/每月定时 → 自动生成成本分析报表"
+  ],
+  "view_design": [
+    {"view_name": "前台视图", "scope": "仅宴席订单表，可录入可查看"},
+    {"view_name": "仓管视图", "scope": "入库+出库+库存，可录入可审核"},
+    {"view_name": "后厨视图", "scope": "仅领用出库表，可新增领用记录"},
+    {"view_name": "总厨视图", "scope": "领用记录全部+差异分析仪表盘"},
+    {"view_name": "财务视图", "scope": "全部数据+成本分析报表"},
+    {"view_name": "老板仪表盘", "scope": "每周利润/每月利润/差异TOP"}
+  ],
+  "dashboard_metrics": ["每周利润", "每月利润", "原料消耗差异率", "库存预警数量", "需补货原料清单", "领用差异TOP师傅"]
+}
