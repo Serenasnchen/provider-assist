@@ -1,37 +1,43 @@
 /**
- * EdgeOne Pages Function: 通用 API 反向代理
+ * EdgeOne Edge Function: 通用 API 反向代理
  * 将所有 /api/* 请求转发到 Vercel 后端
+ * 
+ * 路径：edge-functions/api/[[default]].js
+ * 匹配：所有 /api/* 路径
  */
 
 const BACKEND_ORIGIN = 'https://provider-assist.vercel.app';
 
-export async function onRequest({ request, params }) {
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Max-Age': '86400',
+};
+
+export default async function onRequest(context) {
+  const { request } = context;
   const url = new URL(request.url);
-  
+
   // 构造目标 URL：/api/question_list → https://provider-assist.vercel.app/api/question_list
   const targetUrl = `${BACKEND_ORIGIN}${url.pathname}${url.search}`;
 
   // 处理 OPTIONS 预检请求
   if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '86400',
-      },
-    });
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
 
-  // 构造转发请求头（排除可能干扰的头）
+  // 构造转发请求头
   const proxyHeaders = new Headers(request.headers);
   proxyHeaders.set('Host', 'provider-assist.vercel.app');
   proxyHeaders.delete('cf-connecting-ip');
   proxyHeaders.delete('cf-ray');
+  proxyHeaders.delete('x-forwarded-for');
+  proxyHeaders.delete('x-real-ip');
 
   try {
-    // 转发请求到 Vercel，设置超时为 90 秒（默认只有 15 秒会导致 504）
+    // 转发请求到 Vercel
+    // eo.timeoutSetting 设置读取超时为 90 秒（默认 15 秒对知识库匹配接口不够）
     const response = await fetch(targetUrl, {
       method: request.method,
       headers: proxyHeaders,
@@ -56,12 +62,12 @@ export async function onRequest({ request, params }) {
       headers: newHeaders,
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Proxy request failed', message: error.message }), {
-      status: 502,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    return new Response(
+      JSON.stringify({ error: 'Proxy request failed', message: error.message }),
+      {
+        status: 502,
+        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      }
+    );
   }
 }
