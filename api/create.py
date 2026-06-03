@@ -43,6 +43,48 @@ def extract(mcp_resp):
     return result
 
 
+def normalize_field_type(ft):
+    """确保 field_type 带有 FIELD_TYPE_ 前缀"""
+    if not ft:
+        return "FIELD_TYPE_TEXT"
+    ft = ft.strip().upper()
+    if not ft.startswith("FIELD_TYPE_"):
+        ft = "FIELD_TYPE_" + ft
+    # 映射常见别名
+    alias_map = {
+        "FIELD_TYPE_DATE": "FIELD_TYPE_DATE_TIME",
+        "FIELD_TYPE_DATETIME": "FIELD_TYPE_DATE_TIME",
+        "FIELD_TYPE_SELECT": "FIELD_TYPE_SINGLE_SELECT",
+        "FIELD_TYPE_MULTISELECT": "FIELD_TYPE_MULTI_SELECT",
+        "FIELD_TYPE_MULTI": "FIELD_TYPE_MULTI_SELECT",
+        "FIELD_TYPE_PHONE": "FIELD_TYPE_PHONE_NUMBER",
+        "FIELD_TYPE_TEL": "FIELD_TYPE_PHONE_NUMBER",
+        "FIELD_TYPE_LINK": "FIELD_TYPE_URL",
+        "FIELD_TYPE_MONEY": "FIELD_TYPE_CURRENCY",
+        "FIELD_TYPE_AMOUNT": "FIELD_TYPE_CURRENCY",
+        "FIELD_TYPE_PERCENT": "FIELD_TYPE_PERCENTAGE",
+        "FIELD_TYPE_NUM": "FIELD_TYPE_NUMBER",
+        "FIELD_TYPE_INT": "FIELD_TYPE_NUMBER",
+        "FIELD_TYPE_BOOL": "FIELD_TYPE_CHECKBOX",
+        "FIELD_TYPE_BOOLEAN": "FIELD_TYPE_CHECKBOX",
+    }
+    ft = alias_map.get(ft, ft)
+    # 验证是否是合法类型
+    valid_types = {
+        "FIELD_TYPE_TEXT", "FIELD_TYPE_NUMBER", "FIELD_TYPE_SINGLE_SELECT",
+        "FIELD_TYPE_MULTI_SELECT", "FIELD_TYPE_DATE_TIME", "FIELD_TYPE_CHECKBOX",
+        "FIELD_TYPE_USER", "FIELD_TYPE_PHONE_NUMBER", "FIELD_TYPE_EMAIL",
+        "FIELD_TYPE_URL", "FIELD_TYPE_CURRENCY", "FIELD_TYPE_PERCENTAGE",
+        "FIELD_TYPE_PROGRESS", "FIELD_TYPE_AUTO_NUMBER", "FIELD_TYPE_LOCATION",
+        "FIELD_TYPE_CREATED_TIME", "FIELD_TYPE_MODIFIED_TIME",
+        "FIELD_TYPE_CREATED_USER", "FIELD_TYPE_MODIFIED_USER",
+        "FIELD_TYPE_BARCODE", "FIELD_TYPE_RATING",
+    }
+    if ft not in valid_types:
+        return "FIELD_TYPE_TEXT"
+    return ft
+
+
 def setup_sheet_fields(docid, sid, fields, records, steps, sname):
     """为单个智能表格的默认子表配置字段和数据"""
     fr = extract(call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sid}))
@@ -56,7 +98,7 @@ def setup_sheet_fields(docid, sid, fields, records, steps, sname):
         # 更新第一个字段（复用默认字段）
         call_mcp("smartsheet_update_fields", {
             "docid": docid, "sheet_id": sid,
-            "fields": [{"field_id": dfid, "field_title": fields[0]["field_title"], "field_type": fields[0].get("field_type", "FIELD_TYPE_TEXT")}]
+            "fields": [{"field_id": dfid, "field_title": fields[0]["field_title"], "field_type": normalize_field_type(fields[0].get("field_type", "TEXT"))}]
         })
         # 分批添加剩余字段（每批最多5个，避免API限制）
         remaining = fields[1:]
@@ -65,7 +107,7 @@ def setup_sheet_fields(docid, sid, fields, records, steps, sname):
             batch = remaining[i:i+batch_size]
             resp = call_mcp("smartsheet_add_fields", {
                 "docid": docid, "sheet_id": sid,
-                "fields": [{"field_title": f["field_title"], "field_type": f.get("field_type", "FIELD_TYPE_TEXT")} for f in batch]
+                "fields": [{"field_title": f["field_title"], "field_type": normalize_field_type(f.get("field_type", "TEXT"))} for f in batch]
             })
             r = extract(resp)
             if isinstance(r, dict) and r.get("errcode", 0) != 0:
@@ -78,7 +120,7 @@ def setup_sheet_fields(docid, sid, fields, records, steps, sname):
             batch = fields[i:i+batch_size]
             call_mcp("smartsheet_add_fields", {
                 "docid": docid, "sheet_id": sid,
-                "fields": [{"field_title": f["field_title"], "field_type": f.get("field_type", "FIELD_TYPE_TEXT")} for f in batch]
+                "fields": [{"field_title": f["field_title"], "field_type": normalize_field_type(f.get("field_type", "TEXT"))} for f in batch]
             })
         steps.append(f"  {len(fields)} 个字段已添加(fallback)")
 
