@@ -416,8 +416,9 @@
 <script>
 marked.setOptions({ breaks: true, gfm: true });
 
-// API 基础地址：本地开发用空字符串（相对路径），生产环境指向 Vercel
-const API_BASE = location.hostname === 'localhost' ? '' : 'https://provider-assist.vercel.app';
+// API 基础地址：EdgeOne Pages 部署时用空字符串（边缘函数代理转发到 Vercel）
+// 如果直接在 Vercel 上访问也使用空字符串（相对路径直接命中 Vercel Functions）
+const API_BASE = '';
 
 const STORAGE_KEY = 'provider-assist-clients';
 const PROVIDER_KEY = 'provider-assist-name';
@@ -480,7 +481,7 @@ async function searchCompanyInfo(clientId, companyName, industry) {
             }
         }
 
-        const resp = await fetch(API_BASE + '/api/company_search', {
+        const resp = await fetch('/api/company_search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ company_name: companyName, industry: industry || '' })
@@ -517,7 +518,7 @@ async function reportToAdmin(action, data, targetClientId) {
     try {
         const payload = { action, provider_name: providerName, ...data };
         console.log('[reportToAdmin] 发送:', action, JSON.stringify({step1_doc_url: data.step1_doc_url, report_doc_url: data.report_doc_url, demo_url: data.demo_url, record_id: data.record_id}));
-        const resp = await fetch(API_BASE + '/api/report', {
+        const resp = await fetch('/api/report', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -1069,7 +1070,7 @@ async function generateStep1() {
 
     try {
         // Step1: 后端匹配知识库,返回prompt
-        const matchResp = await fetch(API_BASE + '/api/question_list', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        const matchResp = await fetch('/api/question_list', { method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ industry, initial_demand: initialDemand, company_name: c ? c.name : '', company_intro: companyIntro }) });
         if (!matchResp.ok) { alert('知识库匹配失败(' + matchResp.status + ')'); return; }
         const matchData = await matchResp.json();
@@ -1093,7 +1094,7 @@ async function generateStep1() {
         try {
             const cc0 = getClient(currentClientId);
             const docTitle = (cc0.name || '') + ' - 调研准备材料';
-            const docResp = await fetch(API_BASE + '/api/export_doc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: docTitle, content: result }) });
+            const docResp = await fetch('/api/export_doc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: docTitle, content: result }) });
             const docData = await docResp.json();
             if (docData.success && docData.url) {
                 step1DocUrl = docData.url;
@@ -1194,7 +1195,7 @@ async function handleFileUpload(event) {
             });
             const b64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)));
             try {
-                const resp = await fetch(API_BASE + '/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, file_data: b64 }) });
+                const resp = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, file_data: b64 }) });
                 const data = await resp.json();
                 existing.push({ name: file.name, text: data.text || '', base64: b64 });
             } catch(e) {
@@ -1252,7 +1253,7 @@ async function generateReport() {
 
     try {
         // 1. 后端匹配知识库获取上下文
-        const matchResp = await fetch(API_BASE + '/api/match', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        const matchResp = await fetch('/api/match', { method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ industry, direction: transcript.substring(0, 300) }) });
         let kbContext = '';
         if (matchResp.ok) {
@@ -1374,7 +1375,7 @@ async function generateReport() {
         try {
             const cc2a = getClient(currentClientId);
             const rptTitle = (cc2a.name || '') + ' - 需求分析报告';
-            const rptResp = await fetch(API_BASE + '/api/export_doc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: rptTitle, content: report }) });
+            const rptResp = await fetch('/api/export_doc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: rptTitle, content: report }) });
             const rptData = await rptResp.json();
             if (rptData.success && rptData.url) {
                 reportDocUrl = rptData.url;
@@ -1481,7 +1482,7 @@ async function createSmartsheet() {
     btn.disabled = true; btn.textContent = '创建中(1/' + total + ')...';
     try {
         // 第一步：创建文档+第一个子表
-        const resp = await fetch(API_BASE + '/api/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(schemaObj) });
+        const resp = await fetch('/api/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(schemaObj) });
         const respText = await resp.text();
         let data;
         try { data = JSON.parse(respText); } catch(pe) { throw new Error('服务器返回异常: ' + respText.substring(0, 100)); }
@@ -1492,7 +1493,7 @@ async function createSmartsheet() {
         for (let i = 1; i < total; i++) {
             btn.textContent = '创建中(' + (i+1) + '/' + total + ')...';
             try {
-                const addResp = await fetch(API_BASE + '/api/create', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                const addResp = await fetch('/api/create', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ docid: docid, sheet: schemaObj.sheets[i] }) });
                 const addText = await addResp.text();
                 const addData = JSON.parse(addText);
@@ -1568,7 +1569,7 @@ async function exportWecomDoc(elId, title) {
         } else {
             content = document.getElementById(elId).innerText;
         }
-        const resp = await fetch(API_BASE + '/api/export_doc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        const resp = await fetch('/api/export_doc', { method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: docTitle, content: content }) });
         const data = await resp.json();
         if (data.success && data.url) {
