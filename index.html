@@ -1553,7 +1553,30 @@ function closeAllExports() {
 document.addEventListener('click', e => { if (!e.target.closest('.export-group') && !e.target.closest('#export-overlay')) closeAllExports(); });
 
 function exportWord(elId, title) { const html = `<html><head><meta charset="utf-8"><style>body{font-family:"Microsoft YaHei";font-size:12pt;line-height:1.8}h1,h2,h3{color:#0052d9}strong{color:#0052d9}</style></head><body>${document.getElementById(elId).innerHTML}</body></html>`; const blob = new Blob([html],{type:'application/msword'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=title+'.doc'; a.click(); closeAllExports(); }
-function exportPDF(elId, title) { html2pdf().set({margin:15,filename:title+'.pdf',html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4'}}).from(document.getElementById(elId)).save(); closeAllExports(); }
+function exportPDF(elId, title) {
+    const el = document.getElementById(elId);
+    // 临时移除高度限制，确保完整截取内容
+    const origMaxH = el.style.maxHeight;
+    const origOverflow = el.style.overflowY;
+    el.style.maxHeight = 'none';
+    el.style.overflowY = 'visible';
+    html2pdf().set({
+        margin: [15, 15, 15, 15],
+        filename: title + '.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    }).from(el).save().then(() => {
+        // 恢复原始样式
+        el.style.maxHeight = origMaxH;
+        el.style.overflowY = origOverflow;
+    }).catch(() => {
+        el.style.maxHeight = origMaxH;
+        el.style.overflowY = origOverflow;
+    });
+    closeAllExports();
+}
 async function exportWecomDoc(elId, title) {
     closeAllExports();
     showToast('正在创建企微文档...');
