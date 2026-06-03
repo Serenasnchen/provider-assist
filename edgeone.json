@@ -1,4 +1,9 @@
 {
+  "cloudFunctions": {
+    "nodejs": {
+      "maxDuration": 120
+    }
+  },
   "rewrites": [
     {
       "source": "/((?!api/)(?!functions/).*)",

@@ -24,18 +24,26 @@ export async function onRequest({ request, params }) {
     });
   }
 
-  // 转发请求到 Vercel
-  const proxyRequest = new Request(targetUrl, {
-    method: request.method,
-    headers: request.headers,
-    body: request.body,
-  });
-
-  // 设置正确的 Host 头
-  proxyRequest.headers.set('Host', 'provider-assist.vercel.app');
+  // 构造转发请求头（排除可能干扰的头）
+  const proxyHeaders = new Headers(request.headers);
+  proxyHeaders.set('Host', 'provider-assist.vercel.app');
+  proxyHeaders.delete('cf-connecting-ip');
+  proxyHeaders.delete('cf-ray');
 
   try {
-    const response = await fetch(proxyRequest);
+    // 转发请求到 Vercel，设置超时为 90 秒（默认只有 15 秒会导致 504）
+    const response = await fetch(targetUrl, {
+      method: request.method,
+      headers: proxyHeaders,
+      body: request.body,
+      eo: {
+        timeoutSetting: {
+          connectTimeout: 15000,
+          readTimeout: 90000,
+          writeTimeout: 30000,
+        }
+      }
+    });
 
     // 添加 CORS 头到响应
     const newHeaders = new Headers(response.headers);
