@@ -1225,7 +1225,7 @@ function saveTranscripts() {
     // 上报状态
     const cc = getClient(currentClientId);
     if (cc && cc.admin_record_id) {
-        reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已上传沟通记录', step1_doc_url: cc.step1_doc_url || '' });
+        reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, initial_demand: cc.initial_demand || '', business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已上传沟通记录', step1_doc_url: cc.step1_doc_url || '' });
     }
     showToast('沟通记录已保存');
 }
@@ -1397,7 +1397,7 @@ async function generateReport() {
         }
         // 上报到平台
         const cc2 = getClient(currentClientId);
-        reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已生成需求报告', step1_doc_url: cc2.step1_doc_url || '', report_doc_url: reportDocUrl, demo_url: '', transcript_doc_url: transcriptDocUrl });
+        reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, initial_demand: cc2.initial_demand || '', business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已生成需求报告', step1_doc_url: cc2.step1_doc_url || '', report_doc_url: reportDocUrl, demo_url: '', transcript_doc_url: transcriptDocUrl });
     } catch (e) { alert('请求失败: ' + e.message); }
     finally { document.getElementById('s2-loading').classList.remove('visible'); }
 }
@@ -1507,7 +1507,7 @@ async function createSmartsheet() {
         window.open(data.url, '_blank');
         updateClient(currentClientId, { demo_url: data.url });
         const cc = getClient(currentClientId);
-        if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成表格Demo', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
+        if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, initial_demand: cc.initial_demand || '', business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成表格Demo', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
     } catch (e) { alert('创建失败: ' + e.message); }
     finally { btn.disabled = false; btn.textContent = '创建企微智能表格'; }
 }
@@ -1607,7 +1607,7 @@ async function exportWecomDoc(elId, title) {
             // 同步更新后台表格的链接
             const cc = getClient(currentClientId);
             if (cc && cc.admin_record_id) {
-                reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, business_desc: cc.business_desc, pain_points: cc.pain_points, status: cc.demo_url ? '已生成表格Demo' : cc.step2_report ? '已生成需求报告' : '已生成清单链接', step1_doc_url: cc.step1_doc_url || '', report_doc_url: cc.report_doc_url || '', demo_url: cc.demo_url || '', transcript_doc_url: cc.transcript_doc_url || '' });
+                reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, initial_demand: cc.initial_demand || '', business_desc: cc.business_desc, pain_points: cc.pain_points, status: cc.demo_url ? '已生成表格Demo' : cc.step2_report ? '已生成需求报告' : '已生成清单链接', step1_doc_url: cc.step1_doc_url || '', report_doc_url: cc.report_doc_url || '', demo_url: cc.demo_url || '', transcript_doc_url: cc.transcript_doc_url || '' });
             }
             // 在新窗口打开文档
             window.open(data.url, '_blank');
@@ -1687,6 +1687,7 @@ function handleImport(event) {
                 record_id: c.admin_record_id || '',
                 client_name: c.name,
                 industry: c.industry || '',
+                initial_demand: c.initial_demand || '',
                 business_desc: c.business_desc || '',
                 pain_points: c.pain_points || '',
                 status: status,

@@ -159,6 +159,7 @@ def report_client(data):
         "客户行业": text_val(data.get("industry", "")),
         "本次定制开发业务概述": text_val(data.get("business_desc", "")[:500]),
         "本次定制开发需要智能表格解决的痛点": text_val(data.get("pain_points", "")[:500]),
+        "客户进线的初始需求表达": text_val(data.get("initial_demand", "")[:500]),
     }
     # 当前状态: SINGLE_SELECT格式
     status = data.get("status", "")
